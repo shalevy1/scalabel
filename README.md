@@ -17,7 +17,7 @@ Scalabel (pronounced "scalable") is a versatile and scalable tool that supports 
     ```
     mkdir ../data
     ```
-3. Launch server. There are two options, either (i) to build 
+3. Launch server. There are two options, either (i) to build
  with Docker or (ii) to build by yourself.
     1. Build and run a Docker image from the Dockerfile.
 
@@ -31,26 +31,26 @@ Scalabel (pronounced "scalable") is a versatile and scalable tool that supports 
         ```
         After getting the docker image, you can run the server
         ```
-        docker run -it -v `pwd`/../data:/go/data -p 8686:8686 scalabel/server
+        docker run -it -v `pwd`/../data:/data -p 8686:8686 scalabel/server
         ```
-    2. Build the server by yourself. 
+    2. Build the server by yourself.
         1. Install GoLang. Refer to the [instruction page](https://golang.org/doc/install) for details.
-        2. Install GoLang dependency  
+        2. Install GoLang dependency
         ```
         go get gopkg.in/yaml.v2
         ```
-        3. Compile the packages 
+        3. Compile the packages
         ```
         go build -i -o bin/scalabel ./server/go
         ```
-        4. Specify basic configurations (e.g. the port to start the server, 
-        the data directory to store the image annotations, etc) in your own 
-        `config.yml`. Refer to `app/config/default_config.yml` for the default configurations. 
-        5. Launch the server by running 
+        4. Specify basic configurations (e.g. the port to start the server,
+        the data directory to store the image annotations, etc) in your own
+        `config.yml`. Refer to `app/config/default_config.yml` for the default configurations.
+        5. Launch the server by running
         ```
         ./bin/scalabel --config app/config/default_config.yml
         ```
-    
+
 3. Access the server through the specifed port (we use `8686` as the default port
 specified in the `config.yml`)
     ```

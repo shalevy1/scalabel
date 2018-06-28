@@ -39,18 +39,27 @@ Scalabel (pronounced "scalable") is a versatile and scalable tool that supports 
         ```
         go get gopkg.in/yaml.v2
         ```
-        3. Compile the packages
+        
+        3. Compile the server 
         ```
-        go build -i -o bin/scalabel ./server/go
+        go build -i -o $GOPATH/bin/scalabel ./server/go
         ```
-        4. Specify basic configurations (e.g. the port to start the server,
-        the data directory to store the image annotations, etc) in your own
-        `config.yml`. Refer to `app/config/default_config.yml` for the default configurations.
-        5. Launch the server by running
+        
+         Note that you may choose your own path for the server executable. We
+        use $GOPATH/bin/scalabel as it conforms to golang best practice, 
+        but if your GOPATH is not configured, this will not work.
+        
+        4. Specify basic configurations (e.g. the port to start the server, 
+        the data directory to store the image annotations, etc) in your own 
+        `config.yml`. Refer to `app/config/default_config.yml` for the default configurations. 
+        5. Launch the server by running 
         ```
-        ./bin/scalabel --config app/config/default_config.yml
+        $GOPATH/bin/scalabel --config app/config/default_config.yml
         ```
-
+        
+         If you used a different server path when compiling, make sure to use
+        the correct path here.
+    
 3. Access the server through the specifed port (we use `8686` as the default port
 specified in the `config.yml`)
     ```

@@ -13,6 +13,7 @@ let config = {
     admin: __dirname + '/app/src/js/entries/admin.js',
     point_cloud: __dirname + '/app/src/js/v1/point_cloud/point_cloud.index.js',
     speed_test: __dirname + '/app/src/js/dev/speed_test.js',
+    gpu_test: __dirname + '/app/src/js/dev/gpu_test.js',
     dashboard: __dirname + '/app/src/js/v1/dashboard.index.js',
     vendor: __dirname + '/app/src/js/v1/vendor.index.js',
     label: __dirname + '/app/src/js/entries/label.index.js',

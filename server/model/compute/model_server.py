@@ -18,6 +18,10 @@ class SessionWorker():
     def do_work(self):
         return str(datetime.datetime.now())
 
+    def get_bboxes(self):
+        box1 = pb2.Bbox(x=600, y=100, h=100, w=100)
+        box2 = pb2.Bbox(x=100, y=300, h=100, w=100)
+        return [box1, box2]
 
 class ModelServer(pb2_grpc.ModelServerServicer):
     def __init__(self):
@@ -47,6 +51,23 @@ class ModelServer(pb2_grpc.ModelServerServicer):
         return pb2.Response(session=request,
                             modelServerTimestamp=timestamp,
                             modelServerDuration=duration)
+
+    def ModelComputation(self, request, context):
+        start = time.time()
+        id = request.sessionId
+        url = request.message
+
+        worker = self.sessionIdsToWorkers[id]
+        bboxes = ray.get(worker.get_bboxes.remote())
+        timestamp = ray.get(worker.do_work.remote())
+        end = time.time()
+        duration = "{0:.3f}".format((end - start) * 1000.0)
+        baseResponse = pb2.Response(session=request,
+                                    modelServerTimestamp=timestamp,
+                                    modelServerDuration=duration)
+        fullResponse = pb2.BboxResponse(response=baseResponse)
+        fullResponse.bboxes.extend(bboxes)
+        return fullResponse
 
     def KillActor(self, request, context):
         id = request.sessionId

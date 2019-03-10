@@ -17,12 +17,25 @@ message Response{
     string modelServerDuration = 3;
 }
 
+message Bbox{
+    int32 x = 1;
+    int32 y = 2;
+    int32 w = 3;
+    int32 h = 4;
+}
+
+message BboxResponse{
+    Response response = 1;
+    repeated Bbox bboxes = 2;
+}
+
 message Empty {
 
 }
 
 service ModelServer{
 rpc DummyComputation(Session) returns (Response) {}
+rpc ModelComputation(Session) returns (BboxResponse) {}
 rpc Register(Session) returns (Response) {}
 rpc KillActor(Session) returns (Empty) {}
 }

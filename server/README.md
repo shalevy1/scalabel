@@ -121,6 +121,6 @@ go build -o gateway .
 Start the python server:
 ````
 cd ../compute
-python model_server_local.py --local
+python model_server.py --local
 ````
-Follow the instructions [here](https://github.com/ucbdrive/sat) to launch the http server and go to ``localhost:8686/dev/speed_test.html``.
+Follow the instructions [here](https://github.com/ucbdrive/sat) to launch the http server and go to ``localhost:8686/dev/speed_test.html`` for the speed test, or ``localhost:8686/dev/gpu_test.html`` for the MaskRCNN test.

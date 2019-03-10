@@ -2,7 +2,6 @@ package main
 
 import (
 	pb "../proto"
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"golang.org/x/net/context"
@@ -23,23 +22,50 @@ type Session struct {
 	modelVersion int
 }
 
-type AppMessage struct {
+type WebRegisterMessage struct {
 	SessionId string `json:"sessionId"`
 	StartTime string `json:"startTime"`
 }
 
-type SessionResponse struct {
-	SessionId  string        `json:"sessionId"`
-	TimingData DummyResponse `json:"timingData"`
+type WebRegisterResponse struct {
+	SessionId     string        `json:"sessionId"`
+	EchoedMessage string        `json:"echoedMessage"`
+	TimingData    TimingData    `json:"timingData"`
 }
 
-type Message struct {
-	Type    string          `json:"type"`
-	Message json.RawMessage `json:"message"`
+type WebMessage struct {
+	Message          string `json:"message"`
+	StartTime        string `json:"startTime"`
+	TerminateSession string `json:"terminateSession"`
+	MessageType      string `json:"messageType"`
+}
+
+type WebEchoResponse struct {
+	EchoedMessage string     `json:"echoedMessage"`
+	TimingData    TimingData `json:"timingData"`
+}
+
+type WebBboxResponse struct {
+	BboxData   []Bbox     `json:"bboxData"`
+	TimingData TimingData `json:"timingData"`
+}
+
+type TimingData struct {
+	ModelServerTimestamp string `json:"modelServerTimestamp"`
+	ModelServerDuration  string `json:"modelServerDuration"`
+	GrpcDuration         string `json:"grpcDuration"`
+	StartTime            string `json:"startTime"`
+}
+
+type Bbox struct {
+	x int32 `json:"x"`
+	y int32 `json:"y"`
+	w int32 `json:"w"`
+	h int32 `json:"h"`
 }
 
 func startSession(hub *Hub, conn *websocket.Conn) {
-	var msg AppMessage
+	var msg WebRegisterMessage
 	err := conn.ReadJSON(&msg)
 	log.Printf("Got this message: %v at %s\n", msg, time.Now().String())
 
@@ -63,16 +89,16 @@ func startSession(hub *Hub, conn *websocket.Conn) {
 		}
 
 		hub.registerSession <- session
-		timingData := DummyResponse{
-			EchoedMessage:        echoedMessage,
+		timingData := TimingData{
 			ModelServerTimestamp: modelServerTimestamp,
 			ModelServerDuration:  modelServerDuration,
 			GrpcDuration:         grpcDuration,
 			StartTime:            msg.StartTime,
 		}
-		registrationResponse := SessionResponse{
-			SessionId:  session.uuid,
-			TimingData: timingData,
+		registrationResponse := WebRegisterResponse{
+			SessionId:     session.uuid,
+			TimingData:    timingData,
+			EchoedMessage: echoedMessage,
 		}
 		session.client.conn.WriteJSON(&registrationResponse)
 		go session.DataListener()
@@ -95,20 +121,6 @@ func (hub *Hub) grpcRegistration(sessionId string) (string, string, string, stri
 	return response.Session.Message, response.ModelServerTimestamp, response.ModelServerDuration, grpcDuration
 }
 
-type DummyData struct {
-	Message   string `json:"message"`
-	StartTime string `json:"startTime"`
-	TerminateSession string `json:"terminateSession"`
-}
-
-type DummyResponse struct {
-	EchoedMessage        string `json:"echoedMessage"`
-	ModelServerTimestamp string `json:"modelServerTimestamp"`
-	ModelServerDuration  string `json:"modelServerDuration"`
-	GrpcDuration         string `json:"grpcDuration"`
-	StartTime            string `json:"startTime"`
-}
-
 func (session *Session) DataListener() {
 	defer func() {
 		log.Println("Close DataListener.")
@@ -116,7 +128,7 @@ func (session *Session) DataListener() {
 	}()
 
 	for {
-		var msg DummyData
+		var msg WebMessage
 		err := session.client.conn.ReadJSON(&msg)
 		log.Printf("Got this message: %v at %s\n", msg, time.Now().String())
 		if err != nil {
@@ -132,33 +144,75 @@ func (session *Session) DataListener() {
 			break
 		}
 
-		echoedMessage, modelServerTimestamp, modelServerDuration, grpcDuration := session.grpcComputation(msg)
+		echoedMessage, bboxData, modelServerTimestamp, modelServerDuration, grpcDuration := session.grpcComputation(msg)
 
-		dummyResponse := DummyResponse{
-			EchoedMessage:        echoedMessage,
+		timingData := TimingData{
 			ModelServerTimestamp: modelServerTimestamp,
 			ModelServerDuration:  modelServerDuration,
 			GrpcDuration:         grpcDuration,
 			StartTime:            msg.StartTime,
 		}
-		session.client.conn.WriteJSON(&dummyResponse)
+
+		if msg.MessageType == "echo" {
+			webResponse := WebEchoResponse{
+				EchoedMessage: echoedMessage,
+				TimingData:    timingData,
+			}
+			session.client.conn.WriteJSON(&webResponse)
+		} else if msg.MessageType == "bbox" {
+			webResponse := WebBboxResponse{
+				BboxData:   bboxData,
+				TimingData: timingData,
+			}
+			log.Printf("Made this web response: %v\n", webResponse)
+
+			session.client.conn.WriteJSON(&webResponse)
+		} else {
+			log.Fatalf("invalid message type: %s", msg.MessageType)
+		}
+
 	}
 }
 
-//Call the DummyComputation remote procedure with DummyData, and get data for DummyResponse
-func (session *Session) grpcComputation(msg DummyData) (string, string, string, string) {
+//Call the specified remote procedure using the WebData, and get data for WebResponse
+func (session *Session) grpcComputation(msg WebMessage) (string, []Bbox, string, string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
+	var response *pb.Response
+	var bboxResponse *pb.BboxResponse
+	var err error
+	var echoedMessage string
+	var bboxData []Bbox
+
 	start := time.Now()
-	response, err := session.client.hub.modelServer.DummyComputation(
-		ctx, &pb.Session{Message: msg.Message, SessionId: session.uuid})
+	if msg.MessageType == "echo" {
+		response, err = session.client.hub.modelServer.DummyComputation(
+			ctx, &pb.Session{Message: msg.Message, SessionId: session.uuid})
+		echoedMessage = response.Session.Message
+	} else if msg.MessageType == "bbox" {
+		bboxResponse, err = session.client.hub.modelServer.ModelComputation(
+			ctx, &pb.Session{Message: msg.Message, SessionId: session.uuid})
+		response = bboxResponse.Response
+		bboxData = make([]Bbox, len(bboxResponse.Bboxes))
+
+		for i := 0; i < len(bboxResponse.Bboxes); i++ {
+			bboxData[i].x = bboxResponse.Bboxes[i].X
+			bboxData[i].y = bboxResponse.Bboxes[i].Y
+			bboxData[i].w = bboxResponse.Bboxes[i].W
+			bboxData[i].h = bboxResponse.Bboxes[i].H
+		}
+	} else {
+		log.Fatalf("invalid message type: %s", msg.MessageType)
+	}
 	end := time.Now()
+
 	grpcDuration := fmt.Sprintf("%.3f", float64(end.Sub(start))/float64(time.Millisecond))
 	if err != nil {
 		log.Fatalf("could not echo from gRPC: %v", err)
 	}
-	return response.Session.Message, response.ModelServerTimestamp, response.ModelServerDuration, grpcDuration
+
+	return echoedMessage, bboxData, response.ModelServerTimestamp, response.ModelServerDuration, grpcDuration
 }
 
 //Kill the ray actor corresponding to the go session being killed

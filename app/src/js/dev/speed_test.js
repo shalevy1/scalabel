@@ -207,17 +207,17 @@ function registerWebsocket(sessionId: string, sessionIndex: number,
     if (typeof e.data === 'string') {
       data = JSON.parse(e.data);
     }
+    data['timingData']['finalTime'] = finalTime;
+
     // connected
     if (data['sessionId']) {
-      data['timingData']['finalTime'] = finalTime;
       let initSessionTimingData = [];
       initSessionTimingData.push(data['timingData']);
       processDataAfterCompletion(initSessionTimingData, 'init');
     }
     // sent a message
     if (data['echoedMessage']) {
-      data['finalTime'] = finalTime;
-      sessionTimingData.push(data);
+      sessionTimingData.push(data['timingData']);
       if (currentNum > 1) {
         currentNum -= 1;
         sendData(sessionIndex);
@@ -252,6 +252,7 @@ function sendData(sessionIndex: number) {
   window.websockets[sessionIndex].send(JSON.stringify({
     message: sprintf('%s%d', message, sessionIndex),
     startTime: window.performance.now().toString(),
+    messageType: 'echo',
   }));
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	pb "../proto"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -46,7 +47,7 @@ type WebEchoResponse struct {
 }
 
 type WebBboxResponse struct {
-	BboxData   []Bbox     `json:"bboxData"`
+	BboxData   string     `json:"bboxData"`
 	TimingData TimingData `json:"timingData"`
 }
 
@@ -57,12 +58,6 @@ type TimingData struct {
 	StartTime            string `json:"startTime"`
 }
 
-type Bbox struct {
-	x int32 `json:"x"`
-	y int32 `json:"y"`
-	w int32 `json:"w"`
-	h int32 `json:"h"`
-}
 
 func startSession(hub *Hub, conn *websocket.Conn) {
 	var msg WebRegisterMessage
@@ -175,7 +170,7 @@ func (session *Session) DataListener() {
 }
 
 //Call the specified remote procedure using the WebData, and get data for WebResponse
-func (session *Session) grpcComputation(msg WebMessage) (string, []Bbox, string, string, string) {
+func (session *Session) grpcComputation(msg WebMessage) (string, string, string, string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
@@ -183,7 +178,7 @@ func (session *Session) grpcComputation(msg WebMessage) (string, []Bbox, string,
 	var bboxResponse *pb.BboxResponse
 	var err error
 	var echoedMessage string
-	var bboxData []Bbox
+	var bboxDataString string
 
 	start := time.Now()
 	if msg.MessageType == "echo" {
@@ -194,13 +189,10 @@ func (session *Session) grpcComputation(msg WebMessage) (string, []Bbox, string,
 		bboxResponse, err = session.client.hub.modelServer.ModelComputation(
 			ctx, &pb.Session{Message: msg.Message, SessionId: session.uuid})
 		response = bboxResponse.Response
-		bboxData = make([]Bbox, len(bboxResponse.Bboxes))
-
-		for i := 0; i < len(bboxResponse.Bboxes); i++ {
-			bboxData[i].x = bboxResponse.Bboxes[i].X
-			bboxData[i].y = bboxResponse.Bboxes[i].Y
-			bboxData[i].w = bboxResponse.Bboxes[i].W
-			bboxData[i].h = bboxResponse.Bboxes[i].H
+		bboxData, err2 := json.Marshal(bboxResponse.Bboxes)
+		bboxDataString = string(bboxData)
+		if err2 != nil {
+			log.Fatalf("could not parse grpc return value: %v", err2)
 		}
 	} else {
 		log.Fatalf("invalid message type: %s", msg.MessageType)
@@ -212,7 +204,7 @@ func (session *Session) grpcComputation(msg WebMessage) (string, []Bbox, string,
 		log.Fatalf("could not echo from gRPC: %v", err)
 	}
 
-	return echoedMessage, bboxData, response.ModelServerTimestamp, response.ModelServerDuration, grpcDuration
+	return echoedMessage, bboxDataString, response.ModelServerTimestamp, response.ModelServerDuration, grpcDuration
 }
 
 //Kill the ray actor corresponding to the go session being killed

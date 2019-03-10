@@ -62,7 +62,8 @@ function registerWebsocket(sessionId: string, sessionIndex: number,
       data = JSON.parse(e.data);
     }
     if (data['bboxData']) {
-        let boundingBoxes = data['bboxData'];
+        let boundingBoxes = JSON.parse(data['bboxData']);
+        console.log(boundingBoxes);
         for (let i = 0; i < boundingBoxes.length; i++) {
             let bb = boundingBoxes[i];
             let imageCanvas = document.getElementById('image-canvas');

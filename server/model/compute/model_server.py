@@ -15,7 +15,7 @@ from PIL import Image
 
 #these will crash unless on GPU machine
 from maskrcnn_benchmark.config import cfg
-from maskrcnn-benchmark/demo/predictor import COCODemo
+from predictor import COCODemo
 
 @ray.remote(num_cpus=1)
 class SessionWorker():

@@ -85,17 +85,14 @@ worker_nodes:
 # List of shell commands to run to set up nodes.
 setup_commands:
     - >-
-      sudo rm -rf sat
-      && git config --global credential.helper store
-      && git clone -b model_server_scaling --single-branch https://github.com/ucbdrive/sat.git
-      && cd scalabel/server/model
+      cd scalabel/server/model
+      && git pull origin test_gpu_payload
       && protoc -I proto/ proto/model-server.proto --go_out=plugins=grpc:proto
       && python3 -m grpc_tools.protoc -I proto/ --python_out=compute/ --grpc_python_out=compute/ proto/model-server.proto
-      && source activate maskrcnn_benchmark
 
 # Custom commands that will be run on the head node after common setup.
-head_setup_commands:
-    - pip3 install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions
+head_setup_commands: []
+    # - pip3 install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []

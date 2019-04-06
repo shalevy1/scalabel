@@ -16,6 +16,9 @@ conda create --name maskrcnn_benchmark
 source activate maskrcnn_benchmark
 conda install ipython
 conda install opencv
+conda install grpcio
+conda install protobuf
+conda install requests
 
 #all from the model directory
 git clone https://github.com/facebookresearch/maskrcnn-benchmark.git

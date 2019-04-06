@@ -21,9 +21,9 @@ Sample output:
     "GroupId": "sg-0e8d48691c769bba6"
 }
 ````
-- Record the `GroupId`, i.e. `sg-0e8d48691c769bba6`, for future use. Open `server/model/compute/cluster.yaml`, and on lines 61 and 76, put this `GroupId` inside the brackets for each SecurityGroupIds field, as shown below:
+- Record the `GroupId`, i.e. `sg-0563801ed5a1deaaa`, for future use. Open `server/model/compute/cluster.yaml`, and on lines 61 and 76, put this `GroupId` inside the brackets for each SecurityGroupIds field, as shown below:
 ````
-    SecurityGroupIds: [sg-0e8d48691c769bba6]
+    SecurityGroupIds: [sg-0563801ed5a1deaaa]
 ````
 Give the group permissions to itself and your public IP address, which you can look up online:
 ````
@@ -57,24 +57,24 @@ instanceIP=${instanceIP#\"}
 echo $instanceIP
 ````
 In a new tab (sat tab), update config files with the correct IPs:
-`cd sat`
+`cd scalabel`
 - In `app/config/default_config.yml`, set modelGateHost to the gateway IP (the `instanceIP` that was displayed after running the above commands)
 - In `server/model/gate/gate_config.yml`, set machineHost to the ray public DNS (you can find this under the ray head instance description on the AWS console)
 In the gateway tab, update the gateway server with these changes:
 ````
-ssh -t -i gateway-key.pem ubuntu@$instanceIP 'sudo rm -rf sat && git config --global credential.helper store && git clone -b model_server_scaling --single-branch https://github.com/ucbdrive/sat.git && source ~/.profile && cd sat/server/model && protoc -I proto/ proto/model-server.proto --go_out=plugins=grpc:proto && python3 -m grpc_tools.protoc -I proto/ --python_out=compute/ --grpc_python_out=compute/ proto/model-server.proto'
+ssh -t -i gateway-key.pem ubuntu@$instanceIP 'source ~/.profile && cd scalabel/server/model && git pull origin test_gpu_payload && protoc -I proto/ proto/model-server.proto --go_out=plugins=grpc:proto && python3 -m grpc_tools.protoc -I proto/ --python_out=compute/ --grpc_python_out=compute/ proto/model-server.proto'
 ````
 Still in the gateway tab, copy the gate config to the EC2 instance:
 ````
-scp -i gateway-key.pem gate_config.yml ubuntu@$instanceIP:~/sat/server/model/gate/gate_config.yml
+scp -i gateway-key.pem gate_config.yml ubuntu@$instanceIP:~/scalabel/server/model/gate/gate_config.yml
 ````
 In the ray tab, start running the cluster:
 ````
-ray exec cluster.yaml 'cd sat/server/model/compute && python3 model_server.py'
+ray exec cluster.yaml 'cd scalabel/server/model/compute && source ~/anaconda3/bin/activate maskrcnn_benchmark && python3 model_server.py'
 ````
 In the gateway tab, start running the server:
 ````
-ssh -t -i gateway-key.pem ubuntu@$instanceIP 'cd sat/server/model/gate && go build -o gateway . && ./gateway --config gate_config.yml'
+ssh -t -i gateway-key.pem ubuntu@$instanceIP 'cd scalabel/server/model/gate && go build -o gateway . && ./gateway --config gate_config.yml'
 ````
 In the sat tab, run the following instruction to launch the http server:
 ````

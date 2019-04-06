@@ -1,4 +1,4 @@
-cd server/model
+cd server/model/compute
 
 sudo apt-get update
 sudo apt-get install python3-pip

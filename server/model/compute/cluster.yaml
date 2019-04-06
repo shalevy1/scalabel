@@ -50,7 +50,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: g3s.xlarge #change to m5.large if GPU not needed
-    ImageId: ami-02599cc60bfa86716 #SAT speed test (Ubuntu)
+    ImageId: ami-0193db73cc2038e31 #Scalabel GPU test (Ubuntu)
 
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
@@ -67,7 +67,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: g3s.xlarge #change to m5.large if GPU not needed
-    ImageId: ami-02599cc60bfa86716 #SAT speed test (Ubuntu)
+    ImageId: ami-0193db73cc2038e31 #Scalabel GPU test (Ubuntu)
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
@@ -92,7 +92,7 @@ setup_commands:
       && protoc -I proto/ proto/model-server.proto --go_out=plugins=grpc:proto
       && python3 -m grpc_tools.protoc -I proto/ --python_out=compute/ --grpc_python_out=compute/ proto/model-server.proto
       && source activate maskrcnn_benchmark
-      
+
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - pip3 install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions

@@ -9,7 +9,7 @@ Set up your aws credentials. Use `us-east-2` as default region. (see [this page]
 aws configure
 ````
 Create an amazon machine image (ami):
-- If available to you, use ami-02599cc60bfa86716 (us-east-2)
+- If available to you, use ami-0193db73cc2038e31 (us-east-2)
 - Otherwise, create an EC2 instance on ubuntu 18.04, and run `./model/setup_backend.sh`. To enable testing GPU load, also run `./model/setup_payload.sh`. Then record the ami using [these instructions](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html). Then substitute this ami for each ImageID field in compute/cluster.yaml, and in all commands below
 Create an AWS security group:
 ````
@@ -48,7 +48,7 @@ ray up cluster.yaml
 ````
 In the original tab (the gateway tab), launch the gateway server and record its IP (the following commands also store it in a bash variable). Make sure to insert your `GroupId` in the first command:
 ````
-instanceID=$(aws ec2 run-instances --image-id ami-02599cc60bfa86716  --count 1 --instance-type m5.large --key-name gateway-key --security-group-ids <GroupId> --query "Instances[0].InstanceId")
+instanceID=$(aws ec2 run-instances --image-id ami-0193db73cc2038e31  --count 1 --instance-type m5.large --key-name gateway-key --security-group-ids <GroupId> --query "Instances[0].InstanceId")
 instanceID=${instanceID%\"}
 instanceID=${instanceID#\"}
 instanceIP=$(aws ec2 describe-instances --instance-ids $instanceID --query "Reservations[0].Instances[0].PublicIpAddress")

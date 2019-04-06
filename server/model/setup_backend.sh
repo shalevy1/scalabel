@@ -3,7 +3,7 @@
 sudo apt-get update
 sudo apt-get install autoconf automake libtool curl make g++ unzip python3-pip
 
-#Set up go for Ubunut
+#Set up go for Ubuntu
 #For Mac install, see https://golang.org/doc/install#install
 echo 'export GOROOT=/usr/local/go' >> ~/.profile
 echo 'GOPATH=$HOME/go' >> ~/.profile
@@ -24,8 +24,8 @@ pip3 install -U ray
 pip3 install setproctitle psutil jupyter protobuf grpcio-tools grpcio
 
 #Install repo
-git clone https://github.com/ucbdrive/sat.git
-cd sat
+git clone https://github.com/ucbdrive/scalabel.git
+cd scalabel
 
 #Install packages for grpc for Ubuntu
 #For Mac install, see http://google.github.io/proto-lens/installing-protoc.html

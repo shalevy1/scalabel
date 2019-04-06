@@ -49,14 +49,14 @@ auth:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
-    InstanceType: m5.large
+    InstanceType: g3s.xlarge #change to m5.large if GPU not needed
     ImageId: ami-02599cc60bfa86716 #SAT speed test (Ubuntu)
 
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-              VolumeSize: 50
+              VolumeSize: 30
 
     SecurityGroupIds: [sg-0563801ed5a1deaaa]
     # Additional options in the boto docs.
@@ -66,12 +66,18 @@ head_node:
 # For more documentation on available fields, see:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
-    InstanceType: m5.large
+    InstanceType: g3s.xlarge #change to m5.large if GPU not needed
     ImageId: ami-02599cc60bfa86716 #SAT speed test (Ubuntu)
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
         MarketType: spot
+
+    # You can provision additional disk space with a conf as follows
+    BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+              VolumeSize: 30
 
     SecurityGroupIds: [sg-0563801ed5a1deaaa]
     # Additional options in the boto docs.
@@ -82,10 +88,11 @@ setup_commands:
       sudo rm -rf sat
       && git config --global credential.helper store
       && git clone -b model_server_scaling --single-branch https://github.com/ucbdrive/sat.git
-      && cd sat/server/model
+      && cd scalabel/server/model
       && protoc -I proto/ proto/model-server.proto --go_out=plugins=grpc:proto
       && python3 -m grpc_tools.protoc -I proto/ --python_out=compute/ --grpc_python_out=compute/ proto/model-server.proto
-
+      && source activate maskrcnn_benchmark
+      
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - pip3 install boto3==1.4.8  # 1.4.8 adds InstanceMarketOptions

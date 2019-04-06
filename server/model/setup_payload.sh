@@ -1,3 +1,5 @@
+cd server/model
+
 sudo apt-get update
 sudo apt-get install python3-pip
 sudo apt install nvidia-cuda-toolkit
@@ -13,7 +15,9 @@ source ~/.bashrc
 conda create --name maskrcnn_benchmark
 source activate maskrcnn_benchmark
 conda install ipython
+conda install opencv
 
+#all from the model directory
 git clone https://github.com/facebookresearch/maskrcnn-benchmark.git
 cd maskrcnn-benchmark
 pip install -r requirements.txt
@@ -30,5 +34,3 @@ python setup.py build_ext install
 
 cd ../../maskrcnn-benchmark
 python setup.py build develop
-
-conda install opencv

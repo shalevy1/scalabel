@@ -7,21 +7,48 @@ import time
 import ray
 import logging
 import argparse
+import requests
+import cv2
+from io import BytesIO
 logging.basicConfig(level=logging.INFO)
+from PIL import Image
 
+#these will crash unless on GPU machine
+from maskrcnn_benchmark.config import cfg
+from maskrcnn-benchmark/demo/predictor import COCODemo
 
 @ray.remote(num_cpus=1)
 class SessionWorker():
     def __init__(self, sessionId):
         self.sessionId = sessionId
+        config_file = "maskrcnn-benchmark/configs/caffe2/e2e_mask_rcnn_R_50_FPN_1x_caffe2.yaml"
+
+        # update the config options with the config file
+        cfg.merge_from_file(config_file)
+        # manual override some options
+        cfg.merge_from_list(["MODEL.DEVICE", "cpu"])
+
+        self.coco_demo = COCODemo(
+            cfg,
+            min_image_size=800,
+            confidence_threshold=0.7,
+        )
 
     def do_work(self):
         return str(datetime.datetime.now())
 
-    def get_bboxes(self):
+    def get_bboxes(self, url):
+        response = requests.get(url)
+        bytes = BytesIO(response.content)
+        pil_img = Image.open(bytes)
+        opencv_img = cv2.cvtColor(numpy.array(pil_img), cv2.COLOR_RGB2BGR)
+
+        overlay, bboxes = self.coco_demo.run_on_opencv_image(opencv_img)
+
+        formatted_bboxes = [pb2.Bbox(x=bbox[0], y=bbox[1], h=bbox[2] -bbox[0], w=bbox[3]-bbox[1]) for bbox in bboxes]
         box1 = pb2.Bbox(x=600, y=100, h=100, w=100)
         box2 = pb2.Bbox(x=100, y=300, h=100, w=100)
-        return [box1, box2]
+        return formatted_bboxes
 
 class ModelServer(pb2_grpc.ModelServerServicer):
     def __init__(self):
@@ -58,7 +85,7 @@ class ModelServer(pb2_grpc.ModelServerServicer):
         url = request.message
 
         worker = self.sessionIdsToWorkers[id]
-        bboxes = ray.get(worker.get_bboxes.remote())
+        bboxes = ray.get(worker.get_bboxes.remote(url))
         timestamp = ray.get(worker.do_work.remote())
         end = time.time()
         duration = "{0:.3f}".format((end - start) * 1000.0)

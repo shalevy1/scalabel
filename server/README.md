@@ -10,7 +10,7 @@ aws configure
 ````
 Create an amazon machine image (ami):
 - If available to you, use ami-02599cc60bfa86716 (us-east-2)
-- Otherwise, create an EC2 instance on ubuntu 18.04, and run `./setup_sat.sh`. Add your github credentials by running `git config --global credential.helper store` then `git pull`. Then record the ami using [these instructions](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html). Then substitute this ami for each ImageID field in compute/cluster.yaml, and in all commands below
+- Otherwise, create an EC2 instance on ubuntu 18.04, and run `./model/setup_backend.sh`. To enable testing GPU load, also run `./model/setup_payload.sh`. Then record the ami using [these instructions](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html). Then substitute this ami for each ImageID field in compute/cluster.yaml, and in all commands below
 Create an AWS security group:
 ````
 aws ec2 create-security-group --group-name gateway-sg --description "Security group for gateway server"

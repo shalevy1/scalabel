@@ -50,7 +50,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: g3s.xlarge #change to m5.large if GPU not needed
-    ImageId: ami-0193db73cc2038e31 #Scalabel GPU test (Ubuntu)
+    ImageId: ami-062f9eadd74fa715c #Scalabel GPU (Ubuntu)
 
     # You can provision additional disk space with a conf as follows
     BlockDeviceMappings:
@@ -67,7 +67,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: g3s.xlarge #change to m5.large if GPU not needed
-    ImageId: ami-0193db73cc2038e31 #Scalabel GPU test (Ubuntu)
+    ImageId: ami-062f9eadd74fa715c #Scalabel GPU (Ubuntu)
 
     # Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:

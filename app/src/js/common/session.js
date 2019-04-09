@@ -5,7 +5,7 @@ import type {ImageViewerConfigType,
   ItemType, StateType} from '../functional/types';
 import _ from 'lodash';
 import {makeImageViewerConfig} from '../functional/states';
-import {configureStore, configureFastStore} from '../redux/configure_store';
+import {configureStore, configureFastStore} from './configure_store';
 import type {WindowType} from './window';
 
 /**

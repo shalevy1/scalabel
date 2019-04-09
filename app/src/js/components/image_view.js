@@ -1,7 +1,6 @@
 import React from 'react';
 import Session from '../common/session';
-import type {ImageViewerConfigType}
-from '../functional/types';
+import type {ImageViewerConfigType} from '../functional/types';
 import {withStyles} from '@material-ui/core/styles/index';
 
 const pad = 10;

@@ -26,3 +26,13 @@ export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW';
 export const NEW_IMAGE_BOX2D_LABEL = 'NEW_IMAGE_BOX2D_LABEL';
 export const CHANGE_RECT = 'CHANGE_RECT';
 
+// Point Cloud Specific
+export const MOVE_CAMERA = 'MOVE_CAMERA';
+export const MOVE_CAMERA_AND_TARGET = 'MOVE_CAMERA_AND_TARGET';
+export const NEW_BOX3D_LABEL = 'NEW_BOX3D_LABEL';
+export const HIGHLIGHT_BOX = 'HIGHLIGHT_BOX';
+export const SELECT_BOX = 'SELECT_BOX';
+export const DESELECT_BOX = 'DESELECT_BOX';
+export const MOVE_BOX = 'MOVE_BOX';
+export const SCALE_BOX = 'SCALE_BOX';
+export const ROTATE_BOX = 'ROTATE_BOX';

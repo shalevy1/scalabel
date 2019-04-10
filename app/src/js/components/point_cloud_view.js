@@ -3,6 +3,7 @@ import Session from '../common/session';
 import type {PointCloudViewerConfigType} from '../functional/types';
 import {withStyles} from '@material-ui/core/styles/index';
 import * as THREE from 'three';
+import * as types from '../actions/action_types';
 
 const styles = () => ({
   canvas: {
@@ -41,6 +42,17 @@ class PointCloudView extends React.Component<Props> {
   mouseDown: boolean;
   mX: number;
   mY: number;
+  mouseDownHandler: (e: Event) => void;
+  mouseUpHandler: (e: Event) => void;
+  mouseMoveHandler: (e: Event) => void;
+  MOUSE_CORRECTION_FACTOR: number;
+  MOVE_AMOUNT: number;
+  UP_KEY: number;
+  DOWN_KEY: number;
+  LEFT_KEY: number;
+  RIGHT_KEY: number;
+  PERIOD_KEY: number;
+  SLASH_KEY: number;
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -59,28 +71,100 @@ class PointCloudView extends React.Component<Props> {
     this.scene.add(this.target);
     this.mouseDown = false;
     this.container = React.createRef();
+
+    this.mX = 0;
+    this.mY = 0;
+
+    this.mouseDownHandler = this.handleMouseDown.bind(this);
+    this.mouseUpHandler = this.handleMouseUp.bind(this);
+    this.mouseMoveHandler = this.handleMouseMove.bind(this);
+
+    this.MOUSE_CORRECTION_FACTOR = 80.0;
+    this.MOVE_AMOUNT = 0.3;
+
+    this.UP_KEY = 38;
+    this.DOWN_KEY = 40;
+    this.LEFT_KEY = 37;
+    this.RIGHT_KEY = 39;
+    this.PERIOD_KEY = 190;
+    this.SLASH_KEY = 191;
   }
 
   /**
    * Handle mouse down
+   * @param {Event} e
    */
-  handleMouseDown() {
+  handleMouseDown(e: Event) {
+    e.stopPropagation();
     this.mouseDown = true;
   }
 
   /**
    * Handle mouse up
+   * @param {Event} e
    */
-  handleMouseUp() {
+  handleMouseUp(e: Event) {
+    e.stopPropagation();
     this.mouseDown = false;
   }
+
   /**
    * Handle mouse move
    * @param {Event} e
    */
   handleMouseMove(e: Event) {
-    this.mX = e.clientX;
-    this.mY = e.clientY;
+    e.stopPropagation();
+    let newX = e.clientX - this.container.current.getBoundingClientRect().left;
+    let newY = e.clientY - this.container.current.getBoundingClientRect().top;
+
+    if (this.mouseDown) {
+      let viewerConfig = getCurrentViewerConfig();
+
+      let target = new THREE.Vector3(viewerConfig.target.x,
+        viewerConfig.target.y,
+        viewerConfig.target.z);
+      let offset = new THREE.Vector3(viewerConfig.position.x,
+        viewerConfig.position.y,
+        viewerConfig.position.z);
+      offset.sub(target);
+
+      // Rotate so that positive y-axis is vertical
+      let rotVertQuat = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(viewerConfig.verticalAxis.x,
+          viewerConfig.verticalAxis.y,
+          viewerConfig.verticalAxis.z),
+        new THREE.Vector3(0, 1, 0));
+      offset.applyQuaternion(rotVertQuat);
+
+      // Convert to spherical coordinates
+      let spherical = new THREE.Spherical();
+      spherical.setFromVector3(offset);
+
+      // Apply rotations
+      spherical.theta += (newX - this.mX) / this.MOUSE_CORRECTION_FACTOR;
+      spherical.phi += (newY - this.mY) / this.MOUSE_CORRECTION_FACTOR;
+
+      spherical.phi = Math.max(0, Math.min(Math.PI, spherical.phi));
+
+      spherical.makeSafe();
+
+      // Convert to Cartesian
+      offset.setFromSpherical(spherical);
+
+      // Rotate back to original coordinate space
+      let quatInverse = rotVertQuat.clone().inverse();
+      offset.applyQuaternion(quatInverse);
+
+      offset.add(target);
+
+      Session.dispatch({
+        type: types.MOVE_CAMERA,
+        newPosition: {x: offset.x, y: offset.y, z: offset.z},
+      });
+    }
+
+    this.mX = newX;
+    this.mY = newY;
   }
 
   /**
@@ -102,8 +186,8 @@ class PointCloudView extends React.Component<Props> {
               }
             }
           }}
-          onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp}
-          onMouseMove={this.handleMouseMove}
+          onMouseDown={this.mouseDownHandler} onMouseUp={this.mouseUpHandler}
+          onMouseMove={this.mouseMoveHandler}
         />
       </div>
     );

@@ -46,6 +46,21 @@ export function makeRect(params: {} = {}): RectType {
 }
 
 /**
+ * Initialize a 3d box shape
+ * @param {{}} params
+ * @return {CubeType}
+ */
+export function makeCube(params: {} = {}): CubeType {
+  return {
+    id: -1,
+    center: {x: 0, y: 0, z: 0},
+    size: {x: 1, y: 1, z: 1},
+    orientation: {x: 0, y: 0, z: 0},
+    ...params,
+  };
+}
+
+/**
  * Make a new viewer config
  * @return {ImageViewerConfigType}
  */

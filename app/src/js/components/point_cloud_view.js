@@ -235,8 +235,13 @@ class PointCloudView extends React.Component<Props> {
     let loaded = state.items[item].loaded;
     if (loaded) {
       let pointCloud = Session.pointClouds[item];
-      this.scene.children = [];
-      this.scene.add(pointCloud);
+      if (this.scene.children.length !== 1) {
+        this.scene.children = [null];
+      }
+      if (this.scene.children[0] !== pointCloud) {
+        this.scene.children[0] = pointCloud;
+      }
+      this.updateRenderer();
       this.renderer.render(this.scene, this.camera);
     }
     return true;

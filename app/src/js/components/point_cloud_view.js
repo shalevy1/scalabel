@@ -44,13 +44,18 @@ class PointCloudView extends React.Component<Props> {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   target: THREE.Mesh;
+  raycaster: THREE.Raycaster;
   mouseDown: boolean;
   mX: number;
   mY: number;
+
   mouseDownHandler: (e: MouseEvent) => void;
   mouseUpHandler: (e: MouseEvent) => void;
   mouseMoveHandler: (e: MouseEvent) => void;
   keyDownHandler: (e: KeyboardEvent) => void;
+  mouseWheelHandler: (e: WheelEvent) => void;
+  doubleClickHandler: () => void;
+
   MOUSE_CORRECTION_FACTOR: number;
   MOVE_AMOUNT: number;
   UP_KEY: number;
@@ -75,9 +80,15 @@ class PointCloudView extends React.Component<Props> {
             0xffffff,
         }));
     this.scene.add(this.target);
-    this.mouseDown = false;
+
+    this.raycaster = new THREE.Raycaster();
+    this.raycaster.linePrecision = 0.5;
+    this.raycaster.near = 1.0;
+    this.raycaster.far = 100.0;
+
     this.container = React.createRef();
 
+    this.mouseDown = false;
     this.mX = 0;
     this.mY = 0;
 
@@ -85,6 +96,8 @@ class PointCloudView extends React.Component<Props> {
     this.mouseUpHandler = this.handleMouseUp.bind(this);
     this.mouseMoveHandler = this.handleMouseMove.bind(this);
     this.keyDownHandler = this.handleKeyDown.bind(this);
+    this.mouseWheelHandler = this.handleMouseWheel.bind(this);
+    this.doubleClickHandler = this.handleDoubleClick.bind(this);
 
     this.MOUSE_CORRECTION_FACTOR = 80.0;
     this.MOVE_AMOUNT = 0.3;
@@ -97,6 +110,21 @@ class PointCloudView extends React.Component<Props> {
     this.SLASH_KEY = 191;
 
     document.addEventListener('keydown', this.keyDownHandler);
+  }
+
+  /**
+   * Normalize mouse coordinates
+   * @param {number} mX: Mouse x-coord
+   * @param {number} mY: Mouse y-coord
+   * @return {Array<number>}
+   */
+  convertMouseToNDC(mX: number, mY: number): Array<number> {
+    let x = mX / this.container.current.offsetWidth;
+    let y = mY / this.container.current.offsetHeight;
+    x = 2 * x - 1;
+    y = -2 * y + 1;
+
+    return [x, y];
   }
 
   /**
@@ -303,6 +331,77 @@ class PointCloudView extends React.Component<Props> {
   }
 
   /**
+   * Handle mouse wheel
+   * @param {WheelEvent} e
+   */
+  handleMouseWheel(e: WheelEvent) {
+    let viewerConfig = getCurrentViewerConfig();
+
+    let target = new THREE.Vector3(viewerConfig.target.x,
+      viewerConfig.target.y,
+      viewerConfig.target.z);
+    let offset = new THREE.Vector3(viewerConfig.position.x,
+      viewerConfig.position.y,
+      viewerConfig.position.z);
+    offset.sub(target);
+
+    let spherical = new THREE.Spherical();
+    spherical.setFromVector3(offset);
+
+    // Decrease distance from origin by amount specified
+    let amount = e.deltaY / this.MOUSE_CORRECTION_FACTOR;
+    let newRadius = (1 - amount) * spherical.radius;
+    // Limit zoom to not be too close
+    if (newRadius > 0.1) {
+      spherical.radius = newRadius;
+
+      offset.setFromSpherical(spherical);
+
+      offset.add(target);
+
+      Session.dispatch({
+        type: types.MOVE_CAMERA,
+        newPosition: {x: offset.x, y: offset.y, z: offset.z},
+      });
+    }
+  }
+
+  /**
+   * Handle double click
+   */
+  handleDoubleClick() {
+    let NDC = this.convertMouseToNDC(
+      this.mX,
+      this.mY);
+    let x = NDC[0];
+    let y = NDC[1];
+
+    this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
+    let item = getCurrentItem();
+    let pointCloud = Session.pointClouds[item.index];
+
+    let intersects = this.raycaster.intersectObject(pointCloud);
+
+    if (intersects.length > 0) {
+      let newTarget = intersects[0].point;
+      let viewerConfig = getCurrentViewerConfig();
+      Session.dispatch({
+        type: types.MOVE_CAMERA_AND_TARGET,
+        newPosition: {
+          x: viewerConfig.position.x - viewerConfig.target.x + newTarget.x,
+          y: viewerConfig.position.y - viewerConfig.target.y + newTarget.y,
+          z: viewerConfig.position.z - viewerConfig.target.z + newTarget.z,
+        },
+        newTarget: {
+          x: newTarget.x,
+          y: newTarget.y,
+          z: newTarget.z,
+        },
+      });
+    }
+  }
+
+  /**
    * Render function
    * @return {React.Fragment} React fragment
    */
@@ -321,7 +420,8 @@ class PointCloudView extends React.Component<Props> {
             }
           }}
           onMouseDown={this.mouseDownHandler} onMouseUp={this.mouseUpHandler}
-          onMouseMove={this.mouseMoveHandler}
+          onMouseMove={this.mouseMoveHandler} onWheel={this.mouseWheelHandler}
+          onDoubleClick={this.doubleClickHandler}
         />
       </div>
     );

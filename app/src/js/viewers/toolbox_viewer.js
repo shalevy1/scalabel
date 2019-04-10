@@ -66,7 +66,7 @@ export class ToolboxViewer extends BaseViewer {
       if (attributes[i].values) {
         for (let j = 0; j < attributes[i].values.length; j++) {
           $('#custom_attributeselector_' + i + '-' + j).on('click',
-            function (e) {
+            function(e) {
               e.preventDefault();
               // TODO: [j] should have multiple elements for multi-level
               // selection

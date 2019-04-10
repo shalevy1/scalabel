@@ -11,6 +11,11 @@ const styles = () => ({
   },
 });
 
+type Props = {
+  classes: Object,
+  theme: Object,
+}
+
 /**
  * Get the current item in the state
  * @return {ItemType}
@@ -42,9 +47,9 @@ class PointCloudView extends React.Component<Props> {
   mouseDown: boolean;
   mX: number;
   mY: number;
-  mouseDownHandler: (e: Event) => void;
-  mouseUpHandler: (e: Event) => void;
-  mouseMoveHandler: (e: Event) => void;
+  mouseDownHandler: (e: MouseEvent) => void;
+  mouseUpHandler: (e: MouseEvent) => void;
+  mouseMoveHandler: (e: MouseEvent) => void;
   MOUSE_CORRECTION_FACTOR: number;
   MOVE_AMOUNT: number;
   UP_KEY: number;
@@ -92,27 +97,27 @@ class PointCloudView extends React.Component<Props> {
 
   /**
    * Handle mouse down
-   * @param {Event} e
+   * @param {MouseEvent} e
    */
-  handleMouseDown(e: Event) {
+  handleMouseDown(e: MouseEvent) {
     e.stopPropagation();
     this.mouseDown = true;
   }
 
   /**
    * Handle mouse up
-   * @param {Event} e
+   * @param {MouseEvent} e
    */
-  handleMouseUp(e: Event) {
+  handleMouseUp(e: MouseEvent) {
     e.stopPropagation();
     this.mouseDown = false;
   }
 
   /**
    * Handle mouse move
-   * @param {Event} e
+   * @param {MouseEvent} e
    */
-  handleMouseMove(e: Event) {
+  handleMouseMove(e: MouseEvent) {
     e.stopPropagation();
     let newX = e.clientX - this.container.current.getBoundingClientRect().left;
     let newY = e.clientY - this.container.current.getBoundingClientRect().top;
@@ -178,8 +183,7 @@ class PointCloudView extends React.Component<Props> {
         <canvas className={classes.canvas} ref={(canvas) => {
             if (canvas) {
               this.canvas = canvas;
-              if (this.props.width && this.props.height &&
-                getCurrentItem().loaded) {
+              if (getCurrentItem().loaded) {
                 let rendererParams = {canvas: this.canvas};
                 this.renderer = new THREE.WebGLRenderer(rendererParams);
                 this.updateRenderer();

@@ -2,7 +2,7 @@
 
 import type {
   LabelType, ItemType,
-  RectType, StateType,
+  RectType, CubeType, StateType,
   ConfigType, CurrentType, ImageViewerConfigType, PointCloudViewerConfigType,
   LayoutType,
 } from './types';

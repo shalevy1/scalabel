@@ -27,9 +27,9 @@ export type RectType = {
 
 export type CubeType = {
   ...ShapeType,
-  center: Array<number>,
-  size: Array<number>,
-  orientation: Array<number>
+  center: Object,
+  size: Object,
+  orientation: Object
 };
 
 export type ImageViewerConfigType = {

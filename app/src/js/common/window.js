@@ -55,7 +55,7 @@ export class Window {
     let labelView = null;
     if (Session.itemType == 'image') {
       labelView = (<ImageView key={'imageView'}/>);
-    } else if (Session.itemType == 'pointcloud') {
+    } else {
       labelView = (<PointCloudView key={'pointCloudView'}/>);
     }
     let main = (<MainView views={[labelView]} />);

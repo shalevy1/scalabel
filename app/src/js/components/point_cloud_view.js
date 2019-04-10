@@ -7,8 +7,6 @@ import * as THREE from 'three';
 const styles = () => ({
   canvas: {
     position: 'relative',
-    width: '100%',
-    height: '100%',
   },
 });
 
@@ -35,10 +33,14 @@ function getCurrentViewerConfig(): PointCloudViewerConfigType {
  */
 class PointCloudView extends React.Component<Props> {
   canvas: Object;
+  container: Object;
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   target: THREE.Mesh;
+  mouseDown: boolean;
+  mX: number;
+  mY: number;
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -55,6 +57,30 @@ class PointCloudView extends React.Component<Props> {
             0xffffff,
         }));
     this.scene.add(this.target);
+    this.mouseDown = false;
+    this.container = React.createRef();
+  }
+
+  /**
+   * Handle mouse down
+   */
+  handleMouseDown() {
+    this.mouseDown = true;
+  }
+
+  /**
+   * Handle mouse up
+   */
+  handleMouseUp() {
+    this.mouseDown = false;
+  }
+  /**
+   * Handle mouse move
+   * @param {Event} e
+   */
+  handleMouseMove(e: Event) {
+    this.mX = e.clientX;
+    this.mY = e.clientY;
   }
 
   /**
@@ -63,17 +89,24 @@ class PointCloudView extends React.Component<Props> {
    */
   render() {
     const {classes} = this.props;
-    return (<canvas className={classes.canvas} ref={(canvas) => {
-      if (canvas) {
-        this.canvas = canvas;
-        if (this.props.width && this.props.height &&
-          getCurrentItem().loaded) {
-          let rendererParams = {canvas: this.canvas};
-          this.renderer = new THREE.WebGLRenderer(rendererParams);
-          this.updateRenderer();
-        }
-      }
-    }}/>);
+    return (
+      <div ref={this.container} style={{width: '100%', height: '100%'}}>
+        <canvas className={classes.canvas} ref={(canvas) => {
+            if (canvas) {
+              this.canvas = canvas;
+              if (this.props.width && this.props.height &&
+                getCurrentItem().loaded) {
+                let rendererParams = {canvas: this.canvas};
+                this.renderer = new THREE.WebGLRenderer(rendererParams);
+                this.updateRenderer();
+              }
+            }
+          }}
+          onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp}
+          onMouseMove={this.handleMouseMove}
+        />
+      </div>
+    );
   }
 
   /**
@@ -85,7 +118,8 @@ class PointCloudView extends React.Component<Props> {
     this.target.position.y = config.target.y;
     this.target.position.z = config.target.z;
 
-    this.camera.aspect = this.canvas.width / this.canvas.height;
+    this.camera.aspect = this.container.current.offsetWidth /
+      this.container.current.offsetHeight;
     this.camera.updateProjectionMatrix();
 
     this.camera.up.x = config.verticalAxis.x;
@@ -96,9 +130,8 @@ class PointCloudView extends React.Component<Props> {
     this.camera.position.z = config.position.z;
     this.camera.lookAt(this.target.position);
 
-    this.renderer._width = this.canvas.width;
-    this.renderer._height = this.canvas.height;
-    this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height);
+    this.renderer.setSize(this.container.current.offsetWidth,
+      this.container.current.offsetHeight);
   }
 
   /**
@@ -113,7 +146,6 @@ class PointCloudView extends React.Component<Props> {
    * @return {boolean}
    */
   redraw(): boolean {
-    // TODO: should support lazy drawing
     let state = Session.getState();
     let item = state.current.item;
     let loaded = state.items[item].loaded;

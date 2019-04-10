@@ -50,6 +50,7 @@ class PointCloudView extends React.Component<Props> {
   mouseDownHandler: (e: MouseEvent) => void;
   mouseUpHandler: (e: MouseEvent) => void;
   mouseMoveHandler: (e: MouseEvent) => void;
+  keyDownHandler: (e: KeyboardEvent) => void;
   MOUSE_CORRECTION_FACTOR: number;
   MOVE_AMOUNT: number;
   UP_KEY: number;
@@ -83,6 +84,7 @@ class PointCloudView extends React.Component<Props> {
     this.mouseDownHandler = this.handleMouseDown.bind(this);
     this.mouseUpHandler = this.handleMouseUp.bind(this);
     this.mouseMoveHandler = this.handleMouseMove.bind(this);
+    this.keyDownHandler = this.handleKeyDown.bind(this);
 
     this.MOUSE_CORRECTION_FACTOR = 80.0;
     this.MOVE_AMOUNT = 0.3;
@@ -93,6 +95,8 @@ class PointCloudView extends React.Component<Props> {
     this.RIGHT_KEY = 39;
     this.PERIOD_KEY = 190;
     this.SLASH_KEY = 191;
+
+    document.addEventListener('keydown', this.keyDownHandler);
   }
 
   /**
@@ -170,6 +174,132 @@ class PointCloudView extends React.Component<Props> {
 
     this.mX = newX;
     this.mY = newY;
+  }
+
+  /**
+   * Handle keyboard events
+   * @param {KeyboardEvent} e
+   */
+  handleKeyDown(e: KeyboardEvent) {
+    let viewerConfig = getCurrentViewerConfig();
+
+    // Get vector pointing from camera to target projected to horizontal plane
+    let forwardX = viewerConfig.target.x - viewerConfig.position.x;
+    let forwardY = viewerConfig.target.y - viewerConfig.position.y;
+    let forwardDist = Math.sqrt(forwardX * forwardX + forwardY * forwardY);
+    forwardX *= this.MOVE_AMOUNT / forwardDist;
+    forwardY *= this.MOVE_AMOUNT / forwardDist;
+    let forward = new THREE.Vector3(forwardX, forwardY, 0);
+
+    // Get vector pointing up
+    let vertical = new THREE.Vector3(
+      viewerConfig.verticalAxis.x,
+      viewerConfig.verticalAxis.y,
+      viewerConfig.verticalAxis.z
+    );
+
+    // Handle movement in three dimensions
+    let left = new THREE.Vector3();
+    left.crossVectors(vertical, forward);
+    left.normalize();
+    left.multiplyScalar(this.MOVE_AMOUNT);
+
+    switch (e.key) {
+      case '.':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x,
+            y: viewerConfig.position.y,
+            z: viewerConfig.position.z + this.MOVE_AMOUNT,
+          },
+          newTarget: {
+            x: viewerConfig.target.x,
+            y: viewerConfig.target.y,
+            z: viewerConfig.target.z + this.MOVE_AMOUNT,
+          },
+        });
+        break;
+      case '/':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x,
+            y: viewerConfig.position.y,
+            z: viewerConfig.position.z - this.MOVE_AMOUNT,
+          },
+          newTarget: {
+            x: viewerConfig.target.x,
+            y: viewerConfig.target.y,
+            z: viewerConfig.target.z - this.MOVE_AMOUNT,
+          },
+        });
+        break;
+      case 'Down':
+      case 'ArrowDown':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x - forwardX,
+            y: viewerConfig.position.y - forwardY,
+            z: viewerConfig.position.z,
+          },
+          newTarget: {
+            x: viewerConfig.target.x - forwardX,
+            y: viewerConfig.target.y - forwardY,
+            z: viewerConfig.target.z,
+          },
+        });
+        break;
+      case 'Up':
+      case 'ArrowUp':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x + forwardX,
+            y: viewerConfig.position.y + forwardY,
+            z: viewerConfig.position.z,
+          },
+          newTarget: {
+            x: viewerConfig.target.x + forwardX,
+            y: viewerConfig.target.y + forwardY,
+            z: viewerConfig.target.z,
+          },
+        });
+        break;
+      case 'Left':
+      case 'ArrowLeft':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x + left.x,
+            y: viewerConfig.position.y + left.y,
+            z: viewerConfig.position.z + left.z,
+          },
+          newTarget: {
+            x: viewerConfig.target.x + left.x,
+            y: viewerConfig.target.y + left.y,
+            z: viewerConfig.target.z + left.z,
+          },
+        });
+        break;
+      case 'Right':
+      case 'ArrowRight':
+        Session.dispatch({
+          type: types.MOVE_CAMERA_AND_TARGET,
+          newPosition: {
+            x: viewerConfig.position.x - left.x,
+            y: viewerConfig.position.y - left.y,
+            z: viewerConfig.position.z - left.z,
+          },
+          newTarget: {
+            x: viewerConfig.target.x - left.x,
+            y: viewerConfig.target.y - left.y,
+            z: viewerConfig.target.z - left.z,
+          },
+        });
+        break;
+    }
   }
 
   /**

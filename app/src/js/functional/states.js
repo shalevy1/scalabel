@@ -3,7 +3,8 @@
 import type {
   LabelType, ItemType,
   RectType, StateType,
-  ConfigType, CurrentType, ImageViewerConfigType, LayoutType,
+  ConfigType, CurrentType, ImageViewerConfigType, PointCloudViewerConfigType,
+  LayoutType,
 } from './types';
 
 /**
@@ -53,6 +54,18 @@ export function makeImageViewerConfig(): ImageViewerConfigType {
     imageWidth: 0,
     imageHeight: 0,
     viewScale: 1.0,
+  };
+}
+
+/**
+ * Make a new point cloud viewer config
+ * @return {PointCloudViewerConfigType}
+ */
+export function makePointCloudViewerConfig(): PointCloudViewerConfigType {
+  return {
+    position: {x: 0.0, y: 10.0, z: 0.0},
+    target: {x: 0.0, y: 0.0, z: 0.0},
+    verticalAxis: {x: 0.0, y: 0.0, z: 1.0},
   };
 }
 

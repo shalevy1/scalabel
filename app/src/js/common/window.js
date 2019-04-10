@@ -6,6 +6,7 @@ import Session from './session';
 import Path from './path';
 import MainView from '../components/main_view';
 import ImageView from '../components/image_view';
+import PointCloudView from '../components/point_cloud_view';
 
 /**
  * Manage the whole window
@@ -51,8 +52,13 @@ export class Window {
         />
     );
     let leftSidebar1 = (<div>1</div>);
-    let imageView = (<ImageView key={'imageView'}/>);
-    let main = (<MainView views={[imageView]} />);
+    let labelView = null;
+    if (Session.itemType == 'image') {
+      labelView = (<ImageView key={'imageView'}/>);
+    } else if (Session.itemType == 'pointcloud') {
+      labelView = (<PointCloudView key={'pointCloudView'}/>);
+    }
+    let main = (<MainView views={[labelView]} />);
     let bottomBar = (<div>3</div>);
     let rightSidebar1 = (<div>4</div>);
     let rightSidebar2 = (<div>5</div>);

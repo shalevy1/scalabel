@@ -39,6 +39,9 @@ export type ImageViewerConfigType = {
 };
 
 export type PointCloudViewerConfigType = {
+  position: Object,
+  target: Object,
+  verticalAxis: Object
 };
 
 export type ViewerConfigType = Object;

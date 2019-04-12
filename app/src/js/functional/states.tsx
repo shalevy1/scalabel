@@ -1,6 +1,6 @@
 // @flow
 
-import type {
+import {
   LabelType, ItemType,
   RectType, CubeType, StateType,
   ConfigType, CurrentType, ImageViewerConfigType, PointCloudViewerConfigType,
@@ -20,7 +20,6 @@ export function makeLabel(params: {} = {}): LabelType {
     attributes: {},
     parent: -1, // id
     children: [], // ids
-    numChildren: 0,
     valid: true,
     shapes: [],
     selectedShape: -1,
@@ -37,6 +36,7 @@ export function makeLabel(params: {} = {}): LabelType {
 export function makeRect(params: {} = {}): RectType {
   return {
     id: -1,
+    label: -1,
     x: -1,
     y: -1,
     w: -1,
@@ -53,6 +53,7 @@ export function makeRect(params: {} = {}): RectType {
 export function makeCube(params: {} = {}): CubeType {
   return {
     id: -1,
+    label: -1,
     center: {x: 0, y: 0, z: 0},
     size: {x: 1, y: 1, z: 1},
     orientation: {x: 0, y: 0, z: 0},
@@ -97,7 +98,7 @@ export function makeItem(params: {} = {}): ItemType {
     active: false,
     loaded: false,
     labels: [], // list of label ids
-    viewerConfig: {},
+    viewerConfig: null,
     ...params,
   };
 }

@@ -1,7 +1,7 @@
 import {getCurrentItemViewerConfig,
   setCurrentItemViewerConfig} from './state_util';
 import {updateObject} from './util';
-import type {StateType} from './types';
+import {StateType, Vector3Type} from './types';
 
 /**
  * Move camera position to new position
@@ -9,10 +9,15 @@ import type {StateType} from './types';
  * @param {Object} newPosition: New camera position (x, y, z)
  * @return {StateType}
  */
-export function moveCamera(state: StateType, newPosition: Object): StateType {
+export function moveCamera(state: StateType,
+                           newPosition: Vector3Type): StateType {
   let config = getCurrentItemViewerConfig(state);
   config = updateObject(config, {position: newPosition});
-  return setCurrentItemViewerConfig(state, config);
+  if (config) {
+    return setCurrentItemViewerConfig(state, config);
+  } else {
+    return state;
+  }
 }
 
 /**
@@ -22,9 +27,13 @@ export function moveCamera(state: StateType, newPosition: Object): StateType {
  * @param {Object} newTarget: New target position (x, y, z)
  * @return {StateType}
  */
-export function moveCameraAndTarget(state: StateType, newPosition: Object,
-                                    newTarget: Object): StateType {
+export function moveCameraAndTarget(state: StateType, newPosition: Vector3Type,
+                                    newTarget: Vector3Type): StateType {
   let config = getCurrentItemViewerConfig(state);
   config = updateObject(config, {position: newPosition, target: newTarget});
-  return setCurrentItemViewerConfig(state, config);
+  if (config) {
+    return setCurrentItemViewerConfig(state, config);
+  } else {
+    return state;
+  }
 }

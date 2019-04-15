@@ -5,7 +5,8 @@ import * as image from '../functional/image';
 import * as tag from '../functional/tag';
 import * as box2d from '../functional/box2d';
 import * as pointCloud from '../functional/point_cloud';
-import type {StateType} from '../functional/types';
+import {StateType} from '../functional/types';
+import {ActionTypes} from '../actions/action_types';
 
 /**
  * Reducer
@@ -15,11 +16,11 @@ import type {StateType} from '../functional/types';
  */
 export function reducer(
     currentState: StateType = makeState(),
-    action: Object): StateType {
+    action: ActionTypes): StateType {
   // Appending actions to action array
-  let newActions = currentState.actions.slice();
+  const newActions = currentState.actions.slice();
   newActions.push(action);
-  let state = {...currentState, actions: newActions};
+  const state = {...currentState, actions: newActions};
   // Apply reducers to state
   switch (action.type) {
     case types.INIT_SESSION:

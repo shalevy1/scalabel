@@ -47,6 +47,9 @@ export interface PointCloudViewerConfigType {
   verticalAxis: Vector3Type;
 }
 
+export type ViewerConfigType =
+    ImageViewerConfigType | PointCloudViewerConfigType;
+
 export interface ItemType {
   id: number;
   index: number;
@@ -54,7 +57,7 @@ export interface ItemType {
   active: boolean;
   loaded: boolean;
   labels: number[]; // list of label ids
-  viewerConfig: ImageViewerConfigType | PointCloudViewerConfigType | null;
+  viewerConfig: ViewerConfigType | null;
 }
 
 /*
@@ -106,3 +109,8 @@ export interface StateType {
   actions: any[];
   layout: LayoutType;
 }
+
+export type LabelFunctionalType =
+    (id: number, itemId: number, attributes: object) => LabelType;
+
+export type ItemFunctionalType = (id: number, url: string) => ItemType;

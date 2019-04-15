@@ -90,7 +90,7 @@ export function makePointCloudViewerConfig(): PointCloudViewerConfigType {
  * @param {{}} params
  * @return {ItemType}
  */
-export function makeItem(params: {} = {}): ItemType {
+export function makeItem(params: any = {}): ItemType {
   return {
     id: -1,
     index: 0,

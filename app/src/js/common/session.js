@@ -29,8 +29,14 @@ class Session {
     this.images = [];
     // TODO: make it configurable in the url
     this.devMode = true;
+    document.getElementsByTagName('BODY')[0].onresize = () => {
+      this._onresize();
+    };
   }
 
+  _onresize() {
+    this.dispatch({type: types.UPDATE_ALL});
+  }
   /**
    * Get current state in store
    * @return {StateType}
@@ -72,11 +78,12 @@ class Session {
    */
   initStore(stateJson: Object): void {
     this.store = configureStore(stateJson, this.devMode);
-    this.store.dispatch({type: types.INIT_SESSION});
+    this.dispatch({type: types.INIT_SESSION});
     window.store = this.store;
     let state = this.getState();
     this.itemType = state.config.itemType;
     this.labelType = state.config.labelType;
+    console.log(this.store.getState())
   }
 
   /**
@@ -99,7 +106,7 @@ class Session {
       image.onload = function() {
         config.imageHeight = this.height;
         config.imageWidth = this.width;
-        self.store.dispatch({type: types.LOAD_ITEM, index: item.index,
+        self.dispatch({type: types.LOAD_ITEM, index: item.index,
           config: config});
       };
       image.onerror = function() {

@@ -1,5 +1,7 @@
 import Session from './session';
-import {Window} from './window';
+import React from 'react';
+import {Window} from '../components/window';
+import ReactDOM from 'react-dom';
 import * as types from '../actions/action_types';
 
 /**
@@ -11,7 +13,7 @@ function initFromJson(stateJson: Object): void {
   if (Session.itemType === 'image') {
     initImage();
   }
-  Session.window.render();
+  // Session.window.render();
   Session.dispatch({type: types.UPDATE_ALL});
 }
 
@@ -34,6 +36,7 @@ export function initSession(): void {
     if (xhr.readyState === 4) {
       let json = JSON.parse(xhr.response);
       initFromJson(json);
+      ReactDOM.render(<Window />, document.getElementById('labeling-interface'));
     }
   };
 

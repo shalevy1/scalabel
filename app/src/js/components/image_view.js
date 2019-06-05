@@ -119,21 +119,21 @@ class ImageView extends React.Component<Props> {
    * Callback function when mouse is down
    * @param {Object} e - event
    */
-  onMouseDown(e) {
+  onMouseDown(e) { // eslint-disable-line
   }
 
   /**
    * Callback function when mouse is up
    * @param {Object} e - event
    */
-  onMouseUp(e) {
+  onMouseUp(e) { // eslint-disable-line
   }
 
   /**
    * Callback function when mouse moves
    * @param {Object} e - event
    */
-  onMouseMove(e) {
+  onMouseMove(e) { // eslint-disable-line
   }
 
   /**
@@ -165,7 +165,7 @@ class ImageView extends React.Component<Props> {
    * Callback function when double click occurs
    * @param {Object} e - event
    */
-  onDoubleClick(e) {
+  onDoubleClick(e) { // eslint-disable-line
   }
 
   /**

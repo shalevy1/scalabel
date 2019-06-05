@@ -29,14 +29,19 @@ class Session {
     this.images = [];
     // TODO: make it configurable in the url
     this.devMode = true;
+    this.setListeners();
+  }
+
+  setListeners() {
     document.getElementsByTagName('BODY')[0].onresize = () => {
-      this._onresize();
+      this.onresize();
     };
   }
 
-  _onresize() {
+  onresize() {
     this.dispatch({type: types.UPDATE_ALL});
   }
+
   /**
    * Get current state in store
    * @return {StateType}

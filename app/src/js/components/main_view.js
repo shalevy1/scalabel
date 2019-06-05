@@ -1,4 +1,5 @@
 import React from 'react';
+import * as types from "../actions/action_types";
 
 
 type Props = {
@@ -50,7 +51,8 @@ class MainView extends React.Component<Props> {
           }
         }}
              style={{
-               display: 'block', height: '100%', position: 'absolute',
+               display: 'block', height: 'calc(100% - 50px)',
+               position: 'absolute',
                outline: 'none', width: '100%', background: '#222222',
              }}>
           {viewsWithProps}

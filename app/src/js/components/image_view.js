@@ -3,20 +3,18 @@ import Session from '../common/session';
 import type {ImageViewerConfigType}
 from '../functional/types';
 import {withStyles} from '@material-ui/core/styles/index';
-
-const pad = 10;
+import * as types from '../actions/action_types';
 
 const styles = () => ({
   canvas: {
-    position: 'relative',
+    position: 'absolute',
   },
 });
 
 type Props = {
   classes: Object,
   theme: Object,
-  height: number,
-  width: number,
+  labelType: string,
 }
 
 /**
@@ -63,11 +61,70 @@ class ImageView extends React.Component<Props> {
 
     this.MAX_SCALE = 3.0;
     this.MIN_SCALE = 1.0;
-    this.SCALE_RATIO = 1.05;
+    this.ZOOM_RATIO = 1.05;
     this.UP_RES_RATIO = 2;
-    this.scale = 1;
-
     this.upRes = true;
+    this._keyDownMap = {};
+
+    // this.setupController();
+
+    // set keyboard listeners
+    document.onkeydown = (e) => this.onKeyDown(e);
+    document.onkeyup = (e) => this.onKeyUp(e);
+  }
+
+  setupController() {
+    if (this.props.labelType === 'box') {
+      // this.controller =
+    } else if (this.props.labelType === 'seg') {
+
+    } else if (this.props.labelType === 'tag') {
+
+    }
+  }
+
+  onMouseDown(e) {
+  }
+  onMouseUp(e) {
+  }
+  onMouseMove(e) {
+  }
+  onWheel(e) {
+  }
+  onDoubleClick(e) {
+  }
+
+  onKeyDown(e) {
+    let keyID = e.KeyCode ? e.KeyCode : e.which;
+    this._keyDownMap[keyID] = true;
+    if (keyID === 187) {
+      // + for zooming in
+      this.zoomHandler(1);
+    } else if (keyID === 189) {
+      // - for zooming out
+      this.zoomHandler(-1);
+    }
+  }
+
+  onKeyUp(e) {
+    let keyID = e.KeyCode ? e.KeyCode : e.which;
+    delete this._keyDownMap[keyID];
+  }
+
+  isKeyDown(c) {
+    if (c === 'ctrl') {
+      // ctrl or command key
+      return this._keyDownMap[17] || this._keyDownMap[91];
+    }
+    return this._keyDownMap[c.charCodeAt()];
+  }
+
+  zoomHandler(z) {
+    let ratio = this.ZOOM_RATIO; // zoom in is default
+    if (z < 0) { // zoom out
+      ratio = 1 / ratio;
+    }
+    Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio});
   }
 
   /**
@@ -111,8 +168,8 @@ class ImageView extends React.Component<Props> {
    */
   _getPadding() {
     return {
-      x: Math.max(pad, (this.props.width - this.canvasWidth) / 2),
-      y: Math.max(pad, (this.props.height - this.canvasHeight) / 2),
+      x: Math.max(0, (this.rectDiv.width - this.canvasWidth) / 2),
+      y: Math.max(0, (this.rectDiv.height - this.canvasHeight) / 2),
     };
   }
 
@@ -134,14 +191,14 @@ class ImageView extends React.Component<Props> {
     // resize canvas
     let item = getCurrentItem();
     let image = Session.images[item.index];
-    let ratio = (image.width + 2 * pad) / (image.height + 2 * pad);
+    let ratio = (image.width) / (image.height);
 
-    if (this.props.width / this.props.height > ratio) {
-      this.canvasHeight = (this.props.height - 2 * pad) * config.viewScale;
+    if (this.rectDiv.width / this.rectDiv.height > ratio) {
+      this.canvasHeight = this.rectDiv.height * config.viewScale;
       this.canvasWidth = this.canvasHeight * ratio;
       this.displayToImageRatio = this.canvasHeight / image.height;
     } else {
-      this.canvasWidth = (this.props.width - 2 * pad) * config.viewScale;
+      this.canvasWidth = this.rectDiv.width * config.viewScale;
       this.canvasHeight = this.canvasWidth / ratio;
       this.displayToImageRatio = this.canvasWidth / image.width;
     }
@@ -178,16 +235,75 @@ class ImageView extends React.Component<Props> {
    */
   render() {
     const {classes} = this.props;
-    return (<canvas className={classes.canvas} ref={(canvas) => {
-      if (canvas) {
-        this.canvas = canvas;
-        this.context = canvas.getContext('2d');
-        if (this.props.width && this.props.height &&
-            getCurrentItem().loaded) {
-          this.updateScale();
-        }
-      }
-    }}/>);
+    const imageCanvas = (<canvas className={classes.canvas}
+                                  key='image-canvas'
+                                  ref={(canvas) => {
+                                    if (canvas) {
+                                      this.canvas = canvas;
+                                      this.context = canvas.getContext('2d');
+                                      if (this.rectDiv.width
+                                          && this.rectDiv.height
+                                          && getCurrentItem().loaded) {
+                                        this.updateScale();
+                                      }
+                                    }
+                                  }}
+                                 style={{
+                                   position: 'absolute',
+                                 }}
+    />);
+    const hiddenCanvas = (<canvas className={classes.canvas}
+                                  key='hidden-canvas'
+                                  style={{
+                                    position: 'absolute',
+                                  }}
+    />);
+    const labelCanvas = (<canvas className={classes.canvas}
+                                 key='label-canvas'
+                                 style={{
+                                   position: 'absolute',
+                                 }}
+    />);
+
+    let canvasesWithProps;
+    if (this.divRef) {
+      this.rectDiv = this.divRef.getBoundingClientRect();
+      canvasesWithProps = React.Children.map(
+          [imageCanvas, hiddenCanvas, labelCanvas], (canvas) => {
+            return React.cloneElement(canvas,
+                {height: this.rectDiv.height, width: this.rectDiv.width});
+          }
+      );
+    }
+
+    return (
+        <div style={{
+               display: 'block', height: 'calc(100% - 50px)',
+               position: 'absolute',
+               outline: 'none', width: '100%', background: '#222222',
+             }}
+             onMouseDown={this.onMouseDown}
+             onMouseMove={this.onMouseMove}
+             onMouseUp={this.onMouseUp}
+             onDoubleClick={this.onDoubleClick}
+             onWheel={this.onWheel}
+        >
+          <div ref={(element) => {
+            if (element) {
+              this.divRef = element;
+            }
+          }}
+               style={{
+                 display: 'block', height: 'calc(100% - 20px)',
+                 top: '10px', left: '10px',
+                 position: 'absolute', overflow: 'scroll',
+                 outline: 'none', width: 'calc(100% - 20px)',
+               }}
+          >
+            {canvasesWithProps}
+          </div>
+        </div>
+    );
   }
 
   /**
@@ -214,6 +330,18 @@ class ImageView extends React.Component<Props> {
         0, 0, this.canvas.width, this.canvas.height);
     }
     return true;
+  }
+
+  redrawImageCanvas() {
+
+  }
+
+  redrawHiddenCanvas() {
+
+  }
+
+  redrawLabelCanvas() {
+
   }
 }
 

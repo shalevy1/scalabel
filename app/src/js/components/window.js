@@ -5,7 +5,6 @@ import Session from '../common/session';
 import Path from '../common/path';
 // $FlowFixMe
 import {ToolBar} from '../components/toolbar';
-import MainView from '../components/main_view';
 import ImageView from '../components/image_view';
 
 type Props = {
@@ -59,7 +58,6 @@ export class Window extends React.Component<Props> {
     );
     /* const leftSidebar1 = (<ToolBar/>); // just replace this*/
     let imageView = (<ImageView key={'imageView'}/>);
-    let main = (<MainView views={[imageView]} />);
     let bottomBar = null;
     let rightSidebar1 = null;
     let rightSidebar2 = null;
@@ -69,7 +67,7 @@ export class Window extends React.Component<Props> {
             titleBar={titleBar}
             leftSidebar1={leftSidebar1}
             bottomBar={bottomBar}
-            main={main}
+            main={imageView}
             rightSidebar1={rightSidebar1}
             rightSidebar2={rightSidebar2}
         />

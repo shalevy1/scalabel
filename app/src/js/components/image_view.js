@@ -86,15 +86,20 @@ class ImageView extends React.Component<Props> {
     }
   }
 
+  getVisibleCanvasCoords() {
+    let imgRect = this.imageCanvas.getBoundingClientRect();
+    return [this.maskRect.x - imgRect.x, this.maskRect.y - imgRect.y];
+  }
+
   /**
    * Get the mouse position on the canvas in the image coordinates.
    * @param {object} e: mouse event
    * @return {object}: mouse position (x,y) on the canvas
    */
   getMousePos(e) {
-    const padding = this._getPadding();
-    let x = e.clientX - this.maskRect.x - padding.x;
-    let y = e.clientY - this.maskRect.y - padding.y;
+    let [offsetX, offsetY] = this.getVisibleCanvasCoords();
+    let x = e.clientX - this.maskRect.x + offsetX;
+    let y = e.clientY - this.maskRect.y + offsetY;
 
     // limit the mouse within the image
     x = Math.max(0, Math.min(x, this.canvasWidth));
@@ -115,7 +120,7 @@ class ImageView extends React.Component<Props> {
   }
 
   onWheel(e) {
-    if (this.isDown('ctrl')) { // control for zoom
+    if (this.isKeyDown('ctrl')) { // control for zoom
       e.preventDefault();
       let mousePos = this.getMousePos(e);
       if (this.scrollTimer !== null) {
@@ -220,7 +225,7 @@ class ImageView extends React.Component<Props> {
   /**
    * Set the scale of the image in the display
    */
-  updateScale() {
+  updateScale(canvas: Object, upRes: boolean) {
     let config: ImageViewerConfigType = getCurrentViewerConfig();
 
     // set scale
@@ -248,27 +253,27 @@ class ImageView extends React.Component<Props> {
     }
 
     // set canvas resolution
-    if (this.upRes) {
-      this.canvas.height = this.canvasHeight * this.UP_RES_RATIO;
-      this.canvas.width = this.canvasWidth * this.UP_RES_RATIO;
+    if (upRes) {
+      canvas.height = this.canvasHeight * this.UP_RES_RATIO;
+      canvas.width = this.canvasWidth * this.UP_RES_RATIO;
     } else {
-      this.canvas.height = this.canvasHeight;
-      this.canvas.width = this.canvasWidth;
+      canvas.height = this.canvasHeight;
+      canvas.width = this.canvasWidth;
     }
 
     // set canvas size
-    this.canvas.style.height = this.canvasHeight + 'px';
-    this.canvas.style.width = this.canvasWidth + 'px';
+    canvas.style.height = this.canvasHeight + 'px';
+    canvas.style.width = this.canvasWidth + 'px';
 
     // set padding
     let padding = this._getPadding();
     let padX = padding.x;
     let padY = padding.y;
 
-    this.canvas.style.left = padX + 'px';
-    this.canvas.style.top = padY + 'px';
-    this.canvas.style.right = 'auto';
-    this.canvas.style.bottom = 'auto';
+    canvas.style.left = padX + 'px';
+    canvas.style.top = padY + 'px';
+    canvas.style.right = 'auto';
+    canvas.style.bottom = 'auto';
 
     this.scale = config.viewScale;
   }
@@ -283,12 +288,12 @@ class ImageView extends React.Component<Props> {
                                   key='image-canvas'
                                   ref={(canvas) => {
                                     if (canvas) {
-                                      this.canvas = canvas;
+                                      this.imageCanvas = canvas;
                                       this.context = canvas.getContext('2d');
                                       if (this.maskRect.width
                                           && this.maskRect.height
                                           && getCurrentItem().loaded) {
-                                        this.updateScale();
+                                        this.updateScale(canvas, false);
                                       }
                                     }
                                   }}
@@ -298,12 +303,30 @@ class ImageView extends React.Component<Props> {
     />);
     const hiddenCanvas = (<canvas className={classes.canvas}
                                   key='hidden-canvas'
+                                  ref={(canvas) => {
+                                    if (canvas) {
+                                      if (this.maskRect.width
+                                          && this.maskRect.height
+                                          && getCurrentItem().loaded) {
+                                        this.updateScale(canvas, true);
+                                      }
+                                    }
+                                  }}
                                   style={{
                                     position: 'absolute',
                                   }}
     />);
     const labelCanvas = (<canvas className={classes.canvas}
                                  key='label-canvas'
+                                 ref={(canvas) => {
+                                   if (canvas) {
+                                     if (this.maskRect.width
+                                         && this.maskRect.height
+                                         && getCurrentItem().loaded) {
+                                       this.updateScale(canvas, true);
+                                     }
+                                   }
+                                 }}
                                  style={{
                                    position: 'absolute',
                                  }}
@@ -371,9 +394,9 @@ class ImageView extends React.Component<Props> {
     if (loaded) {
       let image = Session.images[item];
       // draw stuff
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.context.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
       this.context.drawImage(image, 0, 0, image.width, image.height,
-        0, 0, this.canvas.width, this.canvas.height);
+        0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
     return true;
   }

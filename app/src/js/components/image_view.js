@@ -66,7 +66,6 @@ class ImageView extends React.Component<Props> {
     this.MIN_SCALE = 1.0;
     this.zoomRatio = 1.05;
     this.UP_RES_RATIO = 2;
-    this.upRes = true;
     this._keyDownMap = {};
 
     // this.setupController();
@@ -169,12 +168,15 @@ class ImageView extends React.Component<Props> {
   }
 
   zoomHandler(z, offsetX, offsetY) {
-    let ratio = this.zoomRatio; // zoom in is default
+    let ratio = this.zoomRatio; // zoom in by default
     if (z < 0) { // zoom out
       ratio = 1 / ratio;
     }
-    Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio,
-      offsetX: offsetX, offsetY: offsetY});
+    let newScale = getCurrentViewerConfig().viewScale * ratio;
+    if (newScale >= this.MIN_SCALE && newScale <= this.MAX_SCALE) {
+      Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio,
+        viewOffsetX: offsetX, viewOffsetY: offsetY});
+    }
   }
 
   /**
@@ -182,13 +184,14 @@ class ImageView extends React.Component<Props> {
    * If affine, assumes values to be [x, y]. Otherwise
    * performs linear transformation.
    * @param {Array<number>} values - the values to convert.
+   * @param {boolean} upRes
    * @return {Array<number>} - the converted values.
    */
-  toCanvasCoords(values: Array<number>) {
+  toCanvasCoords(values: Array<number>, upRes: boolean) {
     if (values) {
       for (let i = 0; i < values.length; i++) {
         values[i] *= this.displayToImageRatio;
-        if (this.upRes) {
+        if (upRes) {
           values[i] *= this.UP_RES_RATIO;
         }
       }

@@ -4,12 +4,15 @@ import type {ImageViewerConfigType}
 from '../functional/types';
 import {withStyles} from '@material-ui/core/styles/index';
 import * as types from '../actions/action_types';
+import {sprintf} from 'sprintf-js';
 
 const styles = () => ({
   canvas: {
     position: 'absolute',
   },
 });
+
+const pad = 10;
 
 type Props = {
   classes: Object,
@@ -83,14 +86,55 @@ class ImageView extends React.Component<Props> {
     }
   }
 
+  /**
+   * Get the mouse position on the canvas in the image coordinates.
+   * @param {object} e: mouse event
+   * @return {object}: mouse position (x,y) on the canvas
+   */
+  getMousePos(e) {
+    const padding = this._getPadding();
+    let x = e.clientX - this.maskRect.x - padding.x;
+    let y = e.clientY - this.maskRect.y - padding.y;
+
+    // limit the mouse within the image
+    x = Math.max(0, Math.min(x, this.canvasWidth));
+    y = Math.max(0, Math.min(y, this.canvasHeight));
+
+    // return in the image coordinates
+    return {
+      x: x / this.displayToImageRatio,
+      y: y / this.displayToImageRatio,
+    };
+  }
+
   onMouseDown(e) {
   }
   onMouseUp(e) {
   }
   onMouseMove(e) {
   }
+
   onWheel(e) {
+    if (this.isDown('ctrl')) { // control for zoom
+      e.preventDefault();
+      let mousePos = this.getMousePos(e);
+      if (this.scrollTimer !== null) {
+        clearTimeout(this.scrollTimer);
+      }
+      if (e.deltaY < 0) {
+        this.setScale(this.scale * this.SCALE_RATIO, mousePos);
+      } else if (e.deltaY > 0) {
+        this.setScale(this.scale / this.SCALE_RATIO, mousePos);
+      }
+      this.redraw();
+      // this.redrawImageCanvas();
+      // this.redrawLabelCanvas();
+      // this.scrollTimer = setTimeout(function() {
+      //   this.redrawHiddenCanvas();
+      // }, 150);
+    }
   }
+
   onDoubleClick(e) {
   }
 
@@ -168,8 +212,8 @@ class ImageView extends React.Component<Props> {
    */
   _getPadding() {
     return {
-      x: Math.max(0, (this.rectDiv.width - this.canvasWidth) / 2),
-      y: Math.max(0, (this.rectDiv.height - this.canvasHeight) / 2),
+      x: Math.max(0, (this.maskRect.width - this.canvasWidth) / 2),
+      y: Math.max(0, (this.maskRect.height - this.canvasHeight) / 2),
     };
   }
 
@@ -193,12 +237,12 @@ class ImageView extends React.Component<Props> {
     let image = Session.images[item.index];
     let ratio = (image.width) / (image.height);
 
-    if (this.rectDiv.width / this.rectDiv.height > ratio) {
-      this.canvasHeight = this.rectDiv.height * config.viewScale;
+    if (this.maskRect.width / this.maskRect.height > ratio) {
+      this.canvasHeight = this.maskRect.height * config.viewScale;
       this.canvasWidth = this.canvasHeight * ratio;
       this.displayToImageRatio = this.canvasHeight / image.height;
     } else {
-      this.canvasWidth = this.rectDiv.width * config.viewScale;
+      this.canvasWidth = this.maskRect.width * config.viewScale;
       this.canvasHeight = this.canvasWidth / ratio;
       this.displayToImageRatio = this.canvasWidth / image.width;
     }
@@ -241,8 +285,8 @@ class ImageView extends React.Component<Props> {
                                     if (canvas) {
                                       this.canvas = canvas;
                                       this.context = canvas.getContext('2d');
-                                      if (this.rectDiv.width
-                                          && this.rectDiv.height
+                                      if (this.maskRect.width
+                                          && this.maskRect.height
                                           && getCurrentItem().loaded) {
                                         this.updateScale();
                                       }
@@ -266,12 +310,12 @@ class ImageView extends React.Component<Props> {
     />);
 
     let canvasesWithProps;
-    if (this.divRef) {
-      this.rectDiv = this.divRef.getBoundingClientRect();
+    if (this.maskDiv) {
+      this.maskRect = this.maskDiv.getBoundingClientRect();
       canvasesWithProps = React.Children.map(
           [imageCanvas, hiddenCanvas, labelCanvas], (canvas) => {
             return React.cloneElement(canvas,
-                {height: this.rectDiv.height, width: this.rectDiv.width});
+                {height: this.maskRect.height, width: this.maskRect.width});
           }
       );
     }
@@ -282,22 +326,24 @@ class ImageView extends React.Component<Props> {
                position: 'absolute',
                outline: 'none', width: '100%', background: '#222222',
              }}
-             onMouseDown={this.onMouseDown}
-             onMouseMove={this.onMouseMove}
-             onMouseUp={this.onMouseUp}
-             onDoubleClick={this.onDoubleClick}
-             onWheel={this.onWheel}
+             onMouseDown={(e) => this.onMouseDown(e)}
+             onMouseMove={(e) => this.onMouseMove(e)}
+             onMouseUp={(e) => this.onMouseUp(e)}
+             onDoubleClick={(e) => this.onDoubleClick(e)}
+             onWheel={(e) => this.onWheel(e)}
         >
           <div ref={(element) => {
             if (element) {
-              this.divRef = element;
+              this.maskDiv = element;
             }
           }}
                style={{
-                 display: 'block', height: 'calc(100% - 20px)',
-                 top: '10px', left: '10px',
+                 display: 'block',
+                 height: sprintf('calc(100%% - %spx)', 2 * pad),
+                 top: sprintf('%spx', pad), left: sprintf('%spx', pad),
                  position: 'absolute', overflow: 'scroll',
-                 outline: 'none', width: 'calc(100% - 20px)',
+                 outline: 'none',
+                 width: sprintf('calc(100%% - %spx)', 2 * pad),
                }}
           >
             {canvasesWithProps}

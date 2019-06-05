@@ -64,7 +64,7 @@ class ImageView extends React.Component<Props> {
 
     this.MAX_SCALE = 3.0;
     this.MIN_SCALE = 1.0;
-    this.ZOOM_RATIO = 1.05;
+    this.zoomRatio = 1.05;
     this.UP_RES_RATIO = 2;
     this.upRes = true;
     this._keyDownMap = {};
@@ -127,9 +127,9 @@ class ImageView extends React.Component<Props> {
         clearTimeout(this.scrollTimer);
       }
       if (e.deltaY < 0) {
-        this.setScale(this.scale * this.SCALE_RATIO, mousePos);
+        this.zoomHandler(1, mousePos.x, mousePos.y);
       } else if (e.deltaY > 0) {
-        this.setScale(this.scale / this.SCALE_RATIO, mousePos);
+        this.zoomHandler(-1, mousePos.x, mousePos.y);
       }
       this.redraw();
       // this.redrawImageCanvas();
@@ -168,12 +168,13 @@ class ImageView extends React.Component<Props> {
     return this._keyDownMap[c.charCodeAt()];
   }
 
-  zoomHandler(z) {
-    let ratio = this.ZOOM_RATIO; // zoom in is default
+  zoomHandler(z, offsetX, offsetY) {
+    let ratio = this.zoomRatio; // zoom in is default
     if (z < 0) { // zoom out
       ratio = 1 / ratio;
     }
-    Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio});
+    Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio,
+      offsetX: offsetX, offsetY: offsetY});
   }
 
   /**
@@ -224,15 +225,35 @@ class ImageView extends React.Component<Props> {
 
   /**
    * Set the scale of the image in the display
+   * @param {Object} canvas
+   * @param {boolean} upRes
    */
   updateScale(canvas: Object, upRes: boolean) {
     let config: ImageViewerConfigType = getCurrentViewerConfig();
+    // mouseOffset
+    let mouseOffset;
+    let upperLeftCoords;
+    if (config.viewScale > 1.0) {
+      upperLeftCoords = this.getVisibleCanvasCoords();
+      if (config.viewOffsetX === undefined) {
+        mouseOffset = [
+          Math.min(this.maskRect.width, this.imageCanvas.width) / 2,
+          Math.min(this.maskRect.height, this.imageCanvas.height) / 2,
+        ];
+      } else {
+        mouseOffset = this.toCanvasCoords(
+            [config.viewOffsetX, config.viewOffsetY], false);
+        mouseOffset[0] -= upperLeftCoords[0];
+        mouseOffset[1] -= upperLeftCoords[1];
+      }
+    }
 
     // set scale
+    let zoomRatio = 1;
     if (config.viewScale >= this.MIN_SCALE
       && config.viewScale < this.MAX_SCALE) {
-      let ratio = config.viewScale / this.scale;
-      this.context.scale(ratio, ratio);
+      zoomRatio = config.viewScale / this.scale;
+      this.context.scale(zoomRatio, zoomRatio);
     } else {
       return;
     }
@@ -250,6 +271,12 @@ class ImageView extends React.Component<Props> {
       this.canvasWidth = this.maskRect.width * config.viewScale;
       this.canvasHeight = this.canvasWidth / ratio;
       this.displayToImageRatio = this.canvasWidth / image.width;
+    }
+
+    // translate back to origin
+    if (mouseOffset) {
+      this.maskDiv.scrollTop = this.imageCanvas.offsetTop;
+      this.maskDiv.scrollLeft = this.imageCanvas.offsetLeft;
     }
 
     // set canvas resolution
@@ -274,6 +301,20 @@ class ImageView extends React.Component<Props> {
     canvas.style.top = padY + 'px';
     canvas.style.right = 'auto';
     canvas.style.bottom = 'auto';
+
+    // zoom to point
+    if (mouseOffset) {
+      if (this.canvasWidth > this.maskRect.width) {
+        this.maskDiv.scrollLeft =
+            zoomRatio * (upperLeftCoords[0] + mouseOffset[0])
+            - mouseOffset[0];
+      }
+      if (this.canvasHeight > this.maskRect.height) {
+        this.maskDiv.scrollTop =
+            zoomRatio * (upperLeftCoords[1] + mouseOffset[1])
+            - mouseOffset[1];
+      }
+    }
 
     this.scale = config.viewScale;
   }

@@ -35,7 +35,9 @@ export type CubeType = {
 export type ImageViewerConfigType = {
   imageWidth: number,
   imageHeight: number,
-  viewScale: number
+  viewScale: number,
+  viewOffsetX: number,
+  viewOffsetY: number,
 };
 
 export type PointCloudViewerConfigType = {

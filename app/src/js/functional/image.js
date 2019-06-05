@@ -18,11 +18,17 @@ export function createItem(id: number, url: string): ItemType {
  * Zoom image viewer by a certain ratio
  * @param {StateType} state
  * @param {number} ratio
+ * @param {number} offsetX
+ * @param {number} offsetY
  * @return {StateType}
  */
-export function zoomImage(state: StateType, ratio: number): StateType {
+export function zoomImage(state: StateType, ratio: number,
+                          offsetX: number, offsetY: number): StateType {
   let config = getCurrentItemViewerConfig(state);
-  config = updateObject(config, {viewScale: config.viewScale * ratio});
+  config = updateObject(config, {
+    viewScale: config.viewScale * ratio,
+    viewOffsetX: offsetX,
+    viewOffsetY: offsetY});
   return setCurrentItemViewerConfig(state, config);
 }
 

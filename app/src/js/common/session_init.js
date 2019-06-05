@@ -36,7 +36,8 @@ export function initSession(): void {
     if (xhr.readyState === 4) {
       let json = JSON.parse(xhr.response);
       initFromJson(json);
-      ReactDOM.render(<Window />, document.getElementById('labeling-interface'));
+      ReactDOM.render(<Window />,
+          document.getElementById('labeling-interface'));
     }
   };
 

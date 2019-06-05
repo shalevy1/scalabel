@@ -75,16 +75,20 @@ class ImageView extends React.Component<Props> {
     document.onkeyup = (e) => this.onKeyUp(e);
   }
 
-  setupController() {
-    if (this.props.labelType === 'box') {
-      // this.controller =
-    } else if (this.props.labelType === 'seg') {
+  // setupController() {
+  //   if (this.props.labelType === 'box') {
+  //     // this.controller =
+  //   } else if (this.props.labelType === 'seg') {
+  //
+  //   } else if (this.props.labelType === 'tag') {
+  //
+  //   }
+  // }
 
-    } else if (this.props.labelType === 'tag') {
-
-    }
-  }
-
+  /**
+   * Get the coordinates of the upper left corner of the image canvas
+   * @return {[number]} the x and y coordinates
+   */
   getVisibleCanvasCoords() {
     let imgRect = this.imageCanvas.getBoundingClientRect();
     return [this.maskRect.x - imgRect.x, this.maskRect.y - imgRect.y];
@@ -111,13 +115,31 @@ class ImageView extends React.Component<Props> {
     };
   }
 
+  /**
+   * Callback function when mouse is down
+   * @param {Object} e - event
+   */
   onMouseDown(e) {
   }
+
+  /**
+   * Callback function when mouse is up
+   * @param {Object} e - event
+   */
   onMouseUp(e) {
   }
+
+  /**
+   * Callback function when mouse moves
+   * @param {Object} e - event
+   */
   onMouseMove(e) {
   }
 
+  /**
+   * Callback function for scrolling
+   * @param {Object} e - event
+   */
   onWheel(e) {
     if (this.isKeyDown('ctrl')) { // control for zoom
       e.preventDefault();
@@ -139,9 +161,17 @@ class ImageView extends React.Component<Props> {
     }
   }
 
+  /**
+   * Callback function when double click occurs
+   * @param {Object} e - event
+   */
   onDoubleClick(e) {
   }
 
+  /**
+   * Callback function when key is down
+   * @param {Object} e - event
+   */
   onKeyDown(e) {
     let keyID = e.KeyCode ? e.KeyCode : e.which;
     this._keyDownMap[keyID] = true;
@@ -154,11 +184,20 @@ class ImageView extends React.Component<Props> {
     }
   }
 
+  /**
+   * Callback function when key is up
+   * @param {Object} e - event
+   */
   onKeyUp(e) {
     let keyID = e.KeyCode ? e.KeyCode : e.which;
     delete this._keyDownMap[keyID];
   }
 
+  /**
+   * Whether a specific key is pressed down
+   * @param {string} c - the key to check
+   * @return {*}
+   */
   isKeyDown(c) {
     if (c === 'ctrl') {
       // ctrl or command key
@@ -167,6 +206,12 @@ class ImageView extends React.Component<Props> {
     return this._keyDownMap[c.charCodeAt()];
   }
 
+  /**
+   * Handler for zooming
+   * @param {boolean} z - z < 0 for zooming out, otherwise for zooming in
+   * @param {number} offsetX - the offset of x for zooming to cursor
+   * @param {number} offsetY - the offset of y for zooming to cursor
+   */
   zoomHandler(z, offsetX, offsetY) {
     let ratio = this.zoomRatio; // zoom in by default
     if (z < 0) { // zoom out
@@ -252,7 +297,7 @@ class ImageView extends React.Component<Props> {
     }
 
     // set scale
-    let zoomRatio = 1;
+    let zoomRatio;
     if (config.viewScale >= this.MIN_SCALE
       && config.viewScale < this.MAX_SCALE) {
       zoomRatio = config.viewScale / this.scale;
@@ -432,29 +477,19 @@ class ImageView extends React.Component<Props> {
    */
   redraw(): boolean {
     // TODO: should support lazy drawing
+    // TODO: draw each canvas separately for optimization
     let state = Session.getState();
     let item = state.current.item;
     let loaded = state.items[item].loaded;
     if (loaded) {
       let image = Session.images[item];
       // draw stuff
-      this.context.clearRect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
+      this.context.clearRect(
+          0, 0, this.imageCanvas.width, this.imageCanvas.height);
       this.context.drawImage(image, 0, 0, image.width, image.height,
         0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
     return true;
-  }
-
-  redrawImageCanvas() {
-
-  }
-
-  redrawHiddenCanvas() {
-
-  }
-
-  redrawLabelCanvas() {
-
   }
 }
 

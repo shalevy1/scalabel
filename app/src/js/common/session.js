@@ -32,14 +32,13 @@ class Session {
     this.setListeners();
   }
 
+  /**
+   * set listeners for the session
+   */
   setListeners() {
     document.getElementsByTagName('BODY')[0].onresize = () => {
-      this.onresize();
+      this.dispatch({type: types.UPDATE_ALL});
     };
-  }
-
-  onresize() {
-    this.dispatch({type: types.UPDATE_ALL});
   }
 
   /**
@@ -88,7 +87,6 @@ class Session {
     let state = this.getState();
     this.itemType = state.config.itemType;
     this.labelType = state.config.labelType;
-    console.log(this.store.getState())
   }
 
   /**

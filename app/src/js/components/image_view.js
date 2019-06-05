@@ -65,6 +65,7 @@ class ImageView extends React.Component<Props> {
     this.MAX_SCALE = 3.0;
     this.MIN_SCALE = 1.0;
     this.zoomRatio = 1.05;
+    this.scrollZoomRatio = 1.05;
     this.UP_RES_RATIO = 2;
     this._keyDownMap = {};
 
@@ -148,9 +149,9 @@ class ImageView extends React.Component<Props> {
         clearTimeout(this.scrollTimer);
       }
       if (e.deltaY < 0) {
-        this.zoomHandler(1, mousePos.x, mousePos.y);
+        this.zoomHandler(this.scrollZoomRatio, mousePos.x, mousePos.y);
       } else if (e.deltaY > 0) {
-        this.zoomHandler(-1, mousePos.x, mousePos.y);
+        this.zoomHandler(1 / this.scrollZoomRatio, mousePos.x, mousePos.y);
       }
       this.redraw();
       // this.redrawImageCanvas();
@@ -177,10 +178,10 @@ class ImageView extends React.Component<Props> {
     this._keyDownMap[keyID] = true;
     if (keyID === 187) {
       // + for zooming in
-      this.zoomHandler(1);
+      this.zoomHandler(this.zoomRatio);
     } else if (keyID === 189) {
       // - for zooming out
-      this.zoomHandler(-1);
+      this.zoomHandler(1 / this.zoomRatio);
     }
   }
 
@@ -208,15 +209,11 @@ class ImageView extends React.Component<Props> {
 
   /**
    * Handler for zooming
-   * @param {boolean} z - z < 0 for zooming out, otherwise for zooming in
+   * @param {number} ratio - the zoom ratio
    * @param {number} offsetX - the offset of x for zooming to cursor
    * @param {number} offsetY - the offset of y for zooming to cursor
    */
-  zoomHandler(z, offsetX, offsetY) {
-    let ratio = this.zoomRatio; // zoom in by default
-    if (z < 0) { // zoom out
-      ratio = 1 / ratio;
-    }
+  zoomHandler(ratio, offsetX, offsetY) {
     let newScale = getCurrentViewerConfig().viewScale * ratio;
     if (newScale >= this.MIN_SCALE && newScale <= this.MAX_SCALE) {
       Session.dispatch({type: types.IMAGE_ZOOM, ratio: ratio,

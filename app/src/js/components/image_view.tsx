@@ -6,6 +6,8 @@ import {withStyles} from '@material-ui/core/styles';
 import * as types from '../actions/action_types';
 import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
+import {BaseController} from '../controllers/base_controller';
+import {Box2DController} from '../controllers/box2d_controller';
 
 interface ClassType {
   /** canvas */
@@ -71,6 +73,8 @@ class ImageView extends Canvas2d<Props> {
   private scrollTimer: number | undefined;
   /** The div to hold the display */
   private mask: any;
+  /** Controllers */
+  private controllers: {[key: string]: BaseController};
 
   /**
    * Constructor, handles subscription to store
@@ -94,10 +98,26 @@ class ImageView extends Canvas2d<Props> {
     this.displayToImageRatio = 1;
     this.scrollTimer = undefined;
 
-    // this.setupController();
     // set keyboard listeners
     document.onkeydown = this.onKeyDown.bind(this);
     document.onkeyup = this.onKeyUp.bind(this);
+
+    // controllers
+    this.controllers = {
+      box2d: new Box2DController()
+    };
+  }
+
+  /**
+   * Get the current controller
+   * @return {BaseController} the current controller
+   */
+  private getCurrentController() {
+    let labelType = Session.getState().config.labelType;
+    if (!(labelType in Object.keys(this.controllers))) {
+      labelType = 'box2d';
+    }
+    return this.controllers[labelType];
   }
 
   /**
@@ -135,26 +155,29 @@ class ImageView extends Canvas2d<Props> {
 
   /**
    * Callback function when mouse is down
-   * @param {MouseEvent} _ - event
+   * @param {MouseEvent} e - event
    */
-  private onMouseDown(_: MouseEvent) {
+  private onMouseDown(e: MouseEvent) {
     // mouse down
+    this.getCurrentController().onMouseDown(e);
   }
 
   /**
    * Callback function when mouse is up
-   * @param {MouseEvent} _ - event
+   * @param {MouseEvent} e - event
    */
-  private onMouseUp(_: MouseEvent) {
+  private onMouseUp(e: MouseEvent) {
     // mouse up
+    this.getCurrentController().onMouseUp(e);
   }
 
   /**
    * Callback function when mouse moves
-   * @param {MouseEvent} _ - event
+   * @param {MouseEvent} e - event
    */
-  private onMouseMove(_: MouseEvent) {
+  private onMouseMove(e: MouseEvent) {
     // mouse move
+    this.getCurrentController().onMouseMove(e);
   }
 
   /**
@@ -180,10 +203,11 @@ class ImageView extends Canvas2d<Props> {
 
   /**
    * Callback function when double click occurs
-   * @param {MouseEvent} _ - event
+   * @param {MouseEvent} e - event
    */
-  private onDblClick(_: MouseEvent) {
+  private onDblClick(e: MouseEvent) {
     // double click
+    this.getCurrentController().onDblClick(e);
   }
 
   /**
@@ -200,6 +224,9 @@ class ImageView extends Canvas2d<Props> {
           // - for zooming out
           this.zoomHandler(1 / this.ZOOM_RATIO, -1, -1);
       }
+
+      // label-specific handling of key down
+      this.getCurrentController().onKeyDown(e);
   }
 
   /**
@@ -209,6 +236,9 @@ class ImageView extends Canvas2d<Props> {
   private onKeyUp(e: KeyboardEvent) {
       const keyID = e.keyCode ? e.keyCode : e.which;
       delete this._keyDownMap[keyID];
+
+      // label-specific handling of key down
+      this.getCurrentController().onKeyDown(e);
   }
 
   /**
@@ -408,9 +438,6 @@ class ImageView extends Canvas2d<Props> {
                                      }
                                  }
                              }}
-                             style={{
-                                 position: 'absolute'
-                             }}
       />);
       const hiddenCanvas = (<canvas
                             key='hidden-canvas'
@@ -426,9 +453,6 @@ class ImageView extends Canvas2d<Props> {
                                     }
                                 }
                             }}
-                            style={{
-                                position: 'absolute'
-                            }}
       />);
       const labelCanvas = (<canvas
                            key='label-canvas'
@@ -443,9 +467,6 @@ class ImageView extends Canvas2d<Props> {
                                        this.updateScale(canvas, true);
                                    }
                                }
-                           }}
-                           style={{
-                               position: 'absolute'
                            }}
       />);
 

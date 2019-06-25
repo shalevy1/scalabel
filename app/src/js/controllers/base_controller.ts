@@ -1,6 +1,5 @@
-/* :: import {BaseViewer} from '../viewers/base_viewer'; */
-import Session from '../common/session_single';
-import type {State} from '../functional/types';
+import Session from '../common/session';
+import {State, StateType} from '../functional/types';
 
 /**
  * Basic controller
@@ -67,8 +66,58 @@ export class BaseController {
   }
 
   /**
-   * mouseUp callback
-   * @param {Object} ignoredEvent: mouse event
+   * onMouseUp callback
+   * @param {MouseEvent} _: mouse event
    */
-  mouseUp(ignoredEvent: Object): void {}
+  public onMouseUp(_: MouseEvent): void {
+    // mouse up
+  }
+
+  /**
+   * onMouseDown callback
+   * @param {MouseEvent} _: mouse event
+   */
+  public onMouseDown(_: MouseEvent): void {
+    // mouse down
+  }
+
+  /**
+   * onMouseMove callback
+   * @param {MouseEvent} _: mouse event
+   */
+  public onMouseMove(_: MouseEvent): void {
+    // mouse move
+  }
+
+  /**
+   * onDblClick callback
+   * @param {MouseEvent} _: mouse event
+   */
+  public onDblClick(_: MouseEvent): void {
+    // double click
+  }
+
+  /**
+   * onWheel callback
+   * @param {WheelEvent} _: wheel event
+   */
+  public onWheel(_: WheelEvent): void {
+    // wheel
+  }
+
+  /**
+   * onKeyDown callback
+   * @param {KeyboardEvent} _: keyboard event
+   */
+  public onKeyDown(_: KeyboardEvent): void {
+    // key down
+  }
+
+  /**
+   * onKeyUp callback
+   * @param {KeyboardEvent} _: keyboard event
+   */
+  public onKeyUp(_: KeyboardEvent): void {
+    // key up
+  }
 }

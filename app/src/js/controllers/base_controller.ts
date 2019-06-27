@@ -1,32 +1,69 @@
-import * as types from '../action/types';
-import {BaseController} from './base_controller';
+import Session from '../common/session';
+import {State} from '../functional/types';
 import {LabelType} from '../functional/types';
 
 /**
- * Box2D Controller
+ * Basic controller
+ * If there is no temporary object or algorithm involved, this is usually enough
  */
-export class Box2DController extends BaseController {
+export class BaseController {
+  /** all possible states of the controller */
+  public ControllerStates: any;
+  /** state of the controller */
+  protected controllerState: number;
 
+  /**
+   * initialize internal states
+   */
   constructor() {
-    super();
     this.ControllerStates = Object.freeze({
-      NULL: 0, RESIZE: 1, MOVE: 2
+      NULL: 0
     });
     this.controllerState = this.ControllerStates.NULL;
   }
+
+  /**
+   * Callback of redux store
+   */
+  protected onStateUpdated(): void {
+  }
+
+  /**
+   * Callback of fast store update
+   */
+  protected onFastStateUpdated(): void {
+  }
+
+  /**
+   * Dispatch actions from controllers
+   * @param {object} action: action returned by action creator
+   */
+  protected static dispatch(action: object): void {
+    Session.dispatch(action);
+  }
+
+  /**
+   * Wrapper function for session getState
+   * @return {State}
+   */
+  public static getState(): State {
+    return Session.getState();
+  }
+
+  /**
+   * Wrapper function for session getFastState
+   * @return {State}
+   */
+  public static getFastState(): State {
+    return Session.getFastState();
+  }
+
   /**
    * onMouseUp callback
-   * @param {MouseEvent} event: mouse event
+   * @param {MouseEvent} _: mouse event
    */
-  public onMouseUp(event: MouseEvent): void {
+  public onMouseUp(_: MouseEvent): void {
     // mouse up
-    const state = Box2DController.getState();
-    // dispatch a newBox dummy action here to test Box2dViewer
-    Box2DController.dispatch({
-      type: types.NEW_IMAGE_BOX2D_LABEL,
-      itemId: state.current.item,
-      optionalAttributes: {x: event.x, y: event.y, w: 70, h: 35}
-    });
   }
 
   /**
@@ -87,7 +124,6 @@ export class Box2DController extends BaseController {
   public redrawLabel(label: LabelType,
                      canvas: HTMLCanvasElement, context: any,
                      displayToImageRatio: number) {
-    // Redraw rectangle
-
+    // redraw a single label
   }
 }

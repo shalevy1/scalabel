@@ -35,6 +35,15 @@ export interface ShapeType {
   label: number;
 }
 
+export interface VertexType extends ShapeType {
+  /** The x-coordinate */
+  x: number;
+  /** The y-coordinate */
+  y: number;
+  /** Type */
+  type: number;
+}
+
 export interface RectType extends ShapeType {
   /** The x-coordinate */
   x: number;

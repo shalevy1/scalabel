@@ -1,11 +1,17 @@
 import {
   LabelType, ItemType,
-  RectType, CubeType, State,
+  VertexType, RectType, CubeType, State,
   ConfigType, CurrentType, ImageViewerConfigType, PointCloudViewerConfigType,
   LayoutType,
 } from './types';
 
 import * as labels from '../common/label_types';
+
+// enum definitions
+export const VertexTypes = Object.freeze({
+  VERTEX: 0, MIDPOINT: 1,
+  CONTROL_POINT: 2
+});
 
 /**
  * Initialize a label state
@@ -24,6 +30,22 @@ export function makeLabel(params: {} = {}): LabelType {
     shapes: [],
     selectedShape: -1,
     state: -1,
+    ...params
+  };
+}
+
+/**
+ * Initialize a vertex shape
+ * @param {{}} params
+ * @return {VertexType}
+ */
+export function makeVertex(params: {} = {}): VertexType {
+  return {
+    id: -1,
+    label: -1,
+    x: -1,
+    y: -1,
+    type: VertexTypes.VERTEX,
     ...params
   };
 }

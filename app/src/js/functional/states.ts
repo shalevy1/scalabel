@@ -30,6 +30,7 @@ export function makeLabel(params: {} = {}): LabelType {
     shapes: [],
     selectedShape: -1,
     state: -1,
+    color: [-1, -1, -1],
     ...params
   };
 }
@@ -41,6 +42,7 @@ export function makeLabel(params: {} = {}): LabelType {
  */
 export function makeVertex(params: {} = {}): VertexType {
   return {
+    name: 'VertexType',
     id: -1,
     label: -1,
     x: -1,
@@ -57,6 +59,7 @@ export function makeVertex(params: {} = {}): VertexType {
  */
 export function makeRect(params: {} = {}): RectType {
   return {
+    name: 'RectType',
     id: -1,
     label: -1,
     x: -1,
@@ -74,6 +77,7 @@ export function makeRect(params: {} = {}): RectType {
  */
 export function makeCube(params: {} = {}): CubeType {
   return {
+    name: 'CubeType',
     id: -1,
     label: -1,
     center: {x: 0, y: 0, z: 0},

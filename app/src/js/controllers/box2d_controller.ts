@@ -1,6 +1,14 @@
 import * as types from '../action/types';
 import {BaseController} from './base_controller';
-import {LabelType} from '../functional/types';
+import {LabelType, RectType, ShapeType, VertexType} from '../functional/types';
+import {
+  HANDLE_RADIUS,
+  CONTROL_FILL_COLOR,
+  ALPHA_CONTROL_POINT,
+  redrawRect,
+  redrawVertex,
+  HOVERED_HANDLE_RADIUS
+} from '../functional/draw';
 
 /**
  * Box2D Controller
@@ -13,6 +21,7 @@ export class Box2DController extends BaseController {
       NULL: 0, RESIZE: 1, MOVE: 2
     });
     this.controllerState = this.ControllerStates.NULL;
+    this.defaultCursorStyle = 'crosshair';
   }
 
   /**
@@ -81,14 +90,52 @@ export class Box2DController extends BaseController {
   /**
    * Redraw a single label
    * @param {LabelType} label
-   * @param {HTMLCanvasElement} canvas
+   * @param {ShapeType[]} shapes
    * @param context
    * @param {number} displayToImageRatio
+   * @param {number} hoveredShapeId
    */
   public redrawLabel(label: LabelType,
-                     canvas: HTMLCanvasElement, context: any,
-                     displayToImageRatio: number) {
+                     shapes: ShapeType[],
+                     context: any,
+                     displayToImageRatio: number,
+                     hoveredShapeId: number) {
     // Redraw rectangle
+    redrawRect(shapes[label.shapes[0]] as RectType,
+      context, displayToImageRatio);
 
+    let labelHovered = false;
+    // Check if label hovered
+    if (hoveredShapeId > 0) {
+      for (const shapeId of label.shapes) {
+        if (shapeId === hoveredShapeId) {
+          labelHovered = true;
+          break;
+        }
+      }
+    }
+
+    // Redraw vertices if the label is hovered
+    if (labelHovered) {
+      for (let i = 1; i <= 8; i++) {
+        const shapeId = label.shapes[i];
+        // color and alpha
+        let color = label.color;
+        let alpha = 1;
+        if (i % 2 === 0) {
+          color = CONTROL_FILL_COLOR;
+          alpha = ALPHA_CONTROL_POINT;
+        }
+
+        // radius
+        let radius = HANDLE_RADIUS;
+        if (shapeId === hoveredShapeId) {
+          radius = HOVERED_HANDLE_RADIUS;
+        }
+        redrawVertex(shapes[shapeId] as VertexType,
+          context, displayToImageRatio,
+          radius, color, alpha);
+      }
+    }
   }
 }

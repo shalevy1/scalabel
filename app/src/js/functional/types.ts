@@ -19,6 +19,8 @@ export interface LabelType {
   selectedShape: number;
   /** State */
   state: number;
+  /** Display color index of the shape */
+  color: number[];
 }
 
 export interface Track {
@@ -33,6 +35,8 @@ export interface ShapeType {
   id: number;
   /** Label ID of the shape */
   label: number;
+  /** Name of the shape */
+  name: string;
 }
 
 export interface VertexType extends ShapeType {

@@ -1,5 +1,5 @@
 import Session from '../common/session';
-import {State} from '../functional/types';
+import {ShapeType, State} from '../functional/types';
 import {LabelType} from '../functional/types';
 
 /**
@@ -11,6 +11,10 @@ export class BaseController {
   public ControllerStates: any;
   /** state of the controller */
   protected controllerState: number;
+  /** default cursor style */
+  public defaultCursorStyle: string;
+  /** selected label */
+  protected selectedLabel: LabelType | null;
 
   /**
    * initialize internal states
@@ -20,6 +24,8 @@ export class BaseController {
       NULL: 0
     });
     this.controllerState = this.ControllerStates.NULL;
+    this.defaultCursorStyle = 'default';
+    this.selectedLabel = null;
   }
 
   /**
@@ -116,14 +122,16 @@ export class BaseController {
 
   /**
    * Redraw a single label
-   * @param {LabelType} label
-   * @param {HTMLCanvasElement} canvas
-   * @param context
-   * @param {number} displayToImageRatio
+   * @param {LabelType} _label
+   * @param {ShapeType[]} _shapes
+   * @param _context
+   * @param {number} _displayToImageRatio
+   * @param {number} _hoveredShapeId
    */
-  public redrawLabel(label: LabelType,
-                     canvas: HTMLCanvasElement, context: any,
-                     displayToImageRatio: number) {
+  public redrawLabel(_label: LabelType,
+                     _shapes: ShapeType[], _context: any,
+                     _displayToImageRatio: number,
+                     _hoveredShapeId: number) {
     // redraw a single label
   }
 }

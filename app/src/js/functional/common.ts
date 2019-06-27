@@ -9,6 +9,7 @@ import {removeObjectFields, updateListItem, updateListItems,
   updateObject,
 } from './util';
 import * as _ from 'lodash';
+import {getColorById} from './draw';
 
 /**
  * Initialize state
@@ -50,8 +51,9 @@ export function addLabel(
   const newShapes = shapes.map(
       (s, i) => updateObject(s, {label: newId, id: shapeIds[i]}));
   const labelId = newId + shapes.length;
+  const color = getColorById(labelId);
   label = updateObject(label, {id: labelId, item: itemIndex,
-    shapes: label.shapes.concat(shapeIds)});
+    shapes: label.shapes.concat(shapeIds), color});
   let item = state.items[itemIndex];
   const labels = updateObject(
       item.labels,

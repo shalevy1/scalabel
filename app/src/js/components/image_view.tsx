@@ -1,19 +1,20 @@
 import {Canvas2d} from './canvas2d';
 import * as React from 'react';
 import Session from '../common/session';
-import {ImageViewerConfigType, LabelType, ViewerConfigType} from '../functional/types';
+import {ImageViewerConfigType, ViewerConfigType} from '../functional/types';
 import {withStyles} from '@material-ui/core/styles';
 import * as types from '../action/types';
 import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
 import {BaseController} from '../controllers/base_controller';
 import {Box2DController} from '../controllers/box2d_controller';
+import {mode, redrawControlShape} from '../functional/draw';
 
 interface ClassType {
   /** canvas */
   canvas: string;
   /** image display area */
-  mask: string;
+  display: string;
   /** background */
   background: string;
 }
@@ -58,7 +59,7 @@ class ImageView extends Canvas2d<Props> {
   /** The control context */
   public controlContext: any;
   /** The mask to hold the display */
-  private mask: any;
+  private display: any;
 
   // display constants
   /** The maximum scale */
@@ -105,6 +106,8 @@ class ImageView extends Canvas2d<Props> {
   // control canvas
   /** The map from the encoding drawn on the control canvas to shape ID */
   private _controlMap: { [key: number]: number };
+  /** The control map key of the shape being hovered */
+  private hoveredShapeId: number;
 
   /** controllers */
   private controllers: { [key: string]: BaseController };
@@ -129,12 +132,14 @@ class ImageView extends Canvas2d<Props> {
     this._isGrabbingImage = false;
     this._startGrabX = -1;
     this._startGrabY = -1;
-    this._startGrabVisibleCoords = [-1, -1];
+    this._startGrabVisibleCoords = [];
     this.scale = 1;
     this.canvasHeight = 0;
     this.canvasWidth = 0;
     this.displayToImageRatio = 1;
     this.scrollTimer = undefined;
+    this._controlMap = {};
+    this.hoveredShapeId = -1;
 
     // set keyboard listeners
     document.onkeydown = this.onKeyDown.bind(this);
@@ -163,9 +168,9 @@ class ImageView extends Canvas2d<Props> {
    * @return {[number]} the x and y coordinates
    */
   private getVisibleCanvasCoords() {
-    const maskRect = this.mask.getBoundingClientRect();
+    const displayRect = this.display.getBoundingClientRect();
     const imgRect = this.imageCanvas.getBoundingClientRect();
-    return [maskRect.x - imgRect.x, maskRect.y - imgRect.y];
+    return [displayRect.x - imgRect.x, displayRect.y - imgRect.y];
   }
 
   /**
@@ -176,9 +181,9 @@ class ImageView extends Canvas2d<Props> {
    */
   private getMousePos(e: MouseEvent | WheelEvent) {
     const [offsetX, offsetY] = this.getVisibleCanvasCoords();
-    const maskRect = this.mask.getBoundingClientRect();
-    let x = e.clientX - maskRect.x + offsetX;
-    let y = e.clientY - maskRect.y + offsetY;
+    const displayRect = this.display.getBoundingClientRect();
+    let x = e.clientX - displayRect.x + offsetX;
+    let y = e.clientY - displayRect.y + offsetY;
 
     // limit the mouse within the image
     x = Math.max(0, Math.min(x, this.canvasWidth));
@@ -199,6 +204,39 @@ class ImageView extends Canvas2d<Props> {
     this.imageCanvas.style.cursor = cursor;
   }
 
+  // Control map
+  /**
+   * Get the label under the mouse.
+   * @param {any} mousePos: position of the mouse
+   * @return {int}: the selected label
+   */
+  private getKeyInControlMap(mousePos: any) {
+    const [x, y] = this.toCanvasCoords([mousePos.x, mousePos.y],
+      true);
+    const data = this.controlContext.getImageData(x, y, 4, 4).data;
+    const arr = [];
+    for (let i = 0; i < 16; i++) {
+      const color =
+        (data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2];
+      arr.push(color);
+    }
+    // finding the mode of the data array to deal with anti-aliasing
+    return mode(arr) - 1;
+  }
+
+  /**
+   * Get the label under the mouse.
+   * @param {object} mousePos: position of the mouse
+   * @return {Shape | null}: the occupied shape
+   */
+  public getShapeByPosition(mousePos: any) {
+    const shapeIndex = this.getKeyInControlMap(mousePos);
+    if (shapeIndex >= 0) {
+      return this._controlMap[shapeIndex];
+    }
+    return -1;
+  }
+
   /**
    * Callback function when mouse is down
    * @param {MouseEvent} e - event
@@ -207,9 +245,9 @@ class ImageView extends Canvas2d<Props> {
     this._isMouseDown = true;
     // ctrl + click for dragging
     if (this.isKeyDown('ctrl')) {
-      const mask = this.mask.getBoundingClientRect();
-      if (this.imageCanvas.width > mask.width ||
-        this.imageCanvas.height > mask.height) {
+      const display = this.display.getBoundingClientRect();
+      if (this.imageCanvas.width > display.width ||
+        this.imageCanvas.height > display.height) {
         // if needed, start grabbing
         this.setCursor('grabbing');
         this._isGrabbingImage = true;
@@ -229,7 +267,12 @@ class ImageView extends Canvas2d<Props> {
    */
   private onMouseUp(e: MouseEvent) {
     this._isMouseDown = false;
-    // mouse up
+    this._isGrabbingImage = false;
+    this._startGrabX = -1;
+    this._startGrabY = -1;
+    this._startGrabVisibleCoords = [];
+
+    // label-specific handling of mouse up
     this.getCurrentController().onMouseUp(e);
   }
 
@@ -238,7 +281,24 @@ class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseMove(e: MouseEvent) {
-    // mouse move
+    // update the currently hovered shape
+    const mousePos = this.getMousePos(e);
+    this.hoveredShapeId = this.getShapeByPosition(mousePos);
+
+    // grabbing image
+    if (this.isKeyDown('ctrl')) {
+      if (this._isGrabbingImage) {
+        this.setCursor('grabbing');
+        const dx = e.clientX - this._startGrabX;
+        const dy = e.clientY - this._startGrabY;
+        this.display.scrollLeft = this._startGrabVisibleCoords[0] - dx;
+        this.display.scrollTop = this._startGrabVisibleCoords[1] - dy;
+      } else {
+        this.setCursor('grab');
+      }
+    }
+
+    // label-specific handling of mousemove
     this.getCurrentController().onMouseMove(e);
   }
 
@@ -298,9 +358,12 @@ class ImageView extends Canvas2d<Props> {
   private onKeyUp(e: KeyboardEvent) {
     const keyID = e.keyCode ? e.keyCode : e.which;
     delete this._keyDownMap[keyID];
-
+    if (keyID === 17 || keyID === 91) {
+      // ctrl or command
+      this.setCursor(this.getCurrentController().defaultCursorStyle);
+    }
     // label-specific handling of key down
-    this.getCurrentController().onKeyDown(e);
+    this.getCurrentController().onKeyUp(e);
   }
 
   /**
@@ -374,10 +437,10 @@ class ImageView extends Canvas2d<Props> {
    * @return {object} padding
    */
   private _getPadding() {
-    const maskRect = this.mask.getBoundingClientRect();
+    const displayRect = this.display.getBoundingClientRect();
     return {
-      x: Math.max(0, (maskRect.width - this.canvasWidth) / 2),
-      y: Math.max(0, (maskRect.height - this.canvasHeight) / 2)
+      x: Math.max(0, (displayRect.width - this.canvasWidth) / 2),
+      y: Math.max(0, (displayRect.height - this.canvasHeight) / 2)
     };
   }
 
@@ -387,7 +450,7 @@ class ImageView extends Canvas2d<Props> {
    * @param {boolean} upRes
    */
   private updateScale(canvas: HTMLCanvasElement, upRes: boolean) {
-    const maskRect = this.mask.getBoundingClientRect();
+    const displayRect = this.display.getBoundingClientRect();
     const config: ViewerConfigType = getCurrentViewerConfig();
     // mouseOffset
     let mouseOffset;
@@ -396,8 +459,8 @@ class ImageView extends Canvas2d<Props> {
       upperLeftCoords = this.getVisibleCanvasCoords();
       if (config.viewOffsetX < 0 || config.viewOffsetY < 0) {
         mouseOffset = [
-          Math.min(maskRect.width, this.imageCanvas.width) / 2,
-          Math.min(maskRect.height, this.imageCanvas.height) / 2
+          Math.min(displayRect.width, this.imageCanvas.width) / 2,
+          Math.min(displayRect.height, this.imageCanvas.height) / 2
         ];
       } else {
         mouseOffset = this.toCanvasCoords(
@@ -421,21 +484,21 @@ class ImageView extends Canvas2d<Props> {
     const item = getCurrentItem();
     const image = Session.images[item.index];
     const ratio = image.width / image.height;
-    if (maskRect.width / maskRect.height > ratio) {
-      this.canvasHeight = maskRect.height * config.viewScale;
+    if (displayRect.width / displayRect.height > ratio) {
+      this.canvasHeight = displayRect.height * config.viewScale;
       this.canvasWidth = this.canvasHeight * ratio;
       this.displayToImageRatio = this.canvasHeight
         / image.height;
     } else {
-      this.canvasWidth = maskRect.width * config.viewScale;
+      this.canvasWidth = displayRect.width * config.viewScale;
       this.canvasHeight = this.canvasWidth / ratio;
       this.displayToImageRatio = this.canvasWidth / image.width;
     }
 
     // translate back to origin
     if (mouseOffset) {
-      this.mask.scrollTop = this.imageCanvas.offsetTop;
-      this.mask.scrollLeft = this.imageCanvas.offsetLeft;
+      this.display.scrollTop = this.imageCanvas.offsetTop;
+      this.display.scrollLeft = this.imageCanvas.offsetLeft;
     }
 
     // set canvas resolution
@@ -463,13 +526,13 @@ class ImageView extends Canvas2d<Props> {
 
     // zoom to point
     if (mouseOffset && upperLeftCoords) {
-      if (this.canvasWidth > maskRect.width) {
-        this.mask.scrollLeft =
+      if (this.canvasWidth > displayRect.width) {
+        this.display.scrollLeft =
           zoomRatio * (upperLeftCoords[0] + mouseOffset[0])
           - mouseOffset[0];
       }
-      if (this.canvasHeight > maskRect.height) {
-        this.mask.scrollTop =
+      if (this.canvasHeight > displayRect.height) {
+        this.display.scrollTop =
           zoomRatio * (upperLeftCoords[1] + mouseOffset[1])
           - mouseOffset[1];
       }
@@ -491,10 +554,10 @@ class ImageView extends Canvas2d<Props> {
         if (canvas) {
           this.imageCanvas = canvas;
           this.imageContext = canvas.getContext('2d');
-          const maskRect =
-            this.mask.getBoundingClientRect();
-          if (maskRect.width
-            && maskRect.height
+          const displayRect =
+            this.display.getBoundingClientRect();
+          if (displayRect.width
+            && displayRect.height
             && getCurrentItem().loaded) {
             this.updateScale(canvas, false);
           }
@@ -508,10 +571,10 @@ class ImageView extends Canvas2d<Props> {
         if (canvas) {
           this.controlCanvas = canvas;
           this.controlContext = canvas.getContext('2d');
-          const maskRect =
-            this.mask.getBoundingClientRect();
-          if (maskRect.width
-            && maskRect.height
+          const displayRect =
+            this.display.getBoundingClientRect();
+          if (displayRect.width
+            && displayRect.height
             && getCurrentItem().loaded) {
             this.updateScale(canvas, true);
           }
@@ -525,10 +588,10 @@ class ImageView extends Canvas2d<Props> {
         if (canvas) {
           this.labelCanvas = canvas;
           this.labelContext = canvas.getContext('2d');
-          const maskRect =
-            this.mask.getBoundingClientRect();
-          if (maskRect.width
-            && maskRect.height
+          const displayRect =
+            this.display.getBoundingClientRect();
+          if (displayRect.width
+            && displayRect.height
             && getCurrentItem().loaded) {
             this.updateScale(canvas, true);
           }
@@ -537,12 +600,12 @@ class ImageView extends Canvas2d<Props> {
     />);
 
     let canvasesWithProps;
-    if (this.mask) {
-      const maskRect = this.mask.getBoundingClientRect();
+    if (this.display) {
+      const displayRect = this.display.getBoundingClientRect();
       canvasesWithProps = React.Children.map(
         [imageCanvas, controlCanvas, labelCanvas], (canvas) => {
           return React.cloneElement(canvas,
-            {height: maskRect.height, width: maskRect.width});
+            {height: displayRect.height, width: displayRect.width});
         }
       );
     }
@@ -559,10 +622,10 @@ class ImageView extends Canvas2d<Props> {
         />
         <div ref={(element) => {
           if (element) {
-            this.mask = element;
+            this.display = element;
           }
         }}
-             className={classes.mask}
+             className={classes.display}
         >
           {canvasesWithProps}
         </div>
@@ -579,14 +642,15 @@ class ImageView extends Canvas2d<Props> {
     const item = state.current.item;
     const loaded = state.items[item].loaded;
     const labels = state.items[item].labels;
+    const shapes = state.items[item].shapes;
     if (loaded) {
       const image = Session.images[item];
       // redraw imageCanvas
       this.redrawImageCanvas(image);
       // redraw labelCanvas
-      this.redrawLabelCanvas(labels);
+      this.redrawLabelCanvas(labels, shapes);
       // redraw controlCanvas
-      this.redrawControlCanvas(labels);
+      this.redrawControlCanvas(shapes);
     }
     return true;
   }
@@ -618,28 +682,29 @@ class ImageView extends Canvas2d<Props> {
 
   /**
    * Redraw the label canvas
-   * @param {object} labels - the labels to draw
+   * @param {object} labels - labels to draw
+   * @param {any} shapes - shapes to draw
    * @return {boolean}
    */
-  protected redrawLabelCanvas(labels: object): boolean {
+  protected redrawLabelCanvas(labels: object, shapes: any): boolean {
     this.clearCanvas(this.labelCanvas, this.labelContext);
     for (const label of Object.values(labels)) {
-      this.controllers[label.type].redrawLabel(label,
-        this.labelCanvas, this.labelContext, this.displayToImageRatio);
+      this.controllers[label.type].redrawLabel(label, shapes,
+        this.labelContext, this.displayToImageRatio * this.UP_RES_RATIO,
+        this.hoveredShapeId);
     }
     return true;
   }
 
   /**
    * Redraw the control canvas
-   * @param {object} labels - the labels to draw
+   * @param {any} shapes - shapes to draw
    * @return {boolean}
    */
-  protected redrawControlCanvas(labels: object): boolean {
-    this.clearCanvas(this.labelCanvas, this.labelContext);
-    for (const label of Object.values(labels)) {
-      this.controllers[label.type].redrawLabel(label,
-        this.controlCanvas, this.controlContext,
+  protected redrawControlCanvas(shapes: any): boolean {
+    this.clearCanvas(this.controlCanvas, this.controlContext);
+    for (const shapeID of Object.values(this._controlMap)) {
+      redrawControlShape(shapes[shapeID], this.controlContext,
         this.displayToImageRatio * this.UP_RES_RATIO);
     }
     return true;

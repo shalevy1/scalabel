@@ -14,6 +14,7 @@ export class Box2DController extends BaseController {
     });
     this.controllerState = this.ControllerStates.NULL;
   }
+
   /**
    * onMouseUp callback
    * @param {MouseEvent} event: mouse event

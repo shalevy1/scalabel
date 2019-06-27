@@ -8,7 +8,6 @@ import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
 import {BaseController} from '../controllers/base_controller';
 import {Box2DController} from '../controllers/box2d_controller';
-import {ContextType} from 'react';
 
 interface ClassType {
   /** canvas */

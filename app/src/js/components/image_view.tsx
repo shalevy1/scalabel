@@ -1,13 +1,13 @@
 import {Canvas2d} from './canvas2d';
 import * as React from 'react';
 import Session from '../common/session';
-import {ImageViewerConfigType, ViewerConfigType} from '../functional/types';
+import {ImageViewerConfigType, ShapeType, ViewerConfigType} from '../functional/types';
 import {withStyles} from '@material-ui/core/styles';
 import * as types from '../action/types';
 import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
 import {BaseController} from '../controllers/base_controller';
-import {Box2DController} from '../controllers/box2d_controller';
+import {Box2dController} from '../controllers/box2d_controller';
 import {mode, redrawControlShape} from '../functional/draw';
 
 interface ClassType {
@@ -45,7 +45,7 @@ function getCurrentViewerConfig() {
 /**
  * Canvas Viewer
  */
-class ImageView extends Canvas2d<Props> {
+export class ImageView extends Canvas2d<Props> {
   /** The image canvas */
   private imageCanvas: any;
   /** The image context */
@@ -147,7 +147,7 @@ class ImageView extends Canvas2d<Props> {
 
     // controllers
     this.controllers = {
-      box2d: new Box2DController()
+      box2d: new Box2dController()
     };
   }
 
@@ -176,7 +176,7 @@ class ImageView extends Canvas2d<Props> {
   /**
    * Get the mouse position on the canvas in the image coordinates.
    * @param {MouseEvent | WheelEvent} e: mouse event
-   * @return {object}:
+   * @return number[]:
    * mouse position (x,y) on the canvas
    */
   private getMousePos(e: MouseEvent | WheelEvent) {
@@ -190,10 +190,7 @@ class ImageView extends Canvas2d<Props> {
     y = Math.max(0, Math.min(y, this.canvasHeight));
 
     // return in the image coordinates
-    return {
-      x: x / this.displayToImageRatio,
-      y: y / this.displayToImageRatio
-    };
+    return [x / this.displayToImageRatio, y / this.displayToImageRatio];
   }
 
   /**
@@ -207,11 +204,11 @@ class ImageView extends Canvas2d<Props> {
   // Control map
   /**
    * Get the label under the mouse.
-   * @param {any} mousePos: position of the mouse
+   * @param {number[]} mousePos: position of the mouse
    * @return {int}: the selected label
    */
-  private getKeyInControlMap(mousePos: any) {
-    const [x, y] = this.toCanvasCoords([mousePos.x, mousePos.y],
+  private getKeyInControlMap(mousePos: number[]) {
+    const [x, y] = this.toCanvasCoords(mousePos,
       true);
     const data = this.controlContext.getImageData(x, y, 4, 4).data;
     const arr = [];
@@ -225,11 +222,43 @@ class ImageView extends Canvas2d<Props> {
   }
 
   /**
+   * Get label by label ID
+   * @param {number} labelId - ID of the label
+   */
+  public getLabelById(labelId: number) {
+    const state = this.state.session;
+    const item = state.current.item;
+    const labels = state.items[item].labels;
+    return labels[labelId];
+  }
+
+  /**
+   * Get shape by shape ID
+   * @param {number} shapeId - ID of the label
+   */
+  public getShapeById(shapeId: number): ShapeType {
+    const state = this.state.session;
+    const item = state.current.item;
+    const shapes = state.items[item].shapes;
+    return shapes[shapeId];
+  }
+
+  /**
+   * Get the hovered shape
+   * @return {ShapeType | null}
+   */
+  public getHoveredShape(): ShapeType | null {
+    if (this.hoveredShapeId > 0) {
+      return this.getShapeById(this.hoveredShapeId);
+    }
+    return null;
+  }
+  /**
    * Get the label under the mouse.
-   * @param {object} mousePos: position of the mouse
+   * @param {number[]} mousePos: position of the mouse
    * @return {Shape | null}: the occupied shape
    */
-  public getShapeByPosition(mousePos: any) {
+  public getShapeByPosition(mousePos: number[]) {
     const shapeIndex = this.getKeyInControlMap(mousePos);
     if (shapeIndex >= 0) {
       return this._controlMap[shapeIndex];
@@ -242,6 +271,8 @@ class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseDown(e: MouseEvent) {
+    // get mouse position in image coordinates
+    const mousePos = this.getMousePos(e);
     this._isMouseDown = true;
     // ctrl + click for dragging
     if (this.isKeyDown('ctrl')) {
@@ -257,7 +288,7 @@ class ImageView extends Canvas2d<Props> {
       }
     } else {
       // if ctrl not pressed, call label-specific handlers
-      this.getCurrentController().onMouseDown(e);
+      this.getCurrentController().onMouseDown(mousePos);
     }
   }
 
@@ -266,6 +297,8 @@ class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseUp(e: MouseEvent) {
+    // get mouse position in image coordinates
+    const mousePos = this.getMousePos(e);
     this._isMouseDown = false;
     this._isGrabbingImage = false;
     this._startGrabX = -1;
@@ -273,7 +306,7 @@ class ImageView extends Canvas2d<Props> {
     this._startGrabVisibleCoords = [];
 
     // label-specific handling of mouse up
-    this.getCurrentController().onMouseUp(e);
+    this.getCurrentController().onMouseUp(mousePos);
   }
 
   /**
@@ -284,6 +317,7 @@ class ImageView extends Canvas2d<Props> {
     // update the currently hovered shape
     const mousePos = this.getMousePos(e);
     this.hoveredShapeId = this.getShapeByPosition(mousePos);
+    this.hoveredLabel =
 
     // grabbing image
     if (this.isKeyDown('ctrl')) {
@@ -298,8 +332,8 @@ class ImageView extends Canvas2d<Props> {
       }
     }
 
-    // label-specific handling of mousemove
-    this.getCurrentController().onMouseMove(e);
+    // label-specific handling of mouse move
+    this.getCurrentController().onMouseMove(mousePos);
   }
 
   /**
@@ -307,17 +341,18 @@ class ImageView extends Canvas2d<Props> {
    * @param {WheelEvent} e - event
    */
   private onWheel(e: WheelEvent) {
+    // get mouse position in image coordinates
+    const mousePos = this.getMousePos(e);
     if (this.isKeyDown('ctrl')) { // control for zoom
       e.preventDefault();
-      const mousePos = this.getMousePos(e);
       if (this.scrollTimer !== undefined) {
         clearTimeout(this.scrollTimer);
       }
       if (e.deltaY < 0) {
-        this.zoomHandler(this.SCROLL_ZOOM_RATIO, mousePos.x, mousePos.y);
+        this.zoomHandler(this.SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1]);
       } else if (e.deltaY > 0) {
         this.zoomHandler(
-          1 / this.SCROLL_ZOOM_RATIO, mousePos.x, mousePos.y);
+          1 / this.SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1]);
       }
       this.redraw();
     }
@@ -328,8 +363,10 @@ class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onDblClick(e: MouseEvent) {
-    // double click
-    this.getCurrentController().onDblClick(e);
+    // get mouse position in image coordinates
+    const mousePos = this.getMousePos(e);
+    // label-specific handling of double click
+    this.getCurrentController().onDblClick(mousePos);
   }
 
   /**
@@ -337,18 +374,18 @@ class ImageView extends Canvas2d<Props> {
    * @param {KeyboardEvent} e - event
    */
   private onKeyDown(e: KeyboardEvent) {
-    const keyID = e.keyCode ? e.keyCode : e.which;
-    this._keyDownMap[keyID] = true;
-    if (keyID === 187) {
+    const keyId = e.keyCode ? e.keyCode : e.which;
+    this._keyDownMap[keyId] = true;
+    if (keyId === 187) {
       // + for zooming in
       this.zoomHandler(this.ZOOM_RATIO, -1, -1);
-    } else if (keyID === 189) {
+    } else if (keyId === 189) {
       // - for zooming out
       this.zoomHandler(1 / this.ZOOM_RATIO, -1, -1);
     }
 
     // label-specific handling of key down
-    this.getCurrentController().onKeyDown(e);
+    this.getCurrentController().onKeyDown(keyId);
   }
 
   /**
@@ -356,14 +393,14 @@ class ImageView extends Canvas2d<Props> {
    * @param {KeyboardEvent} e - event
    */
   private onKeyUp(e: KeyboardEvent) {
-    const keyID = e.keyCode ? e.keyCode : e.which;
-    delete this._keyDownMap[keyID];
-    if (keyID === 17 || keyID === 91) {
+    const keyId = e.keyCode ? e.keyCode : e.which;
+    delete this._keyDownMap[keyId];
+    if (keyId === 17 || keyId === 91) {
       // ctrl or command
       this.setCursor(this.getCurrentController().defaultCursorStyle);
     }
     // label-specific handling of key down
-    this.getCurrentController().onKeyUp(e);
+    this.getCurrentController().onKeyUp(keyId);
   }
 
   /**
@@ -637,7 +674,7 @@ class ImageView extends Canvas2d<Props> {
    * Function to redraw all canvases
    * @return {boolean}
    */
-  protected redraw(): boolean {
+  public redraw(): boolean {
     const state = this.state.session;
     const item = state.current.item;
     const loaded = state.items[item].loaded;
@@ -646,11 +683,60 @@ class ImageView extends Canvas2d<Props> {
     if (loaded) {
       const image = Session.images[item];
       // redraw imageCanvas
-      this.redrawImageCanvas(image);
+      this._redrawImageCanvas(image);
       // redraw labelCanvas
-      this.redrawLabelCanvas(labels, shapes);
+      this._redrawLabelCanvas(labels, shapes);
       // redraw controlCanvas
-      this.redrawControlCanvas(shapes);
+      this._redrawControlCanvas(shapes);
+    }
+    return true;
+  }
+
+  /**
+   * Function to redraw the image canvas
+   * @return {boolean}
+   */
+  public redrawImageCanvas(): boolean {
+    const state = this.state.session;
+    const item = state.current.item;
+    const loaded = state.items[item].loaded;
+    if (loaded) {
+      const image = Session.images[item];
+      // redraw imageCanvas
+      this._redrawImageCanvas(image);
+    }
+    return true;
+  }
+
+  /**
+   * Function to redraw the label canvas
+   * @return {boolean}
+   */
+  public redrawLabelCanvas(): boolean {
+    const state = this.state.session;
+    const item = state.current.item;
+    const loaded = state.items[item].loaded;
+    const labels = state.items[item].labels;
+    const shapes = state.items[item].shapes;
+    if (loaded) {
+      // redraw labelCanvas
+      this._redrawLabelCanvas(labels, shapes);
+    }
+    return true;
+  }
+
+  /**
+   * Function to redraw the control canvas
+   * @return {boolean}
+   */
+  public redrawControlCanvas(): boolean {
+    const state = this.state.session;
+    const item = state.current.item;
+    const loaded = state.items[item].loaded;
+    const shapes = state.items[item].shapes;
+    if (loaded) {
+      // redraw controlCanvas
+      this._redrawControlCanvas(shapes);
     }
     return true;
   }
@@ -673,7 +759,7 @@ class ImageView extends Canvas2d<Props> {
    * @param {HTMLImageElement} image
    * @return {boolean}
    */
-  protected redrawImageCanvas(image: HTMLImageElement): boolean {
+  protected _redrawImageCanvas(image: HTMLImageElement): boolean {
     this.clearCanvas(this.imageCanvas, this.imageContext);
     this.imageContext.drawImage(image, 0, 0, image.width, image.height,
       0, 0, this.imageCanvas.width, this.imageCanvas.height);
@@ -686,7 +772,7 @@ class ImageView extends Canvas2d<Props> {
    * @param {any} shapes - shapes to draw
    * @return {boolean}
    */
-  protected redrawLabelCanvas(labels: object, shapes: any): boolean {
+  protected _redrawLabelCanvas(labels: object, shapes: any): boolean {
     this.clearCanvas(this.labelCanvas, this.labelContext);
     for (const label of Object.values(labels)) {
       this.controllers[label.type].redrawLabel(label, shapes,
@@ -701,7 +787,7 @@ class ImageView extends Canvas2d<Props> {
    * @param {any} shapes - shapes to draw
    * @return {boolean}
    */
-  protected redrawControlCanvas(shapes: any): boolean {
+  protected _redrawControlCanvas(shapes: any): boolean {
     this.clearCanvas(this.controlCanvas, this.controlContext);
     for (const shapeID of Object.values(this._controlMap)) {
       redrawControlShape(shapes[shapeID], this.controlContext,

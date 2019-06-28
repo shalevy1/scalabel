@@ -7,7 +7,7 @@ import type {RectType} from '../functional/types';
  */
 export class Box2DViewer extends BaseViewer2D {
   /**
-   * @param {BaseController} controller: reference to Box2DController
+   * @param {BaseController} controller: reference to Box2dController
    * @constructor
    */
   constructor(controller/* : BaseController */) {

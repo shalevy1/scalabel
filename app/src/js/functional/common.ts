@@ -197,6 +197,32 @@ export function deleteLabel(state: State, labelId: number): State {
 }
 
 /**
+ * Select a label
+ * @param {State} state
+ * @param {number} labelId
+ * @return {State}
+ */
+export function selectLabel(state: State, labelId: number): State {
+  let current = state.current;
+  current = updateObject(current, {label: labelId});
+  return updateObject(
+    state, {current});
+}
+
+/**
+ * Select a shape
+ * @param {State} state
+ * @param {number} shapeId
+ * @return {State}
+ */
+export function selectShape(state: State, shapeId: number): State {
+  let current = state.current;
+  current = updateObject(current, {shape: shapeId});
+  return updateObject(
+    state, {current});
+}
+
+/**
  * assign Attribute to a label
  * @param {State} state
  * @param {number} _labelId

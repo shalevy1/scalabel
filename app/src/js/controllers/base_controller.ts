@@ -1,31 +1,33 @@
 import Session from '../common/session';
 import {ShapeType, State} from '../functional/types';
 import {LabelType} from '../functional/types';
-
+import {ImageView} from '../components/image_view';
+import {Canvas} from '../components/canvas';
+import * as types from '../action/types';
 /**
  * Basic controller
  * If there is no temporary object or algorithm involved, this is usually enough
  */
 export class BaseController {
-  /** all possible states of the controller */
-  public ControllerStates: any;
+  /** controller states of the controller */
+  public static ControllerStates = Object.freeze({
+    NULL: 0
+  });
   /** state of the controller */
   protected controllerState: number;
   /** default cursor style */
   public defaultCursorStyle: string;
-  /** selected label */
-  protected selectedLabel: LabelType | null;
+  /** viewer */
+  protected viewer: Canvas<any>;
 
   /**
    * initialize internal states
+   * @param {Canvas<any>} viewer
    */
-  constructor() {
-    this.ControllerStates = Object.freeze({
-      NULL: 0
-    });
-    this.controllerState = this.ControllerStates.NULL;
+  constructor(viewer: Canvas<any>) {
+    this.controllerState = BaseController.ControllerStates.NULL;
     this.defaultCursorStyle = 'default';
-    this.selectedLabel = null;
+    this.viewer = viewer;
   }
 
   /**
@@ -65,58 +67,103 @@ export class BaseController {
   }
 
   /**
-   * onMouseUp callback
-   * @param {MouseEvent} _: mouse event
+   * Function to set the controller state
+   * @param {number} state - The state to set to
    */
-  public onMouseUp(_: MouseEvent): void {
+  protected setControllerState(state: number) {
+    this.controllerState = state;
+  }
+
+  /**
+   * Function to select a label
+   * @param {number} labelId
+   */
+  protected selectLabelById(labelId: number) {
+    BaseController.dispatch({
+      type: types.SELECT_LABEL,
+      labelId
+    });
+  }
+
+  /**
+   * Function to select a shape
+   * @param {number} shapeId
+   */
+  protected selectShapeById(shapeId: number) {
+    BaseController.dispatch({
+      type: types.SELECT_LABEL,
+      shapeId
+    });
+  }
+
+  /**
+   * Function to deselect all labels
+   */
+  protected deselectAllLabels() {
+    this.selectLabelById(-1);
+    this.selectShapeById(-1);
+  }
+
+  /**
+   * Function to create a new label
+   */
+  protected createLabel(..._: any) {
+    // create a label
+  }
+
+  /**
+   * onMouseUp callback
+   * @param {number[]} _: mouse position
+   */
+  public onMouseUp(_: number[]): void {
     // mouse up
   }
 
   /**
    * onMouseDown callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} _: mouse position
    */
-  public onMouseDown(_: MouseEvent): void {
+  public onMouseDown(_: number[]): void {
     // mouse down
   }
 
   /**
    * onMouseMove callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} _: mouse position
    */
-  public onMouseMove(_: MouseEvent): void {
+  public onMouseMove(_: number[]): void {
     // mouse move
   }
 
   /**
    * onDblClick callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} _: mouse position
    */
-  public onDblClick(_: MouseEvent): void {
+  public onDblClick(_: number[]): void {
     // double click
   }
 
   /**
    * onWheel callback
-   * @param {WheelEvent} _: wheel event
+   * @param {number[]} _: mouse position
    */
-  public onWheel(_: WheelEvent): void {
+  public onWheel(_: number[]): void {
     // wheel
   }
 
   /**
    * onKeyDown callback
-   * @param {KeyboardEvent} _: keyboard event
+   * @param {number} _: key ID
    */
-  public onKeyDown(_: KeyboardEvent): void {
+  public onKeyDown(_: number): void {
     // key down
   }
 
   /**
    * onKeyUp callback
-   * @param {KeyboardEvent} _: keyboard event
+   * @param {number} _: key ID
    */
-  public onKeyUp(_: KeyboardEvent): void {
+  public onKeyUp(_: number): void {
     // key up
   }
 

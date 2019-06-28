@@ -48,6 +48,10 @@ export function reducer(
     case types.CHANGE_ATTRIBUTE:
       return common.changeAttribute(state, action.labelId,
           action.attributeOptions);
+    case types.SELECT_LABEL:
+      return common.selectShape(state, action.labelId);
+    case types.SELECT_SHAPE:
+      return common.selectShape(state, action.shapeId);
     case types.TOGGLE_ASSISTANT_VIEW:
       return common.toggleAssistantView(state);
     case types.MOVE_CAMERA:

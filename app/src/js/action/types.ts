@@ -27,6 +27,9 @@ export const TAG_IMAGE = 'TAG_IMAGE';
 // Label Level
 export const CHANGE_ATTRIBUTE = 'CHANGE_ATTRIBUTE';
 export const CHANGE_CATEGORY = 'CHANGE_CATEGORY';
+export const SELECT_LABEL = 'SELECT_LABEL';
+// Shape Level
+export const SELECT_SHAPE = 'SELECT_SHAPE';
 
 // View Level
 export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW';
@@ -139,6 +142,20 @@ export interface ChangeAttributeAction {
   attributeOptions: any;
 }
 
+export interface SelectLabelAction {
+  /** Type of the action */
+  type: typeof SELECT_LABEL;
+  /** ID of the label */
+  labelId: number;
+}
+
+export interface SelectShapeAction {
+  /** Type of the action */
+  type: typeof SELECT_SHAPE;
+  /** ID of the shape */
+  shapeId: number;
+}
+
 export interface ChangeCategoryAction {
   /** Type of the action */
   type: typeof CHANGE_CATEGORY;
@@ -201,6 +218,8 @@ export type ActionTypes =
     | TagImageAction
     | ChangeAttributeAction
     | ChangeCategoryAction
+    | SelectLabelAction
+    | SelectShapeAction
     | ToggleAssistantViewAction
     | ChangeRectAction
     | MoveCameraAction

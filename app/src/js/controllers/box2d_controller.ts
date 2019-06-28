@@ -9,81 +9,141 @@ import {
   redrawVertex,
   HOVERED_HANDLE_RADIUS
 } from '../functional/draw';
+import {Canvas} from '../components/canvas';
+import {ImageView} from '../components/image_view';
+import {addBox2dLabel} from '../action/box2d';
 
 /**
  * Box2D Controller
  */
-export class Box2DController extends BaseController {
+export class Box2dController extends BaseController {
+  /** The controller states */
+  public static ControllerStates = Object.freeze({
+    NULL: 0, SELECTED: 1, RESIZE: 2, MOVE: 3
+  });
 
-  constructor() {
-    super();
-    this.ControllerStates = Object.freeze({
-      NULL: 0, RESIZE: 1, MOVE: 2
-    });
-    this.controllerState = this.ControllerStates.NULL;
+  /** image viewer */
+  protected viewer: ImageView<any>;
+
+  /** for box moving */
+  protected startMoveMousePos: number[];
+
+  /**
+   * Constructor
+   * @param {ImageView<any>} viewer
+   */
+  constructor(viewer: ImageView<any>) {
+    super(viewer);
     this.defaultCursorStyle = 'crosshair';
+    this.controllerState = Box2dController.ControllerStates.NULL;
+  }
+
+  /**
+   * Function to create a new label
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   */
+  protected createLabel(x: number, y: number, w: number, h: number) {
+    // FIXME: add category
+    Box2dController.dispatch(addBox2dLabel([0], x, y, w, h));
+  }
+
+  /**
+   * Function to set the controller state
+   * @param {number} state - The state to set to
+   */
+  protected setControllerState(state: number) {
+    if (state === Box2dController.ControllerStates.NULL) {
+      this.deselectAllLabels();
+      this.viewer.redrawLabelCanvas();
+    } else if (state === Box2dController.ControllerStates.SELECTED) {
+      // select
+      this.viewer.redrawLabelCanvas();
+    } else if (state === Box2dController.ControllerStates.RESIZE) {
+      // resize
+    } else if (state === Box2dController.ControllerStates.MOVE) {
+      // move
+    }
+    this.controllerState = state;
   }
 
   /**
    * onMouseUp callback
-   * @param {MouseEvent} event: mouse event
+   * @param {number[]} mousePos - mouse position
    */
-  public onMouseUp(event: MouseEvent): void {
-    // mouse up
-    const state = Box2DController.getState();
-    // dispatch a newBox dummy action here to test Box2dViewer
-    Box2DController.dispatch({
-      type: types.NEW_IMAGE_BOX2D_LABEL,
-      itemId: state.current.item,
-      optionalAttributes: {x: event.x, y: event.y, w: 70, h: 35}
-    });
+  public onMouseUp(mousePos: number[]): void {
+
   }
 
   /**
    * onMouseDown callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} mousePos - mouse position
    */
-  public onMouseDown(_: MouseEvent): void {
-    // mouse down
+  public onMouseDown(mousePos: number[]): void {
+    // find the target shape
+    const hoveredShape = this.viewer.getHoveredShape();
+    if (this.controllerState ===
+      Box2dController.ControllerStates.NULL) {
+      if (hoveredShape === null) {
+        // start a new label
+        this.createLabel(mousePos[0], mousePos[1], 0, 0);
+      } else {
+        // if targeted at an existing label, select it
+        this.selectLabelById(hoveredShape.label);
+        // manipulation based on hovered shape
+        if (hoveredShape.name === 'RectType') {
+          // if clicked on the rectangle, start moving
+          this.setControllerState(Box2dController.ControllerStates.MOVE);
+          this.startMoveMousePos = mousePos;
+        } else if (hoveredShape.name === 'VertexType') {
+          // if clicked on a vertex, start resizing
+          this.setControllerState(Box2dController.ControllerStates.RESIZE);
+        }
+      }
+    }
   }
 
   /**
    * onMouseMove callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} mousePos - mouse position
    */
-  public onMouseMove(_: MouseEvent): void {
-    // mouse move
+  public onMouseMove(mousePos: number[]): void {
+    if (this.controllerState === Box2dController.ControllerStates.RESIZE) {
+
+    }
   }
 
   /**
    * onDblClick callback
-   * @param {MouseEvent} _: mouse event
+   * @param {number[]} mousePos - mouse position
    */
-  public onDblClick(_: MouseEvent): void {
+  public onDblClick(mousePos: number[]): void {
     // double click
   }
 
   /**
    * onWheel callback
-   * @param {WheelEvent} _: wheel event
+   * @param {number[]} mousePos - mouse position
    */
-  public onWheel(_: WheelEvent): void {
+  public onWheel(mousePos: number[]): void {
     // wheel
   }
 
   /**
    * onKeyDown callback
-   * @param {KeyboardEvent} _: keyboard event
+   * @param {number} keyId: key ID
    */
-  public onKeyDown(_: KeyboardEvent): void {
+  public onKeyDown(keyId: number): void {
     // key down
   }
 
   /**
    * onKeyUp callback
-   * @param {KeyboardEvent} _: keyboard event
+   * @param {number} keyId: key ID
    */
-  public onKeyUp(_: KeyboardEvent): void {
+  public onKeyUp(keyId: number): void {
     // key up
   }
 

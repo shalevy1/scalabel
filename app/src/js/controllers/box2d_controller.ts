@@ -120,8 +120,8 @@ export class Box2dController extends BaseController {
   public onMouseDown(mousePos: number[]): void {
     // find the target shape
     const hoveredShape = this.viewer.getHoveredShape();
-    if (this.controllerState ===
-      Box2dController.ControllerStates.NULL) {
+    if (this.controllerState === Box2dController.ControllerStates.NULL ||
+      this.controllerState === Box2dController.ControllerStates.SELECTED) {
       if (hoveredShape === null) {
         // start a new label
         this.createLabel(mousePos[0], mousePos[1], 0, 0);
@@ -146,6 +146,7 @@ export class Box2dController extends BaseController {
           this.setControllerState(Box2dController.ControllerStates.RESIZE);
           this.targetHandleNo = this.targetLabel.shapes
             .indexOf(hoveredShape.id);
+          console.log('in')
         }
       }
     }
@@ -156,10 +157,9 @@ export class Box2dController extends BaseController {
    * @param {number[]} mousePos - mouse position
    */
   public onMouseMove(mousePos: number[]): void {
-    console.log(this.controllerState, this.targetLabel)
+    console.log('state', this.controllerState)
     if (this.controllerState === Box2dController.ControllerStates.RESIZE
     && this.targetLabel !== null) {
-      console.log('resizing')
       const shapeIds = this.targetLabel.shapes;
       let xChangedIdxs: number[] = [];
       let yChangedIdxs: number[] = [];
@@ -191,7 +191,6 @@ export class Box2dController extends BaseController {
       // update vertex
       const [x, y] = this.viewer.toImageCoords(mousePos);
       this.updateVertex(shapeIds[this.targetHandleNo], {x, y});
-      console.log('X_CHANGED', xChangedIdxs, 'X', x);
       for (const i of xChangedIdxs) {
         this.updateVertex(shapeIds[i], {x});
       }
@@ -210,9 +209,7 @@ export class Box2dController extends BaseController {
       const hoveredShape = this.viewer.getHoveredShape();
       if (hoveredShape) {
         const hoveredLabel = this.viewer.getLabelById(hoveredShape.label);
-        console.log(hoveredShape, hoveredLabel)
         const handleNo = hoveredLabel.shapes.indexOf(hoveredShape.id);
-        console.log('handleNo', handleNo)
         if (handleNo === 0) {
           // rectangle
           this.viewer.setCursor('move');

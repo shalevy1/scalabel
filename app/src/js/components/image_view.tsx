@@ -252,7 +252,6 @@ export class ImageView extends Canvas2d<Props> {
     const state = this.state.session;
     const item = state.current.item;
     const labels = state.items[item].labels;
-    console.log('LABELS', labels)
     return labels[labelId];
   }
 
@@ -496,7 +495,6 @@ export class ImageView extends Canvas2d<Props> {
    * @return {Array<number>} - the converted values.
    */
   public toImageCoords(values: number[], upRes: boolean = true) {
-    console.log(this.displayToImageRatio, this.UP_RES_RATIO)
     if (values) {
       for (let i = 0; i < values.length; i++) {
         values[i] /= this.displayToImageRatio;

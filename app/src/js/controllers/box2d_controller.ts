@@ -204,6 +204,28 @@ export class Box2dController extends BaseController {
       let dx = mousePos[0] - this.startMoveMousePos[0];
       let dy = mousePos[1] - this.startMoveMousePos[1];
       // make moved box within the image
+    } else if (this.controllerState ===
+      Box2dController.ControllerStates.SELECTED ||
+      this.controllerState === Box2dController.ControllerStates.NULL) {
+      const hoveredShape = this.viewer.getHoveredShape();
+      if (hoveredShape) {
+        const hoveredLabel = this.viewer.getLabelById(hoveredShape.label);
+        console.log(hoveredShape, hoveredLabel)
+        const handleNo = hoveredLabel.shapes.indexOf(hoveredShape.id);
+        console.log('handleNo', handleNo)
+        if (handleNo === 0) {
+          // rectangle
+          this.viewer.setCursor('move');
+        } else if (handleNo === 1 || handleNo === 5) {
+          this.viewer.setCursor('nwse-resize');
+        } else if (handleNo === 3 || handleNo === 7) {
+          this.viewer.setCursor('nesw-resize');
+        } else if (handleNo === 2 || handleNo === 6) {
+          this.viewer.setCursor('ns-resize');
+        } else if (handleNo === 4 || handleNo === 8) {
+          this.viewer.setCursor('ew-resize');
+        }
+      }
     }
   }
 

@@ -48,9 +48,9 @@ export function addLabel(
   const itemIndex = state.current.item;
   const newId = state.current.maxObjectId + 1;
   const shapeIds = _.range(shapes.length).map((i) => i + newId);
-  const newShapes = shapes.map(
-      (s, i) => updateObject(s, {label: newId, id: shapeIds[i]}));
   const labelId = newId + shapes.length;
+  const newShapes = shapes.map(
+      (s, i) => updateObject(s, {label: labelId, id: shapeIds[i]}));
   const color = getColorById(labelId);
   label = updateObject(label, {id: labelId, item: itemIndex,
     shapes: label.shapes.concat(shapeIds), color});

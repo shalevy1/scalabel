@@ -198,8 +198,15 @@ export class ImageView extends Canvas2d<Props> {
    * Set the current cursor
    * @param {string} cursor - cursor type
    */
-  private setCursor(cursor: string) {
-    this.imageCanvas.style.cursor = cursor;
+  public setCursor(cursor: string) {
+    this.labelCanvas.style.cursor = cursor;
+  }
+
+  /**
+   * Set the current cursor to default
+   */
+  public setDefaultCursor() {
+    this.setCursor(this.getCurrentController().defaultCursorStyle);
   }
 
   // Control map
@@ -245,6 +252,7 @@ export class ImageView extends Canvas2d<Props> {
     const state = this.state.session;
     const item = state.current.item;
     const labels = state.items[item].labels;
+    console.log('LABELS', labels)
     return labels[labelId];
   }
 
@@ -353,6 +361,8 @@ export class ImageView extends Canvas2d<Props> {
       } else {
         this.setCursor('grab');
       }
+    } else {
+      this.setDefaultCursor();
     }
 
     // label-specific handling of mouse move
@@ -421,7 +431,7 @@ export class ImageView extends Canvas2d<Props> {
     delete this._keyDownMap[keyId];
     if (keyId === 17 || keyId === 91) {
       // ctrl or command
-      this.setCursor(this.getCurrentController().defaultCursorStyle);
+      this.setDefaultCursor();
     }
     // label-specific handling of key down
     this.getCurrentController().onKeyUp(keyId);

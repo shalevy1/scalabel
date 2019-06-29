@@ -41,6 +41,8 @@ export function reducer(
       return common.changeLabelShape(state, action.shapeId, action.props);
     case types.CHANGE_LABEL_PROPS:
       return common.changeLabelProps(state, action.labelId, action.props);
+    case types.UPDATE_MIDPOINT:
+      return common.updateMidpoint(state, action.labelId);
     case types.DELETE_LABEL:
       return common.deleteLabel(state, action.labelId);
     case types.TAG_IMAGE:

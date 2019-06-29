@@ -51,6 +51,15 @@ export function changeLabelShape(
 }
 
 /**
+ * Update the midpoint and boundary of a label
+ * @param {number} labelId
+ * @return {UpdateMidpointAction}
+ */
+export function updateMidpoint(labelId: number): types.UpdateMidpointAction {
+  return {type: types.UPDATE_MIDPOINT, labelId};
+}
+
+/**
  * Change the properties of the label
  * @param {number} labelId
  * @param {{}}props

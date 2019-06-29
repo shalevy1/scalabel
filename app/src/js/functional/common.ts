@@ -1,15 +1,15 @@
 import {
   ItemType,
-  LabelType,
+  LabelType, RectType,
   ShapeType,
-  State,
+  State, VertexType,
   ViewerConfigType
 } from './types';
 import {removeObjectFields, updateListItem, updateListItems,
   updateObject,
 } from './util';
 import * as _ from 'lodash';
-import {getColorById} from './draw';
+import {getColorById, idx} from './draw';
 
 /**
  * Initialize state
@@ -63,7 +63,7 @@ export function addLabel(
   const items = updateListItem(state.items, itemIndex, item);
   const current = updateObject(
       state.current,
-      {maxObjectId: labelId});
+      {maxObjectId: labelId, label: labelId});
   return {
     ...state,
     items,
@@ -85,6 +85,42 @@ export function changeLabelShape(
   const shape = updateObject(item.shapes[shapeId], props);
   item = updateObject(
       item, {shapes: updateObject(item.shapes, {[shapeId]: shape})});
+  const items = updateListItem(state.items, itemIndex, item);
+  return {...state, items};
+}
+
+/**
+ * Update the rectangle and midpoints of a bounding box
+ * @param {State} state
+ * @param {number} labelId
+ * @return {State}
+ */
+export function updateMidpoint(
+  state: State, labelId: number): State {
+  const itemIndex = state.current.item;
+  let item = state.items[itemIndex];
+  const label = item.labels[labelId];
+  const newPositions: {[key: number]: ShapeType} = {};
+  // midpoints
+  for (let i = 2; i <= 8; i += 2) {
+    const prevVertex = item.shapes[label.shapes[idx(i - 1, 8)]] as VertexType;
+    const nextVertex = item.shapes[label.shapes[idx(i + 1, 8)]] as VertexType;
+    const id = label.shapes[i];
+    newPositions[id] = updateObject(item.shapes[id] as VertexType, {
+      x: (prevVertex.x + nextVertex.x) / 2,
+      y: (prevVertex.y + nextVertex.y) / 2
+    });
+  }
+  // rectangle
+  const tl = item.shapes[label.shapes[1]] as VertexType;
+  const br = item.shapes[label.shapes[5]] as VertexType;
+  newPositions[label.shapes[0]] = updateObject(
+    item.shapes[label.shapes[0]] as RectType, {
+    x: tl.x, y: tl.y, w: br.x - tl.x, h: br.y - tl.y
+  });
+  console.log('UPDATE MIDPOINT:', br.x - tl.x, br.y - tl.y)
+  item = updateObject(
+    item, {shapes: updateObject(item.shapes, newPositions)});
   const items = updateListItem(state.items, itemIndex, item);
   return {...state, items};
 }

@@ -4,6 +4,8 @@ import {LabelType} from '../functional/types';
 import {ImageView} from '../components/image_view';
 import {Canvas} from '../components/canvas';
 import * as types from '../action/types';
+import {addBox2dLabel} from '../action/box2d';
+import {Box2dController} from './box2d_controller';
 /**
  * Basic controller
  * If there is no temporary object or algorithm involved, this is usually enough
@@ -94,6 +96,13 @@ export class BaseController {
       type: types.SELECT_LABEL,
       shapeId
     });
+  }
+
+  /**
+   * Function to select a shape
+   */
+  protected deselectAllShapes() {
+    this.selectShapeById(-1);
   }
 
   /**

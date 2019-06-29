@@ -7,11 +7,13 @@ import {
   ALPHA_CONTROL_POINT,
   redrawRect,
   redrawVertex,
-  HOVERED_HANDLE_RADIUS
+  HOVERED_HANDLE_RADIUS, idx, LINE_WIDTH
 } from '../functional/draw';
 import {Canvas} from '../components/canvas';
 import {ImageView} from '../components/image_view';
 import {addBox2dLabel} from '../action/box2d';
+import {changeLabelShape, updateMidpoint} from '../action/creators';
+import {updateObject} from '../functional/util';
 
 /**
  * Box2D Controller
@@ -25,8 +27,15 @@ export class Box2dController extends BaseController {
   /** image viewer */
   protected viewer: ImageView<any>;
 
-  /** for box moving */
+  // for box moving
+  /** mouse position when moving starts */
   protected startMoveMousePos: number[];
+
+  // for box resizing
+  /** target handle number */
+  protected targetHandleNo: number;
+  /** target label */
+  protected targetLabel: LabelType | null;
 
   /**
    * Constructor
@@ -36,6 +45,9 @@ export class Box2dController extends BaseController {
     super(viewer);
     this.defaultCursorStyle = 'crosshair';
     this.controllerState = Box2dController.ControllerStates.NULL;
+    this.startMoveMousePos = [];
+    this.targetHandleNo = -1;
+    this.targetLabel = null;
   }
 
   /**
@@ -48,6 +60,24 @@ export class Box2dController extends BaseController {
   protected createLabel(x: number, y: number, w: number, h: number) {
     // FIXME: add category
     Box2dController.dispatch(addBox2dLabel([0], x, y, w, h));
+  }
+
+  /**
+   * Function to update a vertex
+   * @param {number} shapeId
+   * @param {object} props
+   */
+  protected updateVertex(shapeId: number,
+                        props: object) {
+    Box2dController.dispatch(changeLabelShape(shapeId, props));
+  }
+
+  /**
+   * Function to update the midpoints and therectangle
+   * @param {number} labelId
+   */
+  protected updateMidpoint(labelId: number) {
+    Box2dController.dispatch(updateMidpoint(labelId));
   }
 
   /**
@@ -74,7 +104,13 @@ export class Box2dController extends BaseController {
    * @param {number[]} mousePos - mouse position
    */
   public onMouseUp(mousePos: number[]): void {
-
+    if (this.controllerState === Box2dController.ControllerStates.RESIZE) {
+      this.targetHandleNo = -1;
+      this.targetLabel = null;
+      this.deselectAllShapes();
+      this.setControllerState(Box2dController.ControllerStates.SELECTED);
+    }
+    this.viewer.redrawControlCanvas();
   }
 
   /**
@@ -89,9 +125,17 @@ export class Box2dController extends BaseController {
       if (hoveredShape === null) {
         // start a new label
         this.createLabel(mousePos[0], mousePos[1], 0, 0);
+        this.setControllerState(Box2dController.ControllerStates.RESIZE);
+        this.targetHandleNo = 5;
+        this.targetLabel = this.viewer.getSelectedLabel();
       } else {
         // if targeted at an existing label, select it
+        this.selectShapeById(hoveredShape.id);
         this.selectLabelById(hoveredShape.label);
+        this.targetLabel = this.viewer.getLabelById(hoveredShape.label);
+        if (this.targetLabel === null) {
+          return;
+        }
         // manipulation based on hovered shape
         if (hoveredShape.name === 'RectType') {
           // if clicked on the rectangle, start moving
@@ -100,6 +144,8 @@ export class Box2dController extends BaseController {
         } else if (hoveredShape.name === 'VertexType') {
           // if clicked on a vertex, start resizing
           this.setControllerState(Box2dController.ControllerStates.RESIZE);
+          this.targetHandleNo = this.targetLabel.shapes
+            .indexOf(hoveredShape.id);
         }
       }
     }
@@ -110,8 +156,54 @@ export class Box2dController extends BaseController {
    * @param {number[]} mousePos - mouse position
    */
   public onMouseMove(mousePos: number[]): void {
-    if (this.controllerState === Box2dController.ControllerStates.RESIZE) {
+    console.log(this.controllerState, this.targetLabel)
+    if (this.controllerState === Box2dController.ControllerStates.RESIZE
+    && this.targetLabel !== null) {
+      console.log('resizing')
+      const shapeIds = this.targetLabel.shapes;
+      let xChangedIdxs: number[] = [];
+      let yChangedIdxs: number[] = [];
+      if (this.targetHandleNo % 2 === 0) {
+        // move a midpoint
+        const changedIdxs = [
+          idx(this.targetHandleNo + 1, 8),
+          idx(this.targetHandleNo - 1, 8)];
+        if (this.targetHandleNo % 4 === 0) {
+          // horizontal
+          xChangedIdxs = changedIdxs;
+        } else {
+          // vertical
+          yChangedIdxs = changedIdxs;
+        }
+      } else {
+        // move a vertex
+        const nextIdx = idx(this.targetHandleNo + 2, 8);
+        const prevIdx = idx(this.targetHandleNo - 2, 8);
 
+        if (this.targetHandleNo === 1 || this.targetHandleNo === 5) {
+          xChangedIdxs.push(prevIdx);
+          yChangedIdxs.push(nextIdx);
+        } else {
+          xChangedIdxs.push(nextIdx);
+          yChangedIdxs.push(prevIdx);
+        }
+      }
+      // update vertex
+      const [x, y] = this.viewer.toImageCoords(mousePos);
+      this.updateVertex(shapeIds[this.targetHandleNo], {x, y});
+      console.log('X_CHANGED', xChangedIdxs, 'X', x);
+      for (const i of xChangedIdxs) {
+        this.updateVertex(shapeIds[i], {x});
+      }
+      for (const i of yChangedIdxs) {
+        this.updateVertex(shapeIds[i], {y});
+      }
+      // update the midpoints and the rectangle
+      this.updateMidpoint(this.targetLabel.id);
+    } else if (this.controllerState === Box2dController.ControllerStates.MOVE) {
+      let dx = mousePos[0] - this.startMoveMousePos[0];
+      let dy = mousePos[1] - this.startMoveMousePos[1];
+      // make moved box within the image
     }
   }
 
@@ -162,8 +254,9 @@ export class Box2dController extends BaseController {
                      hoveredShapeId: number) {
     // Redraw rectangle
     redrawRect(shapes[label.shapes[0]] as RectType,
-      context, displayToImageRatio);
-
+      context, displayToImageRatio,
+      LINE_WIDTH,
+      label.color);
     let labelHovered = false;
     // Check if label hovered
     if (hoveredShapeId > 0) {
@@ -175,8 +268,8 @@ export class Box2dController extends BaseController {
       }
     }
 
-    // Redraw vertices if the label is hovered
-    if (labelHovered) {
+    // Redraw vertices if the label is hovered or selected
+    if (labelHovered || true) {
       for (let i = 1; i <= 8; i++) {
         const shapeId = label.shapes[i];
         // color and alpha

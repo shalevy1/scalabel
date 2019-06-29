@@ -72,14 +72,23 @@ export function rgba(color: number[], alpha: number = -1) {
 }
 
 /**
- * Get the hidden color as rgb, which encodes the id and handle index.
+ * Get rgb color from index
  * @param {number} index - The index.
- * @return {string} - The hidden color rgb string.
+ * @return {number[]} - The rgb array.
  */
-export function hiddenStyleColor(index: number) {
-  const color = index + 1;
-  return rgba([(color >> 16) & 255, (color >> 8) & 255,
-    (color & 255)]);
+export function indexToRgb(index: number) {
+  index = index + 1;
+  return [(index >> 16) & 255, (index >> 8) & 255, (index & 255)];
+}
+
+/**
+ * Get index from rgb color
+ * @param {number[]} color - The rgb color
+ * @return {number} - The encoded index.
+ */
+export function rgbToIndex(color: number[]) {
+  const index = (color[0] << 16) | (color[1] << 8) | (color[2]);
+  return index - 1;
 }
 
 /**
@@ -109,16 +118,18 @@ export function idx(i: number, length: number) {
  * @param {ShapeType} shape - the shape to redraw
  * @param {any} context - the context to redraw on
  * @param {number} displayToImageRatio - display to image ratio
+ * @param {number[]} color - the color to redraw
  */
 export function redrawControlShape(shape: ShapeType,
                                    context: any,
-                                   displayToImageRatio: number) {
+                                   displayToImageRatio: number,
+                                   color: number[]) {
   if (shape.name === 'VertexType') {
     redrawVertex(shape as VertexType, context, displayToImageRatio,
-      CONTROL_HANDLE_RADIUS);
+      CONTROL_HANDLE_RADIUS, color);
   } else if (shape.name === 'RectType') {
     redrawRect(shape as RectType, context, displayToImageRatio,
-      CONTROL_LINE_WIDTH);
+      CONTROL_LINE_WIDTH, color);
   }
 }
 
@@ -128,8 +139,8 @@ export function redrawControlShape(shape: ShapeType,
  * @param {any} context - the context to redraw on
  * @param {number} displayToImageRatio - display to image ratio
  * @param {number} radius - radius of the vertex to be drawn
- * @param {number[]} color - rgb color, max value 1
- * @param {number} alpha - alpha value, max value 1
+ * @param {number[]} color - rgb color
+ * @param {number} alpha - alpha value
  */
 export function redrawVertex(vertex: VertexType,
                              context: any,
@@ -144,13 +155,7 @@ export function redrawVertex(vertex: VertexType,
 
   context.save();
   context.beginPath();
-  if (vertex.type === VertexTypes.CONTROL_POINT
-    || vertex.type === VertexTypes.MIDPOINT) {
-    context.fillStyle = rgba(CONTROL_FILL_COLOR, ALPHA_CONTROL_POINT);
-    context.strokeStyle = rgba(CONTROL_LINE_COLOR, ALPHA_CONTROL_POINT);
-  } else {
-    context.fillStyle = rgba(color, alpha);
-  }
+  context.fillStyle = rgba(color, alpha);
   context.arc(x, y, radius, 0, 2 * Math.PI, false);
   context.closePath();
   context.fill();
@@ -163,8 +168,8 @@ export function redrawVertex(vertex: VertexType,
  * @param {any} context - the context to redraw on
  * @param {number} displayToImageRatio - display to image ratio
  * @param {number} lineWidth - line width
- * @param {number[]} color - rgba color, max value 1
- * @param {number} alpha - alpha value, max value 1
+ * @param {number[]} color - rgba color
+ * @param {number} alpha - alpha value
  * @param {boolean} dashed - whether or not the box is dashed
  */
 export function redrawRect(rect: RectType,
@@ -179,7 +184,6 @@ export function redrawRect(rect: RectType,
   const y = displayToImageRatio * rect.y;
   const w = displayToImageRatio * rect.w;
   const h = displayToImageRatio * rect.h;
-
   context.save();
   context.strokeStyle = rgba(color, alpha);
   if (dashed) {

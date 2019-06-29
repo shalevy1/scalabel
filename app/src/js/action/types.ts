@@ -36,7 +36,7 @@ export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW';
 
 // Box2D specific
 export const NEW_IMAGE_BOX2D_LABEL = 'NEW_IMAGE_BOX2D_LABEL';
-export const CHANGE_RECT = 'CHANGE_RECT';
+export const UPDATE_MIDPOINT = 'UPDATE_MIDPOINT';
 
 // Point Cloud Specific
 export const MOVE_CAMERA = 'MOVE_CAMERA';
@@ -104,6 +104,13 @@ export interface ChangeLabelShapeAction {
   shapeId: number;
   /** properties to update for the shape */
   props: object;
+}
+
+export interface UpdateMidpointAction {
+  /** Type of the action */
+  type: typeof UPDATE_MIDPOINT;
+  /** Shape ID */
+  labelId: number;
 }
 
 export interface ChangeLabelPropsAction {
@@ -179,15 +186,6 @@ export interface NewImageBox2dLabelAction {
   optionalAttributes: any;
 }
 
-export interface ChangeRectAction {
-  /** Type of the action */
-  type: typeof CHANGE_RECT;
-  /** ID of the shape */
-  shapeId: number;
-  /** Target box attributes */
-  targetBoxAttributes: any;
-}
-
 export interface MoveCameraAction {
   /** Type of the action */
   type: typeof MOVE_CAMERA;
@@ -221,6 +219,6 @@ export type ActionTypes =
     | SelectLabelAction
     | SelectShapeAction
     | ToggleAssistantViewAction
-    | ChangeRectAction
+    | UpdateMidpointAction
     | MoveCameraAction
     | MoveCameraAndTargetAction;

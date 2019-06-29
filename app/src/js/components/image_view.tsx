@@ -8,11 +8,15 @@ import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
 import {BaseController} from '../controllers/base_controller';
 import {Box2dController} from '../controllers/box2d_controller';
-import {mode, redrawControlShape} from '../functional/draw';
+import {indexToRgb, mode, redrawControlShape, rgbToIndex} from '../functional/draw';
 
 interface ClassType {
-  /** canvas */
-  canvas: string;
+  /** image canvas */
+  image_canvas: string;
+  /** label canvas */
+  label_canvas: string;
+  /** control canvas */
+  control_canvas: string;
   /** image display area */
   display: string;
   /** background */
@@ -104,8 +108,6 @@ export class ImageView extends Canvas2d<Props> {
   private _startGrabVisibleCoords: number[];
 
   // control canvas
-  /** The map from the encoding drawn on the control canvas to shape ID */
-  private _controlMap: { [key: number]: number };
   /** The control map key of the shape being hovered */
   private hoveredShapeId: number;
 
@@ -138,7 +140,6 @@ export class ImageView extends Canvas2d<Props> {
     this.canvasWidth = 0;
     this.displayToImageRatio = 1;
     this.scrollTimer = undefined;
-    this._controlMap = {};
     this.hoveredShapeId = -1;
 
     // set keyboard listeners
@@ -147,7 +148,7 @@ export class ImageView extends Canvas2d<Props> {
 
     // controllers
     this.controllers = {
-      box2d: new Box2dController()
+      box2d: new Box2dController(this)
     };
   }
 
@@ -207,18 +208,33 @@ export class ImageView extends Canvas2d<Props> {
    * @param {number[]} mousePos: position of the mouse
    * @return {int}: the selected label
    */
-  private getKeyInControlMap(mousePos: number[]) {
+  private updateHoveredShape(mousePos: number[]) {
     const [x, y] = this.toCanvasCoords(mousePos,
       true);
     const data = this.controlContext.getImageData(x, y, 4, 4).data;
     const arr = [];
     for (let i = 0; i < 16; i++) {
-      const color =
-        (data[i * 4] << 16) | (data[i * 4 + 1] << 8) | data[i * 4 + 2];
+      const color = rgbToIndex(data.slice(i * 4, i * 4 + 3));
       arr.push(color);
     }
     // finding the mode of the data array to deal with anti-aliasing
-    return mode(arr) - 1;
+    const controlColor = mode(arr);
+    this.hoveredShapeId = this.controlColorToShapeId(controlColor);
+  }
+
+  /**
+   * Convert the color on the control canvas to shape ID
+   * @param {number} color
+   * @return {number}
+   */
+  private controlColorToShapeId(color: number) {
+    const state = this.state.session;
+    const item = state.current.item;
+    const shapes = state.items[item].shapes;
+    if (shapes) {
+      return Number(Object.keys(shapes)[color]);
+    }
+    return -1;
   }
 
   /**
@@ -253,17 +269,16 @@ export class ImageView extends Canvas2d<Props> {
     }
     return null;
   }
+
   /**
    * Get the label under the mouse.
-   * @param {number[]} mousePos: position of the mouse
-   * @return {Shape | null}: the occupied shape
+   * @return {LabelType}: the occupied shape
    */
-  public getShapeByPosition(mousePos: number[]) {
-    const shapeIndex = this.getKeyInControlMap(mousePos);
-    if (shapeIndex >= 0) {
-      return this._controlMap[shapeIndex];
-    }
-    return -1;
+  public getSelectedLabel() {
+    const state = this.state.session;
+    const item = state.current.item;
+    const labels = state.items[item].labels;
+    return labels[state.current.label];
   }
 
   /**
@@ -310,15 +325,23 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
+   * Callback function when mouse leaves
+   * @param {MouseEvent} e - event
+   */
+  private onMouseLeave(e: MouseEvent) {
+    this._keyDownMap = {};
+    this.onMouseUp(e);
+  }
+
+  /**
    * Callback function when mouse moves
    * @param {MouseEvent} e - event
    */
   private onMouseMove(e: MouseEvent) {
     // update the currently hovered shape
     const mousePos = this.getMousePos(e);
-    this.hoveredShapeId = this.getShapeByPosition(mousePos);
-    this.hoveredLabel =
-
+    this.updateHoveredShape(mousePos);
+    // FIXME: update hovered label
     // grabbing image
     if (this.isKeyDown('ctrl')) {
       if (this._isGrabbingImage) {
@@ -334,6 +357,7 @@ export class ImageView extends Canvas2d<Props> {
 
     // label-specific handling of mouse move
     this.getCurrentController().onMouseMove(mousePos);
+    this.redrawLabelCanvas();
   }
 
   /**
@@ -458,12 +482,17 @@ export class ImageView extends Canvas2d<Props> {
    * If affine, assumes values to be [x, y]. Otherwise
    * performs linear transformation.
    * @param {Array<number>} values - the values to convert.
+   * @param {boolean} upRes - whether the canvas has higher resolution
    * @return {Array<number>} - the converted values.
    */
-  public toImageCoords(values: number[]) {
+  public toImageCoords(values: number[], upRes: boolean = true) {
+    console.log(this.displayToImageRatio, this.UP_RES_RATIO)
     if (values) {
       for (let i = 0; i < values.length; i++) {
         values[i] /= this.displayToImageRatio;
+        if (upRes) {
+          values[i] /= this.UP_RES_RATIO;
+        }
       }
     }
     return values;
@@ -584,26 +613,9 @@ export class ImageView extends Canvas2d<Props> {
    */
   public render() {
     const {classes} = this.props;
-    const imageCanvas = (<canvas
-      key='image-canvas'
-      className={classes.canvas}
-      ref={(canvas) => {
-        if (canvas) {
-          this.imageCanvas = canvas;
-          this.imageContext = canvas.getContext('2d');
-          const displayRect =
-            this.display.getBoundingClientRect();
-          if (displayRect.width
-            && displayRect.height
-            && getCurrentItem().loaded) {
-            this.updateScale(canvas, false);
-          }
-        }
-      }}
-    />);
     const controlCanvas = (<canvas
       key='control-canvas'
-      className={classes.canvas}
+      className={classes.control_canvas}
       ref={(canvas) => {
         if (canvas) {
           this.controlCanvas = canvas;
@@ -620,7 +632,7 @@ export class ImageView extends Canvas2d<Props> {
     />);
     const labelCanvas = (<canvas
       key='label-canvas'
-      className={classes.canvas}
+      className={classes.label_canvas}
       ref={(canvas) => {
         if (canvas) {
           this.labelCanvas = canvas;
@@ -631,6 +643,23 @@ export class ImageView extends Canvas2d<Props> {
             && displayRect.height
             && getCurrentItem().loaded) {
             this.updateScale(canvas, true);
+          }
+        }
+      }}
+    />);
+    const imageCanvas = (<canvas
+      key='image-canvas'
+      className={classes.image_canvas}
+      ref={(canvas) => {
+        if (canvas) {
+          this.imageCanvas = canvas;
+          this.imageContext = canvas.getContext('2d');
+          const displayRect =
+            this.display.getBoundingClientRect();
+          if (displayRect.width
+            && displayRect.height
+            && getCurrentItem().loaded) {
+            this.updateScale(canvas, false);
           }
         }
       }}
@@ -654,6 +683,7 @@ export class ImageView extends Canvas2d<Props> {
           onMouseDown={(e) => this.onMouseDown(e)}
           onMouseMove={(e) => this.onMouseMove(e)}
           onMouseUp={(e) => this.onMouseUp(e)}
+          onMouseLeave={(e) => this.onMouseLeave(e)}
           onDblClick={(e) => this.onDblClick(e)}
           onWheel={withOptions((e) => this.onWheel(e), {passive: false})}
         />
@@ -784,14 +814,21 @@ export class ImageView extends Canvas2d<Props> {
 
   /**
    * Redraw the control canvas
-   * @param {any} shapes - shapes to draw
+   * @param {object} shapes - shapes to draw
    * @return {boolean}
    */
-  protected _redrawControlCanvas(shapes: any): boolean {
+  protected _redrawControlCanvas(shapes: object): boolean {
     this.clearCanvas(this.controlCanvas, this.controlContext);
-    for (const shapeID of Object.values(this._controlMap)) {
-      redrawControlShape(shapes[shapeID], this.controlContext,
-        this.displayToImageRatio * this.UP_RES_RATIO);
+    // counter as control canvas index
+    let counter = 0;
+    if (shapes) {
+      for (const shape of Object.values(shapes)) {
+        const color = indexToRgb(counter);
+        redrawControlShape(shape, this.controlContext,
+          this.displayToImageRatio * this.UP_RES_RATIO,
+          color);
+        counter += 1;
+      }
     }
     return true;
   }

@@ -812,10 +812,15 @@ export class ImageView extends Canvas2d<Props> {
    */
   protected _redrawLabelCanvas(labels: object, shapes: any): boolean {
     this.clearCanvas(this.labelCanvas, this.labelContext);
+    const selectedLabel = this.getSelectedLabel();
+    let selectedLabelId = -1;
+    if (selectedLabel) {
+      selectedLabelId = selectedLabel.id;
+    }
     for (const label of Object.values(labels)) {
       this.controllers[label.type].redrawLabel(label, shapes,
         this.labelContext, this.displayToImageRatio * this.UP_RES_RATIO,
-        this.hoveredShapeId);
+        selectedLabelId === label.id, this.hoveredShapeId);
     }
     return true;
   }

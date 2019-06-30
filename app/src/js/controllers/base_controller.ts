@@ -182,11 +182,13 @@ export class BaseController {
    * @param {ShapeType[]} _shapes
    * @param _context
    * @param {number} _displayToImageRatio
+   * @param {boolean} _selected
    * @param {number} _hoveredShapeId
    */
   public redrawLabel(_label: LabelType,
                      _shapes: ShapeType[], _context: any,
                      _displayToImageRatio: number,
+                     _selected: boolean,
                      _hoveredShapeId: number) {
     // redraw a single label
   }

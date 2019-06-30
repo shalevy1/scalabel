@@ -12,8 +12,9 @@ import {
 import {Canvas} from '../components/canvas';
 import {ImageView} from '../components/image_view';
 import {addBox2dLabel} from '../action/box2d';
-import {changeLabelShape, updateMidpoint} from '../action/creators';
+import {changeLabelShape, deleteLabel, updateMidpoint} from '../action/creators';
 import {updateObject} from '../functional/util';
+import {Label} from '@material-ui/icons';
 
 /**
  * Box2D Controller
@@ -63,6 +64,23 @@ export class Box2dController extends BaseController {
   }
 
   /**
+   * Function to delete a label
+   * @param {number} labelId
+   */
+  protected deleteLabel(labelId: number) {
+    Box2dController.dispatch(deleteLabel(labelId));
+  }
+
+  /**
+   * Check if the label is valid
+   * @param {LabelType} label
+   */
+  protected isLabelValid(label: LabelType) {
+    const rect = this.viewer.getShapeById(label.shapes[0]);
+    return rect.w > 5 && rect.h > 5;
+  }
+
+  /**
    * Function to update a vertex
    * @param {number} shapeId
    * @param {object} props
@@ -100,15 +118,39 @@ export class Box2dController extends BaseController {
   }
 
   /**
+   * Set cursor by handle number
+   * @param {number} handleNo
+   */
+  public setCursorByHandleNo(handleNo: number) {
+    if (handleNo === 0) {
+      // rectangle
+      this.viewer.setCursor('move');
+    } else if (handleNo === 1 || handleNo === 5) {
+      this.viewer.setCursor('nwse-resize');
+    } else if (handleNo === 3 || handleNo === 7) {
+      this.viewer.setCursor('nesw-resize');
+    } else if (handleNo === 2 || handleNo === 6) {
+      this.viewer.setCursor('ns-resize');
+    } else if (handleNo === 4 || handleNo === 8) {
+      this.viewer.setCursor('ew-resize');
+    }
+  }
+
+  /**
    * onMouseUp callback
    * @param {number[]} mousePos - mouse position
    */
   public onMouseUp(mousePos: number[]): void {
     if (this.controllerState === Box2dController.ControllerStates.RESIZE) {
+      this.deselectAllShapes();
+      if (!this.isLabelValid(this.targetLabel)) {
+        this.deleteLabel(this.targetLabel.id);
+        this.setControllerState(Box2dController.ControllerStates.NULL);
+      } else {
+        this.setControllerState(Box2dController.ControllerStates.SELECTED);
+      }
       this.targetHandleNo = -1;
       this.targetLabel = null;
-      this.deselectAllShapes();
-      this.setControllerState(Box2dController.ControllerStates.SELECTED);
     }
     this.viewer.redrawControlCanvas();
   }
@@ -121,7 +163,7 @@ export class Box2dController extends BaseController {
     // find the target shape
     const hoveredShape = this.viewer.getHoveredShape();
     if (this.controllerState === Box2dController.ControllerStates.NULL ||
-      this.controllerState === Box2dController.ControllerStates.SELECTED) {
+        this.controllerState === Box2dController.ControllerStates.SELECTED) {
       if (hoveredShape === null) {
         // start a new label
         this.createLabel(mousePos[0], mousePos[1], 0, 0);
@@ -146,7 +188,6 @@ export class Box2dController extends BaseController {
           this.setControllerState(Box2dController.ControllerStates.RESIZE);
           this.targetHandleNo = this.targetLabel.shapes
             .indexOf(hoveredShape.id);
-          console.log('in')
         }
       }
     }
@@ -160,6 +201,7 @@ export class Box2dController extends BaseController {
     console.log('state', this.controllerState)
     if (this.controllerState === Box2dController.ControllerStates.RESIZE
     && this.targetLabel !== null) {
+      this.setCursorByHandleNo(this.targetHandleNo);
       const shapeIds = this.targetLabel.shapes;
       let xChangedIdxs: number[] = [];
       let yChangedIdxs: number[] = [];
@@ -210,18 +252,7 @@ export class Box2dController extends BaseController {
       if (hoveredShape) {
         const hoveredLabel = this.viewer.getLabelById(hoveredShape.label);
         const handleNo = hoveredLabel.shapes.indexOf(hoveredShape.id);
-        if (handleNo === 0) {
-          // rectangle
-          this.viewer.setCursor('move');
-        } else if (handleNo === 1 || handleNo === 5) {
-          this.viewer.setCursor('nwse-resize');
-        } else if (handleNo === 3 || handleNo === 7) {
-          this.viewer.setCursor('nesw-resize');
-        } else if (handleNo === 2 || handleNo === 6) {
-          this.viewer.setCursor('ns-resize');
-        } else if (handleNo === 4 || handleNo === 8) {
-          this.viewer.setCursor('ew-resize');
-        }
+        this.setCursorByHandleNo(handleNo);
       }
     }
   }
@@ -264,12 +295,14 @@ export class Box2dController extends BaseController {
    * @param {ShapeType[]} shapes
    * @param context
    * @param {number} displayToImageRatio
+   * @param {boolean} selected
    * @param {number} hoveredShapeId
    */
   public redrawLabel(label: LabelType,
                      shapes: ShapeType[],
                      context: any,
                      displayToImageRatio: number,
+                     selected: boolean,
                      hoveredShapeId: number) {
     // Redraw rectangle
     redrawRect(shapes[label.shapes[0]] as RectType,
@@ -288,7 +321,7 @@ export class Box2dController extends BaseController {
     }
 
     // Redraw vertices if the label is hovered or selected
-    if (labelHovered || true) {
+    if (labelHovered || selected) {
       for (let i = 1; i <= 8; i++) {
         const shapeId = label.shapes[i];
         // color and alpha

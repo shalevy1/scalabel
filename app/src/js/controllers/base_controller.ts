@@ -6,6 +6,7 @@ import {Canvas} from '../components/canvas';
 import * as types from '../action/types';
 import {addBox2dLabel} from '../action/box2d';
 import {Box2dController} from './box2d_controller';
+import {changeLabelShape} from '../action/creators';
 /**
  * Basic controller
  * If there is no temporary object or algorithm involved, this is usually enough
@@ -93,9 +94,19 @@ export class BaseController {
    */
   protected selectShapeById(shapeId: number) {
     BaseController.dispatch({
-      type: types.SELECT_LABEL,
+      type: types.SELECT_SHAPE,
       shapeId
     });
+  }
+
+  /**
+   * Function to update a shape
+   * @param {number} shapeId
+   * @param {object} props
+   */
+  protected updateShape(shapeId: number,
+                        props: object) {
+    BaseController.dispatch(changeLabelShape(shapeId, props));
   }
 
   /**

@@ -36,7 +36,6 @@ export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW';
 
 // Box2D specific
 export const NEW_IMAGE_BOX2D_LABEL = 'NEW_IMAGE_BOX2D_LABEL';
-export const UPDATE_MIDPOINT = 'UPDATE_MIDPOINT';
 
 // Point Cloud Specific
 export const MOVE_CAMERA = 'MOVE_CAMERA';

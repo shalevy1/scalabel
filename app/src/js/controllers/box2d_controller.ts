@@ -81,24 +81,6 @@ export class Box2dController extends BaseController {
   }
 
   /**
-   * Function to update a vertex
-   * @param {number} shapeId
-   * @param {object} props
-   */
-  protected updateVertex(shapeId: number,
-                        props: object) {
-    Box2dController.dispatch(changeLabelShape(shapeId, props));
-  }
-
-  /**
-   * Function to update the midpoints and therectangle
-   * @param {number} labelId
-   */
-  protected updateMidpoint(labelId: number) {
-    Box2dController.dispatch(updateMidpoint(labelId));
-  }
-
-  /**
    * Function to set the controller state
    * @param {number} state - The state to set to
    */
@@ -198,49 +180,66 @@ export class Box2dController extends BaseController {
    * @param {number[]} mousePos - mouse position
    */
   public onMouseMove(mousePos: number[]): void {
-    console.log('state', this.controllerState)
     if (this.controllerState === Box2dController.ControllerStates.RESIZE
     && this.targetLabel !== null) {
-      this.setCursorByHandleNo(this.targetHandleNo);
+      const [x, y] = this.viewer.toImageCoords(mousePos);
       const shapeIds = this.targetLabel.shapes;
-      let xChangedIdxs: number[] = [];
-      let yChangedIdxs: number[] = [];
+      let x1;
+      let x2;
+      let y1;
+      let y2;
       if (this.targetHandleNo % 2 === 0) {
         // move a midpoint
-        const changedIdxs = [
-          idx(this.targetHandleNo + 1, 8),
-          idx(this.targetHandleNo - 1, 8)];
-        if (this.targetHandleNo % 4 === 0) {
-          // horizontal
-          xChangedIdxs = changedIdxs;
-        } else {
-          // vertical
-          yChangedIdxs = changedIdxs;
+        const v1 = this.viewer.getShapeById(shapeIds[1]);
+        const v2 = this.viewer.getShapeById(shapeIds[5]);
+        if (this.targetHandleNo === 2) {
+          v1.y = y;
+        } else if (this.targetHandleNo === 4) {
+          v2.x = x;
+        } else if (this.targetHandleNo === 6) {
+          v2.y = y;
+        } else if (this.targetHandleNo === 8) {
+          v1.x = x;
         }
+        x1 = Math.min(v1.x, v2.x);
+        x2 = Math.max(v1.x, v2.x);
+        y1 = Math.min(v1.y, v2.y);
+        y2 = Math.max(v1.y, v2.y);
       } else {
         // move a vertex
-        const nextIdx = idx(this.targetHandleNo + 2, 8);
-        const prevIdx = idx(this.targetHandleNo - 2, 8);
-
-        if (this.targetHandleNo === 1 || this.targetHandleNo === 5) {
-          xChangedIdxs.push(prevIdx);
-          yChangedIdxs.push(nextIdx);
+        const oppVertex = this.viewer.getShapeById(
+          shapeIds[idx(this.targetHandleNo + 4, 8))];
+        x1 = Math.min(x, oppVertex.x);
+        x2 = Math.max(x, oppVertex.x);
+        y1 = Math.min(y, oppVertex.y);
+        y2 = Math.max(y, oppVertex.y);
+        if (oppVertex.x < x) {
+          if (oppVertex.y < y) {
+            this.targetHandleNo = 5;
+          } else {
+            this.targetHandleNo = 3;
+          }
         } else {
-          xChangedIdxs.push(nextIdx);
-          yChangedIdxs.push(prevIdx);
+          if (oppVertex.y < y) {
+            this.targetHandleNo = 7;
+          } else {
+            this.targetHandleNo = 1;
+          }
         }
       }
       // update vertex
-      const [x, y] = this.viewer.toImageCoords(mousePos);
-      this.updateVertex(shapeIds[this.targetHandleNo], {x, y});
-      for (const i of xChangedIdxs) {
-        this.updateVertex(shapeIds[i], {x});
-      }
-      for (const i of yChangedIdxs) {
-        this.updateVertex(shapeIds[i], {y});
-      }
-      // update the midpoints and the rectangle
-      this.updateMidpoint(this.targetLabel.id);
+      this.updateShape(shapeIds[1], {x: x1, y: y1});
+      this.updateShape(shapeIds[3], {x: x2, y: y1});
+      this.updateShape(shapeIds[5], {x: x2, y: y2});
+      this.updateShape(shapeIds[7], {x: x1, y: y2});
+      // update midpoint
+      this.updateShape(shapeIds[2], {x: (x1 + x2) / 2, y: y1});
+      this.updateShape(shapeIds[4], {x: x2, y: (y1 + y2) / 2});
+      this.updateShape(shapeIds[6], {x: (x1 + x2) / 2, y: y2});
+      this.updateShape(shapeIds[8], {x: x1, y: (y1 + y2) / 2});
+      // update rectangle
+      this.updateShape(shapeIds[0], {x: x1, y: y1, w: x2 - x1, h: y2 - y1});
+      this.setCursorByHandleNo(this.targetHandleNo);
     } else if (this.controllerState === Box2dController.ControllerStates.MOVE) {
       let dx = mousePos[0] - this.startMoveMousePos[0];
       let dy = mousePos[1] - this.startMoveMousePos[1];

@@ -88,7 +88,7 @@ export function indexToRgb(index: number) {
  */
 export function rgbToIndex(color: number[]) {
   const index = (color[0] << 16) | (color[1] << 8) | (color[2]);
-  return index - 1;
+  return index;
 }
 
 /**
@@ -97,8 +97,7 @@ export function rgbToIndex(color: number[]) {
  * @return {[number, number]}
  */
 export function getLabelAndShapeIdFromControlIndex(index: number) {
-  index = index - 1;
-  return [index >> 12, index & 1023];
+  return [((index >> 12) & 1023) - 2, index & 1023];
 }
 
 /**
@@ -109,8 +108,7 @@ export function getLabelAndShapeIdFromControlIndex(index: number) {
  */
 export function getControlColorFromLabelAndShapeId(
   labelId: number, shapeId: number) {
-  let index = (labelId << 12) & shapeId;
-  index = index + 1;
+  let index = ((labelId + 2) << 12) | shapeId;
   return [(index >> 16) & 255, (index >> 8) & 255, (index & 255)];
 }
 

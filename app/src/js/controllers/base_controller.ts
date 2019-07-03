@@ -99,7 +99,7 @@ export class BaseController {
    * Function to deselect all labels
    */
   protected deselectAllLabels() {
-    this.selectLabelById(-1);
+    this.selectLabelById(-2);
   }
 
   /**

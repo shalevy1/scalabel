@@ -78,13 +78,14 @@ export class Box2dController extends BaseController {
    * @return {DrawableLabel}
    */
   protected copySelectedLabelAsTemporaryDrawableLabel() {
-    const selectedLabel = this.viewer.getSelectedLabel();
-    const rect = selectedLabel.shapes[0];
-    return this.getBox2dDrawableLabel(
-      rect.x, rect.y, rect.w, rect.h,
-      selectedLabel.category, selectedLabel.id,
-      selectedLabel.color
+    const selectedDrawableLabel = this.viewer.getSelectedDrawableLabel();
+    const rect = selectedDrawableLabel.shapes[0];
+    const temporaryDrawableLabel = this.getBox2dDrawableLabel(
+      rect,
+      selectedDrawableLabel.category, selectedDrawableLabel.id,
+      selectedDrawableLabel.color
     );
+    this.viewer.setTemporaryDrawableLabel(temporaryDrawableLabel);
   }
 
   /**
@@ -98,7 +99,7 @@ export class Box2dController extends BaseController {
     shapes: {[key: string]: ShapeType}): DrawableLabel {
     const rect = shapes[label.shapes[0]] as RectType;
     return this.getBox2dDrawableLabel(
-      rect.x, rect.y, rect.w, rect.h,
+      rect,
       label.category,
       label.id,
       label.color);
@@ -106,22 +107,21 @@ export class Box2dController extends BaseController {
 
   /**
    * Create AddLabelAction to create a box2d label
-   * @param {number} x
-   * @param {number} y
-   * @param {number} w
-   * @param {number} h
+   * @param {RectType} rect
    * @param {number[]} category: list of category ids
    * @param {number} id
    * @param {number[]} color
    * @return {DrawableLabel}
    */
   protected getBox2dDrawableLabel(
-    x: number, y: number, w: number, h: number,
+    rect: RectType,
     category: number[] = [0], id: number = -1, color: number[] | null = null)
     : DrawableLabel {
     // FIXME: add category
-    // rectangle
-    const rect = makeRect({x, y, w, h});
+    const x = rect.x;
+    const y = rect.y;
+    const w = rect.w;
+    const h = rect.h;
 
     // vertices
     const tl = makeVertex({x, y});
@@ -152,6 +152,20 @@ export class Box2dController extends BaseController {
   }
 
   /**
+   * Get new box2d label
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   * @return {DrawableLabel}
+   */
+  protected newBox2dDrawableLabel(x: number, y: number, w: number, h: number)
+    : DrawableLabel {
+    const rect = makeRect({x, y, w, h});
+    return this.getBox2dDrawableLabel(rect);
+  }
+
+  /**
    * Function to update the temporary label
    * @param {number} x
    * @param {number} y
@@ -159,8 +173,18 @@ export class Box2dController extends BaseController {
    * @param {number} h
    */
   protected updateTemporaryLabel(x: number, y: number, w: number, h: number) {
-    const label = this.getBox2dDrawableLabel(x, y, w, h);
-    this.viewer.setTemporaryDrawableLabel(label);
+    const previousLabel = this.viewer.temporaryDrawableLabel;
+    const rect = previousLabel.shapes[0];
+    rect.x = x;
+    rect.y = y;
+    rect.w = w;
+    rect.h = h;
+    if (previousLabel) {
+      const label = this.getBox2dDrawableLabel(rect,
+        previousLabel.category, previousLabel.id, previousLabel.color
+      );
+      this.viewer.setTemporaryDrawableLabel(label);
+    }
   }
 
   /**
@@ -189,6 +213,7 @@ export class Box2dController extends BaseController {
     if (state === Box2dController.ControllerStates.NULL) {
       this.viewer.resetTemporaryDrawableLabel();
       this.viewer.redrawLabelCanvas();
+      this.deselectAllLabels();
     } else if (state === Box2dController.ControllerStates.SELECTED) {
       // select
       this.viewer.resetTemporaryDrawableLabel();
@@ -246,34 +271,32 @@ export class Box2dController extends BaseController {
    */
   public onMouseDown(mousePos: number[]): void {
     // find the target shape
-    const [hoveredLabelId, hoveredShapeId] =
-      this.viewer.getHoveredLabelAndShapeId();
     if (this.controllerState === Box2dController.ControllerStates.NULL ||
         this.controllerState === Box2dController.ControllerStates.SELECTED) {
-      if (hoveredLabelId < 0) {
+      if (this.viewer.hoveredLabelId < 0) {
         // start a new label
-        const newLabel = this.getBox2dDrawableLabel(
+        const newLabel = this.newBox2dDrawableLabel(
           mousePos[0], mousePos[1], 0, 0);
         this.viewer.setTemporaryDrawableLabel(newLabel);
         this.setControllerState(Box2dController.ControllerStates.RESIZE);
         this.targetHandleNo = 5;
       } else {
         // if targeted at an existing label, select it
-        this.selectLabelById(hoveredLabelId);
+        this.selectLabelById(this.viewer.hoveredLabelId);
         this.copySelectedLabelAsTemporaryDrawableLabel();
         // manipulation based on hovered shape
-        if (hoveredShapeId === 0) {
+        if (this.viewer.hoveredShapeIndex === 0) {
           // if clicked on the rectangle, start moving
           this.setControllerState(Box2dController.ControllerStates.MOVE);
           this.startMoveMousePos = mousePos;
         } else {
           // if clicked on a vertex, start resizing
           this.setControllerState(Box2dController.ControllerStates.RESIZE);
-          this.targetHandleNo = this.viewer.temporaryDrawableLabel.shapes
-            .indexOf(hoveredShapeId);
+          this.targetHandleNo = this.viewer.hoveredShapeIndex;
         }
       }
     }
+    this.viewer.redrawLabelCanvas();
   }
 
   /**
@@ -346,10 +369,8 @@ export class Box2dController extends BaseController {
     } else if (this.controllerState ===
       Box2dController.ControllerStates.SELECTED ||
       this.controllerState === Box2dController.ControllerStates.NULL) {
-      const [hoveredLabelId, hoveredShapeId] =
-        this.viewer.getHoveredLabelAndShapeId();
-      if (hoveredLabelId >= 0) {
-        this.setCursorByHandleNo(hoveredShapeId);
+      if (this.viewer.hoveredLabelId >= 0) {
+        this.setCursorByHandleNo(this.viewer.hoveredShapeIndex);
       }
     }
   }

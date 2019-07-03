@@ -24,7 +24,8 @@ export class Box2dViewer extends BaseViewer {
    * @param {any} context
    * @param {number} displayToImageRatio
    * @param {number} selectedLabelId
-   * @param {number} hoveredIndex
+   * @param {number} hoveredLabelId
+   * @param {number} hoveredShapeIndex
    * @param {boolean} controlCanvasMode
    * @return {boolean}
    */
@@ -32,11 +33,10 @@ export class Box2dViewer extends BaseViewer {
                 context: any,
                 displayToImageRatio: number,
                 selectedLabelId: number,
-                hoveredIndex: number,
+                hoveredLabelId: number,
+                hoveredShapeIndex: number,
                 controlCanvasMode: boolean = false): boolean {
-    // find hovered label and shape ID
-    const [hoveredLabelId, hoveredShapeId] =
-      getLabelAndShapeIdFromControlIndex(hoveredIndex);
+    // find hovered label ID and shape index
     for (const label of labels) {
       // redraw rectangle
       // if (label.id === -1) {
@@ -52,8 +52,10 @@ export class Box2dViewer extends BaseViewer {
         displayToImageRatio,
         lineWidth, color);
 
-      // Redraw vertices if the label is hovered or selected
-      if (label.id === hoveredLabelId || label.id === selectedLabelId) {
+      // Redraw vertices if the label is hovered or selected,
+      // or the control canvas mode
+      if (label.id === hoveredLabelId || label.id === selectedLabelId
+      || controlCanvasMode) {
         for (let i = 1; i <= 8; i++) {
           // color and alpha
           let color = label.color;
@@ -70,7 +72,7 @@ export class Box2dViewer extends BaseViewer {
               alpha = ALPHA_CONTROL_POINT;
             }
             // radius
-            if (i === hoveredShapeId) {
+            if (i === hoveredShapeIndex && label.id === hoveredLabelId) {
               radius = HOVERED_HANDLE_RADIUS;
             }
           }

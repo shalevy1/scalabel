@@ -17,7 +17,8 @@ export class BaseViewer {
    * @param {any} _context
    * @param {number} _displayToImageRatio
    * @param {number} _selectedLabelId
-   * @param {number} _hoveredIndex
+   * @param {number} _hoveredLabelId
+   * @param {number} _hoveredShapeIndex
    * @param {boolean} _controlCanvasMode
    * @return {boolean}: whether redraw is successful
    */
@@ -25,7 +26,8 @@ export class BaseViewer {
                 _context: any,
                 _displayToImageRatio: number,
                 _selectedLabelId: number,
-                _hoveredIndex: number,
+                _hoveredLabelId: number,
+                _hoveredShapeIndex: number,
                 _controlCanvasMode: boolean = false) {
   }
 }

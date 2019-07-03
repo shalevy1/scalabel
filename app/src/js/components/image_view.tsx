@@ -117,8 +117,11 @@ export class ImageView extends Canvas2d<Props> {
   private _startGrabVisibleCoords: number[];
 
   // control canvas
-  /** The control map key of the shape being hovered */
-  private hoveredIndex: number;
+  /** The ID of the hovered label.
+   * 0: background; 1: temporary; 2+: labels **/
+  private hoveredLabelId: number;
+  /** The index of the hovered shape */
+  private hoveredShapeIndex: number;
 
   /** controllers */
   private controllers: { [key: string]: BaseController };
@@ -156,7 +159,8 @@ export class ImageView extends Canvas2d<Props> {
     this.canvasWidth = 0;
     this.displayToImageRatio = 1;
     this.scrollTimer = undefined;
-    this.hoveredIndex = -1;
+    this.hoveredLabelId = 0;
+    this.hoveredShapeIndex = -1;
 
     // set keyboard listeners
     document.onkeydown = this.onKeyDown.bind(this);
@@ -237,7 +241,7 @@ export class ImageView extends Canvas2d<Props> {
    * @param {number[]} mousePos: position of the mouse
    * @return {int}: the selected label
    */
-  private updateHoveredIndex(mousePos: number[]) {
+  private updateHoveredLabelAndShapeId(mousePos: number[]) {
     const [x, y] = this.toCanvasCoords(mousePos,
       true);
     const data = this.controlContext.getImageData(x, y, 4, 4).data;
@@ -247,7 +251,9 @@ export class ImageView extends Canvas2d<Props> {
       arr.push(color);
     }
     // finding the mode of the data array to deal with anti-aliasing
-    this.hoveredIndex = mode(arr);
+    const hoveredIndex = mode(arr);
+    [this.hoveredLabelId, this.hoveredShapeIndex] =
+      getLabelAndShapeIdFromControlIndex(hoveredIndex);
   }
 
   /**
@@ -312,17 +318,6 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
-   * Get the hovered label and shape ID
-   * @return {number[]}
-   */
-  public getHoveredLabelAndShapeId(): number[] {
-    if (this.hoveredIndex > 0) {
-      return getLabelAndShapeIdFromControlIndex(this.hoveredIndex);
-    }
-    return [-1, -1];
-  }
-
-  /**
    * Get the color of the next label
    * @return {number[]}
    */
@@ -334,13 +329,31 @@ export class ImageView extends Canvas2d<Props> {
 
   /**
    * Get the label under the mouse.
-   * @return {LabelType}: the occupied shape
+   * @return {DrawableLabel | null}: the occupied shape
    */
-  public getSelectedLabel() {
+  public getSelectedDrawableLabel(): DrawableLabel | null {
+    const selectedLabelId = this.getSelectedLabelId();
+    if (this.temporaryDrawableLabel
+      && selectedLabelId === this.temporaryDrawableLabel.id) {
+      return this.temporaryDrawableLabel;
+    }
+    for (const labelType of Object.keys(this.drawableLabels)) {
+      for (const drawableLabel of this.drawableLabels[labelType]) {
+        if (drawableLabel.id === selectedLabelId) {
+          return drawableLabel;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the selected label ID
+   * @return {number}: the selected label ID
+   */
+  public getSelectedLabelId(): number {
     const state = this.state.session;
-    const item = state.current.item;
-    const labels = state.items[item].labels;
-    return labels[state.current.label];
+    return state.current.label;
   }
 
   /**
@@ -402,7 +415,7 @@ export class ImageView extends Canvas2d<Props> {
   private onMouseMove(e: MouseEvent) {
     // update the currently hovered shape
     const mousePos = this.getMousePos(e);
-    this.updateHoveredIndex(mousePos);
+    this.updateHoveredLabelAndShapeId(mousePos);
     // FIXME: update hovered label
     // grabbing image
     if (this.isKeyDown('ctrl')) {
@@ -833,18 +846,12 @@ export class ImageView extends Canvas2d<Props> {
     // clear label canvas
     this.clearCanvas(canvas, context);
     // get selected label
-    const selectedLabel = this.getSelectedLabel();
-    let selectedLabelId = -1;
-    if (selectedLabel) {
-      selectedLabelId = selectedLabel.id;
-    }
+    const selectedLabelId = this.getSelectedLabelId();
     let labelTypes = Object.keys(this.drawableLabels);
     if (this.temporaryDrawableLabel) {
       labelTypes = labelTypes.concat(this.temporaryDrawableLabel.type);
     }
     for (const labelType of new Set(labelTypes)) {
-        labelType === Object.keys(this.drawableLabels)[0],
-        Object.keys(this.drawableLabels).indexOf(labelType) >= 0)
       let labels: DrawableLabel[] = [];
       // filter out replaced label
       if (Object.keys(this.drawableLabels).indexOf(labelType) >= 0) {
@@ -864,7 +871,8 @@ export class ImageView extends Canvas2d<Props> {
       this.viewers[labelType].redraw(
         labels, context,
         this.displayToImageRatio * this.UP_RES_RATIO,
-        selectedLabelId, this.hoveredIndex, onControlCanvas
+        selectedLabelId, this.hoveredLabelId, this.hoveredShapeIndex,
+        onControlCanvas
       );
     }
 }

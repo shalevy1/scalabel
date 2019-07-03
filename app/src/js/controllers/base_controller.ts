@@ -1,11 +1,8 @@
 import Session from '../common/session';
-import {ShapeType, State} from '../functional/types';
+import {DrawableLabel, RectType, ShapeType, State} from '../functional/types';
 import {LabelType} from '../functional/types';
-import {ImageView} from '../components/image_view';
 import {Canvas} from '../components/canvas';
 import * as types from '../action/types';
-import {addBox2dLabel} from '../action/box2d';
-import {Box2dController} from './box2d_controller';
 import {changeLabelShape} from '../action/creators';
 /**
  * Basic controller
@@ -89,17 +86,6 @@ export class BaseController {
   }
 
   /**
-   * Function to select a shape
-   * @param {number} shapeId
-   */
-  protected selectShapeById(shapeId: number) {
-    BaseController.dispatch({
-      type: types.SELECT_SHAPE,
-      shapeId
-    });
-  }
-
-  /**
    * Function to update a shape
    * @param {number} shapeId
    * @param {object} props
@@ -110,18 +96,10 @@ export class BaseController {
   }
 
   /**
-   * Function to select a shape
-   */
-  protected deselectAllShapes() {
-    this.selectShapeById(-1);
-  }
-
-  /**
    * Function to deselect all labels
    */
   protected deselectAllLabels() {
     this.selectLabelById(-1);
-    this.selectShapeById(-1);
   }
 
   /**
@@ -129,6 +107,18 @@ export class BaseController {
    */
   protected createLabel(..._: any) {
     // create a label
+  }
+
+  /**
+   * function to get DrawableLabel from state label
+   * @param {LabelType} _label
+   * @param {{ [key: string]: ShapeType }} _shapes
+   * @return LabelType | null
+   */
+  public getDrawableLabelFromStateLabel(
+    _label: LabelType,
+    _shapes: { [key: string]: ShapeType }): DrawableLabel | null {
+    return null;
   }
 
   /**

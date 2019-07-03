@@ -105,13 +105,6 @@ export interface ChangeLabelShapeAction {
   props: object;
 }
 
-export interface UpdateMidpointAction {
-  /** Type of the action */
-  type: typeof UPDATE_MIDPOINT;
-  /** Shape ID */
-  labelId: number;
-}
-
 export interface ChangeLabelPropsAction {
   /** Type of the action */
   type: typeof CHANGE_LABEL_PROPS;
@@ -126,6 +119,8 @@ export interface DeleteLabelAction {
   type: typeof DELETE_LABEL;
   /** ID of label to be deleted */
   labelId: number;
+  /** Index of the item the label is in */
+  itemId: number;
 }
 
 export interface TagImageAction {
@@ -174,15 +169,6 @@ export interface ChangeCategoryAction {
 export interface ToggleAssistantViewAction {
   /** Type of the action */
   type: typeof TOGGLE_ASSISTANT_VIEW;
-}
-
-export interface NewImageBox2dLabelAction {
-  /** Type of the action */
-  type: typeof NEW_IMAGE_BOX2D_LABEL;
-  /** Item of the corresponding item */
-  itemId: number;
-  /** Optional attributes */
-  optionalAttributes: any;
 }
 
 export interface MoveCameraAction {

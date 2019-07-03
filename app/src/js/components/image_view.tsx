@@ -1,14 +1,23 @@
 import {Canvas2d} from './canvas2d';
 import * as React from 'react';
 import Session from '../common/session';
-import {ImageViewerConfigType, ShapeType, ViewerConfigType} from '../functional/types';
+import {DrawableLabel, ImageViewerConfigType, LabelType, ShapeType, ViewerConfigType} from '../functional/types';
 import {withStyles} from '@material-ui/core/styles';
 import * as types from '../action/types';
 import EventListener, {withOptions} from 'react-event-listener';
 import {imageViewStyle} from '../styles/label';
 import {BaseController} from '../controllers/base_controller';
 import {Box2dController} from '../controllers/box2d_controller';
-import {indexToRgb, mode, redrawControlShape, rgbToIndex} from '../functional/draw';
+import {
+  getAllShapesOfBox2d, getColorById,
+  getLabelAndShapeIdFromControlIndex,
+  indexToRgb,
+  mode,
+  redrawControlShape,
+  rgbToIndex
+} from '../functional/draw';
+import {BaseViewer} from '../viewers/base_viewer';
+import {Box2dViewer} from '../viewers/box2d_viewer';
 
 interface ClassType {
   /** image canvas */
@@ -109,10 +118,17 @@ export class ImageView extends Canvas2d<Props> {
 
   // control canvas
   /** The control map key of the shape being hovered */
-  private hoveredShapeId: number;
+  private hoveredIndex: number;
 
   /** controllers */
   private controllers: { [key: string]: BaseController };
+
+  /** viewers */
+  private viewers: { [key: string]: BaseViewer };
+  /** drawable shapes */
+  private drawableLabels: { [key: string]: DrawableLabel[] };
+  /** temporary label */
+  private temporaryDrawableLabel: DrawableLabel | null;
 
   /**
    * Constructor, handles subscription to store
@@ -140,7 +156,7 @@ export class ImageView extends Canvas2d<Props> {
     this.canvasWidth = 0;
     this.displayToImageRatio = 1;
     this.scrollTimer = undefined;
-    this.hoveredShapeId = -1;
+    this.hoveredIndex = -1;
 
     // set keyboard listeners
     document.onkeydown = this.onKeyDown.bind(this);
@@ -150,6 +166,12 @@ export class ImageView extends Canvas2d<Props> {
     this.controllers = {
       box2d: new Box2dController(this)
     };
+    // viewers
+    this.viewers = {
+      box2d: new Box2dViewer()
+    };
+    this.drawableLabels = {};
+    this.temporaryDrawableLabel = null;
   }
 
   /**
@@ -158,7 +180,7 @@ export class ImageView extends Canvas2d<Props> {
    */
   private getCurrentController() {
     let labelType = Session.getState().config.labelType;
-    if (!(labelType in Object.keys(this.controllers))) {
+    if (Object.keys(this.controllers).indexOf(labelType) < 0) {
       labelType = 'box2d';
     }
     return this.controllers[labelType];
@@ -215,7 +237,7 @@ export class ImageView extends Canvas2d<Props> {
    * @param {number[]} mousePos: position of the mouse
    * @return {int}: the selected label
    */
-  private updateHoveredShape(mousePos: number[]) {
+  private updateHoveredIndex(mousePos: number[]) {
     const [x, y] = this.toCanvasCoords(mousePos,
       true);
     const data = this.controlContext.getImageData(x, y, 4, 4).data;
@@ -225,56 +247,89 @@ export class ImageView extends Canvas2d<Props> {
       arr.push(color);
     }
     // finding the mode of the data array to deal with anti-aliasing
-    const controlColor = mode(arr);
-    this.hoveredShapeId = this.controlColorToShapeId(controlColor);
+    this.hoveredIndex = mode(arr);
   }
 
   /**
-   * Convert the color on the control canvas to shape ID
-   * @param {number} color
-   * @return {number}
+   * function to update drawable shapes
    */
-  private controlColorToShapeId(color: number) {
+  public updateDrawableLabels() {
     const state = this.state.session;
     const item = state.current.item;
+    const labels = state.items[item].labels;
     const shapes = state.items[item].shapes;
-    if (shapes) {
-      return Number(Object.keys(shapes)[color]);
+    // TODO: sort by order
+    this.drawableLabels = {};
+    for (const label of Object.values(labels)) {
+      const drawableLabel = this.controllers[label.type]
+        .getDrawableLabelFromStateLabel(label, shapes);
+      if (drawableLabel === null) {
+        continue;
+      }
+      if (Object.keys(this.drawableLabels).indexOf(label.type) >= 0) {
+        this.drawableLabels[label.type] =
+          this.drawableLabels[label.type].concat(drawableLabel);
+      } else {
+        this.drawableLabels[label.type] = [drawableLabel];
+      }
     }
-    return -1;
+  }
+
+  /**
+   * function to reset temporary label
+   */
+  public resetTemporaryDrawableLabel() {
+    this.setTemporaryDrawableLabel(null);
+  }
+
+  /**
+   * function to reset temporary label
+   * @param {DrawableLabel | null} label
+   */
+  public setTemporaryDrawableLabel(label: DrawableLabel | null) {
+    this.temporaryDrawableLabel = label;
   }
 
   /**
    * Get label by label ID
    * @param {number} labelId - ID of the label
+   * @returns {DrawableLabel | null}
    */
-  public getLabelById(labelId: number) {
-    const state = this.state.session;
-    const item = state.current.item;
-    const labels = state.items[item].labels;
-    return labels[labelId];
-  }
-
-  /**
-   * Get shape by shape ID
-   * @param {number} shapeId - ID of the label
-   */
-  public getShapeById(shapeId: number): ShapeType {
-    const state = this.state.session;
-    const item = state.current.item;
-    const shapes = state.items[item].shapes;
-    return shapes[shapeId];
-  }
-
-  /**
-   * Get the hovered shape
-   * @return {ShapeType | null}
-   */
-  public getHoveredShape(): ShapeType | null {
-    if (this.hoveredShapeId > 0) {
-      return this.getShapeById(this.hoveredShapeId);
+  public getDrawableLabelById(labelId: number): DrawableLabel | null {
+    // override drawable label with the temporary one if applicable
+    if (this.temporaryDrawableLabel
+      && labelId === this.temporaryDrawableLabel.id) {
+      return this.temporaryDrawableLabel;
+    }
+    for (const labelType of Object.keys(this.drawableLabels)) {
+      for (const label of this.drawableLabels[labelType]) {
+        if (label.id === labelId) {
+          return label;
+        }
+      }
     }
     return null;
+  }
+
+  /**
+   * Get the hovered label and shape ID
+   * @return {number[]}
+   */
+  public getHoveredLabelAndShapeId(): number[] {
+    if (this.hoveredIndex > 0) {
+      return getLabelAndShapeIdFromControlIndex(this.hoveredIndex);
+    }
+    return [-1, -1];
+  }
+
+  /**
+   * Get the color of the next label
+   * @return {number[]}
+   */
+  public getColorOfNextLabel(): number[] {
+    // FIXME: this implementation is temporary. Need to deal with shape/label id
+    const maxObjectId = this.state.session.current.maxObjectId;
+    return getColorById(maxObjectId + 1);
   }
 
   /**
@@ -347,7 +402,7 @@ export class ImageView extends Canvas2d<Props> {
   private onMouseMove(e: MouseEvent) {
     // update the currently hovered shape
     const mousePos = this.getMousePos(e);
-    this.updateHoveredShape(mousePos);
+    this.updateHoveredIndex(mousePos);
     // FIXME: update hovered label
     // grabbing image
     if (this.isKeyDown('ctrl')) {
@@ -709,75 +764,110 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
+   * function to check if the current item is loaded
+   * @return {boolean}
+   */
+  private currentItemIsLoaded() {
+    const state = this.state.session;
+    const item = state.current.item;
+    return state.items[item].loaded;
+  }
+
+  /**
    * Function to redraw all canvases
    * @return {boolean}
    */
   public redraw(): boolean {
-    const state = this.state.session;
-    const item = state.current.item;
-    const loaded = state.items[item].loaded;
-    const labels = state.items[item].labels;
-    const shapes = state.items[item].shapes;
-    if (loaded) {
-      const image = Session.images[item];
-      // redraw imageCanvas
-      this._redrawImageCanvas(image);
-      // redraw labelCanvas
-      this._redrawLabelCanvas(labels, shapes);
-      // redraw controlCanvas
-      this._redrawControlCanvas(shapes);
-    }
+    // redraw imageCanvas
+    this.redrawImageCanvas();
+    // redraw labelCanvas
+    this.redrawLabelCanvas();
+    // redraw controlCanvas
+    this.redrawControlCanvas();
     return true;
   }
 
   /**
    * Function to redraw the image canvas
-   * @return {boolean}
    */
-  public redrawImageCanvas(): boolean {
-    const state = this.state.session;
-    const item = state.current.item;
-    const loaded = state.items[item].loaded;
-    if (loaded) {
-      const image = Session.images[item];
+  public redrawImageCanvas() {
+    if (this.currentItemIsLoaded()) {
+      const image = Session.images[this.state.session.current.item];
       // redraw imageCanvas
-      this._redrawImageCanvas(image);
+      this.clearCanvas(this.imageCanvas, this.imageContext);
+      this.imageContext.drawImage(image, 0, 0, image.width, image.height,
+        0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
     return true;
   }
 
   /**
    * Function to redraw the label canvas
-   * @return {boolean}
    */
-  public redrawLabelCanvas(): boolean {
-    const state = this.state.session;
-    const item = state.current.item;
-    const loaded = state.items[item].loaded;
-    const labels = state.items[item].labels;
-    const shapes = state.items[item].shapes;
-    if (loaded) {
-      // redraw labelCanvas
-      this._redrawLabelCanvas(labels, shapes);
+  public redrawLabelCanvas() {
+    if (this.currentItemIsLoaded()) {
+      this._redrawLabels();
     }
-    return true;
   }
 
   /**
-   * Function to redraw the control canvas
-   * @return {boolean}
+   * Function to redraw the label canvas
    */
-  public redrawControlCanvas(): boolean {
-    const state = this.state.session;
-    const item = state.current.item;
-    const loaded = state.items[item].loaded;
-    const shapes = state.items[item].shapes;
-    if (loaded) {
-      // redraw controlCanvas
-      this._redrawControlCanvas(shapes);
+  public redrawControlCanvas() {
+    if (this.currentItemIsLoaded()) {
+      this._redrawLabels(true);
     }
-    return true;
   }
+
+  /**
+   * Redraw labels
+   * @param {boolean} onControlCanvas
+   */
+  private _redrawLabels(onControlCanvas: boolean = false) {
+    let canvas = this.labelCanvas;
+    let context = this.labelContext;
+    if (onControlCanvas) {
+      canvas = this.controlCanvas;
+      context = this.controlContext;
+    }
+    // clear label canvas
+    this.clearCanvas(canvas, context);
+    // get selected label
+    const selectedLabel = this.getSelectedLabel();
+    let selectedLabelId = -1;
+    if (selectedLabel) {
+      selectedLabelId = selectedLabel.id;
+    }
+    let labelTypes = Object.keys(this.drawableLabels);
+    if (this.temporaryDrawableLabel) {
+      labelTypes = labelTypes.concat(this.temporaryDrawableLabel.type);
+    }
+    for (const labelType of new Set(labelTypes)) {
+        labelType === Object.keys(this.drawableLabels)[0],
+        Object.keys(this.drawableLabels).indexOf(labelType) >= 0)
+      let labels: DrawableLabel[] = [];
+      // filter out replaced label
+      if (Object.keys(this.drawableLabels).indexOf(labelType) >= 0) {
+        for (const label of this.drawableLabels[labelType]) {
+          if (this.temporaryDrawableLabel === null
+            || label.id !== this.temporaryDrawableLabel.id) {
+            labels = labels.concat(label);
+          }
+        }
+      }
+      // add the temporary label
+      if (this.temporaryDrawableLabel
+        && this.temporaryDrawableLabel.type === labelType) {
+        labels = labels.concat(this.temporaryDrawableLabel);
+      }
+      // draw the labels
+      this.viewers[labelType].redraw(
+        labels, context,
+        this.displayToImageRatio * this.UP_RES_RATIO,
+        selectedLabelId, this.hoveredIndex, onControlCanvas
+      );
+    }
+}
 
   /**
    * Clear the canvas
@@ -789,60 +879,6 @@ export class ImageView extends Canvas2d<Props> {
                         context: any): boolean {
     // clear context
     context.clearRect(0, 0, canvas.width, canvas.height);
-    return true;
-  }
-
-  /**
-   * Redraw the image canvas
-   * @param {HTMLImageElement} image
-   * @return {boolean}
-   */
-  protected _redrawImageCanvas(image: HTMLImageElement): boolean {
-    this.clearCanvas(this.imageCanvas, this.imageContext);
-    this.imageContext.drawImage(image, 0, 0, image.width, image.height,
-      0, 0, this.imageCanvas.width, this.imageCanvas.height);
-    return true;
-  }
-
-  /**
-   * Redraw the label canvas
-   * @param {object} labels - labels to draw
-   * @param {any} shapes - shapes to draw
-   * @return {boolean}
-   */
-  protected _redrawLabelCanvas(labels: object, shapes: any): boolean {
-    this.clearCanvas(this.labelCanvas, this.labelContext);
-    const selectedLabel = this.getSelectedLabel();
-    let selectedLabelId = -1;
-    if (selectedLabel) {
-      selectedLabelId = selectedLabel.id;
-    }
-    for (const label of Object.values(labels)) {
-      this.controllers[label.type].redrawLabel(label, shapes,
-        this.labelContext, this.displayToImageRatio * this.UP_RES_RATIO,
-        selectedLabelId === label.id, this.hoveredShapeId);
-    }
-    return true;
-  }
-
-  /**
-   * Redraw the control canvas
-   * @param {object} shapes - shapes to draw
-   * @return {boolean}
-   */
-  protected _redrawControlCanvas(shapes: object): boolean {
-    this.clearCanvas(this.controlCanvas, this.controlContext);
-    // counter as control canvas index
-    let counter = 0;
-    if (shapes) {
-      for (const shape of Object.values(shapes)) {
-        const color = indexToRgb(counter);
-        redrawControlShape(shape, this.controlContext,
-          this.displayToImageRatio * this.UP_RES_RATIO,
-          color);
-        counter += 1;
-      }
-    }
     return true;
   }
 }

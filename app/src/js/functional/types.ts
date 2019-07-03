@@ -13,7 +13,7 @@ export interface LabelType {
   parent: number;
   /** Children label IDs */
   children: number[];
-  /** Shape ids of the label */
+  /** Shape information of the label */
   shapes: number[];
   /** Selected shape of the label */
   selectedShape: number;
@@ -21,6 +21,19 @@ export interface LabelType {
   state: number;
   /** Display color index of the shape */
   color: number[];
+}
+
+export interface DrawableLabel {
+  /** type of the label */
+  type: string;
+  /** id of the label */
+  id: number;
+  /** category of the label */
+  category: number[];
+  /** color of the label */
+  color: number[] | null;
+  /** shapes of the label */
+  shapes: ShapeType[];
 }
 
 export interface Track {

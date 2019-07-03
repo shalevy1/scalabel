@@ -51,15 +51,6 @@ export function changeLabelShape(
 }
 
 /**
- * Update the midpoint and boundary of a label
- * @param {number} labelId
- * @return {UpdateMidpointAction}
- */
-export function updateMidpoint(labelId: number): types.UpdateMidpointAction {
-  return {type: types.UPDATE_MIDPOINT, labelId};
-}
-
-/**
  * Change the properties of the label
  * @param {number} labelId
  * @param {{}}props
@@ -76,9 +67,11 @@ export function changeLabelProps(
  * @param {number} labelId
  * @return {DeleteLabelAction}
  */
-export function deleteLabel(labelId: number): types.DeleteLabelAction {
+export function deleteLabel(
+  itemId: number, labelId: number): types.DeleteLabelAction {
     return {
         type: types.DELETE_LABEL,
+        itemId,
         labelId
     };
 }

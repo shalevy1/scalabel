@@ -1,5 +1,5 @@
-import {RectType, ShapeType, VertexType} from './types';
-import {VertexTypes} from './states';
+import {DrawableBox2d, DrawableLabel, LabelType, RectType, ShapeType, VertexType} from './types';
+import {makeRect, makeVertex, VertexTypes} from './states';
 import {sprintf} from 'sprintf-js';
 
 /**
@@ -89,6 +89,29 @@ export function indexToRgb(index: number) {
 export function rgbToIndex(color: number[]) {
   const index = (color[0] << 16) | (color[1] << 8) | (color[2]);
   return index - 1;
+}
+
+/**
+ * Get the label and shape ID given the control index
+ * @param {number} index
+ * @return {[number, number]}
+ */
+export function getLabelAndShapeIdFromControlIndex(index: number) {
+  index = index - 1;
+  return [index >> 12, index & 1023];
+}
+
+/**
+ * Get the control color given the label and shape IDs
+ * @param {number} labelId
+ * @param {number} shapeId
+ * @return {number[]}
+ */
+export function getControlColorFromLabelAndShapeId(
+  labelId: number, shapeId: number) {
+  let index = (labelId << 12) & shapeId;
+  index = index + 1;
+  return [(index >> 16) & 255, (index >> 8) & 255, (index & 255)];
 }
 
 /**
@@ -192,4 +215,42 @@ export function redrawRect(rect: RectType,
   context.lineWidth = lineWidth;
   context.strokeRect(x, y, w, h);
   context.restore();
+}
+
+/**
+ * Get all shapes given label information
+ * @param {LabelType} label
+ * @param {object} shapes
+ * @return {DrawableLabel}
+ */
+export function getAllShapesOfBox2d(label: LabelType,
+                                    shapes: {[key: number]: ShapeType})
+  : DrawableLabel {
+  const rect = shapes[label.shapes[0]] as RectType;
+  const x = rect.x;
+  const y = rect.y;
+  const w = rect.w;
+  const h = rect.h;
+
+  // vertices
+  const tl = makeVertex({x, y});
+  const tr = makeVertex({x: x + w, y});
+  const bl = makeVertex({x, y: y + h});
+  const br = makeVertex({x: x + w, y: y + h});
+
+  // midpoints
+  const tm = makeVertex({x: x + w / 2, y,
+    type: VertexTypes.MIDPOINT});
+  const bm = makeVertex({x: x + w / 2, y: y + h,
+    type: VertexTypes.MIDPOINT});
+  const lm = makeVertex({x, y: y + h / 2,
+    type: VertexTypes.MIDPOINT});
+  const rm = makeVertex({x: x + w, y: y + h / 2,
+    type: VertexTypes.MIDPOINT});
+
+  return {
+    id: label.id,
+    color: label.color,
+    shapes: [rect, tl, tm, tr, rm, br, bm, bl, lm]
+  };
 }

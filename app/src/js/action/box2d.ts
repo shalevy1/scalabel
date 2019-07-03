@@ -17,23 +17,6 @@ export function addBox2dLabel(
     x: number, y: number, w: number, h: number): AddLabelAction {
     // rectangle
     const rect = makeRect({x, y, w, h});
-
-    // vertices
-    const tl = makeVertex({x, y});
-    const tr = makeVertex({x: x + w, y});
-    const bl = makeVertex({x, y: y + h});
-    const br = makeVertex({x: x + w, y: y + h});
-
-    // midpoints
-    const tm = makeVertex({x: x + w / 2, y,
-    type: VertexTypes.MIDPOINT});
-    const bm = makeVertex({x: x + w / 2, y: y + h,
-    type: VertexTypes.MIDPOINT});
-    const lm = makeVertex({x, y: y + h / 2,
-    type: VertexTypes.MIDPOINT});
-    const rm = makeVertex({x: x + w, y: y + h / 2,
-    type: VertexTypes.MIDPOINT});
-
     const label = makeLabel({type: labels.BOX_2D, category});
-    return actions.addLabel(label, [rect, tl, tm, tr, rm, br, bm, bl, lm]);
+    return actions.addLabel(label, [rect]);
 }

@@ -20,7 +20,6 @@ export function reducer(
   // newActions.push(action);
   // const state = {...currentState, actions: newActions};
   const state = currentState;
-  console.log('DISPATCHING', action)
   // Apply reducers to state
   switch (action.type) {
     case types.INIT_SESSION:
@@ -43,7 +42,7 @@ export function reducer(
     case types.CHANGE_LABEL_PROPS:
       return common.changeLabelProps(state, action.labelId, action.props);
     case types.DELETE_LABEL:
-      return common.deleteLabel(state, action.labelId);
+      return common.deleteLabel(state, action.itemId, action.labelId);
     case types.TAG_IMAGE:
       return tag.tagImage(state, action.attributeIndex, action.selectedIndex);
     case types.CHANGE_ATTRIBUTE:

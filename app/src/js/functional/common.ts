@@ -1,15 +1,15 @@
 import {
   ItemType,
-  LabelType, RectType,
+  LabelType,
   ShapeType,
-  State, VertexType,
+  State,
   ViewerConfigType
 } from './types';
 import {removeObjectFields, updateListItem, updateListItems,
   updateObject,
 } from './util';
 import * as _ from 'lodash';
-import {getColorById, idx} from './draw';
+import {getColorById} from './draw';
 
 /**
  * Initialize state
@@ -173,12 +173,14 @@ export function loadItem(state: State, itemIndex: number,
 /**
  * Deconstruct given label
  * @param {State} state
+ * @param {number} itemId
  * @param {number} labelId
  * @return {State}
  */
-export function deleteLabel(state: State, labelId: number): State {
+export function deleteLabel(
+  state: State, itemId: number, labelId: number): State {
   const itemIndex = state.current.item;
-  const item = state.items[itemIndex];
+  const item = state.items[itemId];
   const label = item.labels[labelId];
   const labels = removeObjectFields(item.labels, [labelId]);
   // TODO: should we remove shapes?

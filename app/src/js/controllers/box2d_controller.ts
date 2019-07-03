@@ -123,6 +123,9 @@ export class Box2dController extends BaseController {
     const w = rect.w;
     const h = rect.h;
 
+    // rectangle
+    const newRect = makeRect({x, y, w, h, id: rect.id});
+
     // vertices
     const tl = makeVertex({x, y});
     const tr = makeVertex({x: x + w, y});
@@ -146,7 +149,7 @@ export class Box2dController extends BaseController {
 
     return {
       id, category, color,
-      shapes: [rect, tl, tm, tr, rm, br, bm, bl, lm],
+      shapes: [newRect, tl, tm, tr, rm, br, bm, bl, lm],
       type: 'box2d'
     };
   }
@@ -261,6 +264,11 @@ export class Box2dController extends BaseController {
         this.setControllerState(Box2dController.ControllerStates.SELECTED);
       }
       this.targetHandleNo = -1;
+    } else if (this.controllerState === Box2dController.ControllerStates.MOVE) {
+      this.updateTemporaryLabelToState();
+      this.viewer.updateDrawableLabels();
+      this.setControllerState(Box2dController.ControllerStates.SELECTED);
+      this.startMoveMousePos = [];
     }
     this.viewer.redrawControlCanvas();
   }
@@ -306,7 +314,7 @@ export class Box2dController extends BaseController {
   public onMouseMove(mousePos: number[]): void {
     if (this.controllerState === Box2dController.ControllerStates.RESIZE
     && this.viewer.temporaryDrawableLabel !== null) {
-      const [x, y] = this.viewer.toImageCoords(mousePos);
+      const [x, y] = mousePos;
       const shapes = this.viewer.temporaryDrawableLabel.shapes;
       let x1;
       let x2;
@@ -365,7 +373,18 @@ export class Box2dController extends BaseController {
     } else if (this.controllerState === Box2dController.ControllerStates.MOVE) {
       let dx = mousePos[0] - this.startMoveMousePos[0];
       let dy = mousePos[1] - this.startMoveMousePos[1];
-      // make moved box within the image
+      // make moved box within the canvas
+      const [height, width] = this.viewer.getCurrentImageSize();
+      const label = this.viewer.temporaryDrawableLabel;
+      const rect = label.shapes[0];
+      const cachedRect = this.viewer.getDrawableLabelById(label.id, true)
+        .shapes[0];
+      dx = Math.min(dx, (width - rect.w) - cachedRect.x);
+      dx = Math.max(dx, -cachedRect.x);
+      dy = Math.min(dy, (height - rect.h) - cachedRect.y);
+      dy = Math.max(dy, -cachedRect.y);
+      this.updateTemporaryLabel(cachedRect.x + dx, cachedRect.y + dy,
+        cachedRect.w, cachedRect.h);
     } else if (this.controllerState ===
       Box2dController.ControllerStates.SELECTED ||
       this.controllerState === Box2dController.ControllerStates.NULL) {

@@ -235,6 +235,17 @@ export class ImageView extends Canvas2d<Props> {
     this.setCursor(this.getCurrentController().defaultCursorStyle);
   }
 
+
+  /**
+   * Get the current item in the state
+   * @return {[number, number]}
+   */
+  public getCurrentImageSize(): [number, number] {
+    const item = getCurrentItem();
+    const image = Session.images[item.index];
+    return [image.height, image.width];
+  }
+
   // Control map
   /**
    * Get the label under the mouse.
@@ -299,12 +310,14 @@ export class ImageView extends Canvas2d<Props> {
   /**
    * Get label by label ID
    * @param {number} labelId - ID of the label
+   * @param {boolean} getCached - if false, return temporary label if applicable
    * @returns {DrawableLabel | null}
    */
-  public getDrawableLabelById(labelId: number): DrawableLabel | null {
+  public getDrawableLabelById(labelId: number, getCached: boolean = false)
+    : DrawableLabel | null {
     // override drawable label with the temporary one if applicable
     if (this.temporaryDrawableLabel
-      && labelId === this.temporaryDrawableLabel.id) {
+      && labelId === this.temporaryDrawableLabel.id && !getCached) {
       return this.temporaryDrawableLabel;
     }
     for (const labelType of Object.keys(this.drawableLabels)) {
@@ -543,15 +556,17 @@ export class ImageView extends Canvas2d<Props> {
    * @return {Array<number>} - the converted values.
    */
   public toCanvasCoords(values: number[], upRes: boolean) {
+    let out: number[] = [];
     if (values) {
       for (let i = 0; i < values.length; i++) {
-        values[i] *= this.displayToImageRatio;
+        let value = values[i] * this.displayToImageRatio;
         if (upRes) {
-          values[i] *= this.UP_RES_RATIO;
+          value *= this.UP_RES_RATIO;
         }
+        out = out.concat(value);
       }
     }
-    return values;
+    return out;
   }
 
   /**
@@ -563,15 +578,17 @@ export class ImageView extends Canvas2d<Props> {
    * @return {Array<number>} - the converted values.
    */
   public toImageCoords(values: number[], upRes: boolean = true) {
+    let out: number[] = [];
     if (values) {
       for (let i = 0; i < values.length; i++) {
-        values[i] /= this.displayToImageRatio;
+        let value = values[i] * this.displayToImageRatio;
         if (upRes) {
-          values[i] /= this.UP_RES_RATIO;
+          value /= this.UP_RES_RATIO;
         }
+        out = out.concat(value);
       }
     }
-    return values;
+    return out;
   }
 
   /**

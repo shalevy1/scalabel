@@ -364,7 +364,7 @@ class ImageView extends Canvas2d<Props> {
   private onKeyDown (e: KeyboardEvent) {
     // tslint: remove which
     // tslint:disable-next-line
-    const keyID = e.code ? e.code : e.which
+    const keyID = (e.code ? e.code : e.which) as number
     this._keyDownMap[keyID] = true
     if (keyID === 187) {
       // + for zooming in
@@ -382,7 +382,7 @@ class ImageView extends Canvas2d<Props> {
   private onKeyUp (e: KeyboardEvent) {
     // TODO: remove which
     // tslint:disable-next-line
-    const keyID = e.code ? e.code : e.which
+    const keyID = (e.code ? e.code : e.which) as number
     delete this._keyDownMap[keyID]
   }
 

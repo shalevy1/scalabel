@@ -11,6 +11,9 @@ export const INIT_SESSION = 'INIT_SESSION'
 export const CHANGE_SELECT = 'CHANGE_SELECT'
 export const LOAD_ITEM = 'LOAD_ITEM'
 export const UPDATE_ALL = 'UPDATE_ALL'
+export const SELECT_LABEL = 'SELECT_LABEL'
+export const CHANGE_CURRENT_CATEGORY = 'CHANGE_CURRENT_CATEGORY'
+export const CHANGE_CURRENT_ATTRIBUTES = 'CHANGE_CURRENT_ATTRIBUTES'
 
 // Item Level
 export const ADD_LABELS = 'ADD_LABELS'
@@ -87,6 +90,13 @@ export interface MergeTrackAction extends BaseAction {
   trackIds: number[]
 }
 
+export interface SelectLabelAction extends BaseAction {
+  /** item of the selected label */
+  itemIndex: number
+  /** selected label ID */
+  labelId: number
+}
+
 export interface ChangeShapesAction extends BaseAction {
   /** item of the shape */
   itemIndices: number[]
@@ -126,12 +136,24 @@ export interface UpdatePointCloudViewerConfigAction extends BaseAction {
   newFields: Partial<PointCloudViewerConfigType>
 }
 
+export interface ChangeCurrentCategoryAction extends BaseAction {
+  /** New category ID */
+  category: number
+}
+
+export interface ChangeCurrentAttributesAction extends BaseAction {
+  /** New attributes */
+  attributes: {[key: number]: number[]}
+}
+
 export type ActionType =
   | InitSessionAction
   | ChangeSelectAction
   | LoadItemAction
   | UpdateAllAction
   | UpdateImageViewerConfigAction
+  | ChangeCurrentCategoryAction
+  | ChangeCurrentAttributesAction
   | AddLabelsAction
   | AddTrackAction
   | MergeTrackAction

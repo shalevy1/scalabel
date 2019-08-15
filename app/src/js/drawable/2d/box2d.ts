@@ -48,7 +48,7 @@ export class Box2D extends Label2D {
     return this._shapes
   }
 
-  /** Draw the label on viewing or control convas */
+  /** Draw the label on viewing or control canvas */
   public draw (context: Context2D, ratio: number, mode: DrawMode): void {
     const self = this
 
@@ -87,6 +87,9 @@ export class Box2D extends Label2D {
     const rect = self._shapes[0] as Rect2D
     rectStyle.color = assignColor(0)
     rect.draw(context, ratio, rectStyle)
+    if (mode === DrawMode.VIEW) {
+      self.drawTag(context, ratio, [rect.x, rect.y], self._color)
+    }
     if (mode === DrawMode.CONTROL || this._selected || this._highlighted) {
       for (let i = 1; i <= 8; i += 1) {
         let style

@@ -14,18 +14,19 @@ import { SwitchBtn } from '../components/toolbar_switch'
  */
 export function renderTemplate (
   toolType: string,
-  handleToggle: (switchName: string) => void,
+  handleToggle: (switchName: string) => () => void,
   handleAttributeToggle: (
     toggleName: string,
     alignment: string) => void,
   name: string,
   options: string[],
+  value: number,
   initialAlignmentIndex: number
 ) {
   if (toolType === 'switch') {
-    return <SwitchBtn onChange={handleToggle} value={name} />
+    return <SwitchBtn onChange={handleToggle} name={name}
+    value={value} />
   } else if (toolType === 'list') {
-    // console.log(initialAlignmentIndex)
     return (
       <ListItem dense={true} style={{ textAlign: 'center' }}>
         <ListButton

@@ -164,6 +164,8 @@ export function addLabels (state: State, action: types.AddLabelsAction): State {
     for (const label of newLabels) {
       if (label.item === user.select.item) {
         user = updateUserSelect(user, { label: label.id })
+        user = updateUserSelect(user, { category: label.category[0] })
+        user = updateUserSelect(user, { attributes: label.attributes })
         break
       }
     }
@@ -383,6 +385,57 @@ function getRoot (item: ItemType, labelId: number): number {
     parent = item.labels[labelId].parent
   }
   return labelId
+}
+
+/**
+ * Update the current category
+ * @param {State} state
+ * @param {types.SelectLabelAction} action
+ * @return {State}
+ */
+export function selectLabel (state: State,
+                             action:
+  types.SelectLabelAction):
+  State {
+  let select
+  if (state.user.select.item === action.itemIndex) {
+    select = updateObject(state.user.select, { label: action.labelId })
+  } else {
+    select = state.user.select
+  }
+  const user = updateObject(state.user, { select })
+  return { ...state, user }
+}
+
+/**
+ * Update the current category
+ * @param {State} state
+ * @param {types.ChangeCurrentCategoryAction} action
+ * @return {State}
+ */
+export function changeCurrentCategory (state: State,
+                                       action:
+                                       types.ChangeCurrentCategoryAction):
+                                       State {
+  const select = updateObject(state.user.select, { category: action.category })
+  const user = updateObject(state.user, { select })
+  return { ...state, user }
+}
+
+/**
+ * Update the current attributes
+ * @param {State} state
+ * @param {types.ChangeCurrentAttributesAction} action
+ * @return {State}
+ */
+export function changeCurrentAttributes (state: State,
+                                         action:
+                                         types.ChangeCurrentAttributesAction):
+  State {
+  const select = updateObject(state.user.select,
+    { attributes: action.attributes })
+  const user = updateObject(state.user, { select })
+  return { ...state, user }
 }
 
 /**

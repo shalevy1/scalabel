@@ -9,12 +9,12 @@ import { Label2D } from './label2d'
  * Tag2D drawable class
  */
 export class Tag2D extends Label2D {
-  /** attributes for task */
-  private attributes: Attribute[]
+  /** attributes for specific task */
+  private configAttributes: Attribute[]
 
   constructor () {
     super()
-    this.attributes = this.getAttributes()
+    this.configAttributes = Session.getState().task.config.attributes
   }
 
   /**
@@ -43,13 +43,16 @@ export class Tag2D extends Label2D {
    * @param context
    */
   public draw (context: Context2D) {
-    const selectedAttributes = this.getSelectedAttributes()
+    // tslint:disable-next-line: no-console
+    console.log(this.attributes)
     context.font = '36px Arial'
     const abbr: string[] = []
-    for (const key in selectedAttributes) {
-      if (selectedAttributes[key][0] !== -1) {
-        const selectedAttribute = this.attributes[key]
-        const selectedIndex = selectedAttributes[key][0]
+    for (const key in this.attributes) {
+      if (this.attributes[key][0] !== -1) {
+        // tslint:disable-next-line: no-console
+        console.log(key)
+        const selectedIndex = this.attributes[key][0]
+        const selectedAttribute = this.configAttributes[key]
         abbr.push(sprintf('  %s: %s', selectedAttribute.name,
           selectedAttribute.values[selectedIndex]))
       }
@@ -71,22 +74,4 @@ export class Tag2D extends Label2D {
   public initTemp () {
     return
   }
-
-  /**
-   * helper method to retrieve attributes from config
-   */
-  private getAttributes () {
-    return Session.getState().task.config.attributes
-  }
-
-  /**
-   * helper method to retrieve selected attributes
-   */
-  private getSelectedAttributes () {
-    const state = Session.getState()
-    const item = state.task.items[state.user.select.item]
-    const labelId = Number(_.findKey(item.labels))
-    return item.labels[labelId].attributes
-  }
-
 }

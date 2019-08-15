@@ -3,7 +3,7 @@ import List from '@material-ui/core/List/List'
 import ListItem from '@material-ui/core/ListItem'
 import _ from 'lodash'
 import React from 'react'
-import { deleteLabel } from '../action/common'
+import { changeCurrentAttributes, changeLabelProps, deleteLabel } from '../action/common'
 import { addLabelTag } from '../action/tag'
 import { renderButtons, renderTemplate } from '../common/label'
 import Session from '../common/session'
@@ -33,6 +33,7 @@ interface Props {
   /** labelType of ToolBar 'box2d' | 'segmentation' | 'lane' */
   labelType: string
 }
+
 /**
  * This is ToolBar component that displays
  * all the attributes and categories for the 2D bounding box labeling tool
@@ -78,6 +79,8 @@ export class ToolBar extends Component<Props> {
    */
   public render () {
     const { categories, attributes, itemType, labelType } = this.props
+    // FIXME: multiple option support
+    const currentAttributes = Session.getState().user.select.attributes
     return (
       <div>
         {categories !== null ? (
@@ -87,13 +90,18 @@ export class ToolBar extends Component<Props> {
         ) : null}
         <Divider variant='middle' />
         <List>
-          {attributes.map((element: Attribute) =>
+          {attributes.map((element: Attribute, index: number) =>
             renderTemplate(
               element.toolType,
               this.handleToggle,
               this.handleAttributeToggle,
               element.name,
               element.values,
+              currentAttributes ? (
+                Object.keys(currentAttributes).indexOf(String(index)) >= 0 ?
+                  currentAttributes[index][0]
+                  : 0)
+              : 0,
               this.getAlignmentIndex(element.name)
             )
           )}
@@ -123,21 +131,37 @@ export class ToolBar extends Component<Props> {
   }
   /**
    * This function updates the checked list of switch buttons.
-   * TODO: Add attribute update for label here (PR 188)
    * @param {string} switchName
    */
-  private handleToggle (switchName: string) {
-    // @ts-ignore
-    const { checked } = this.state
-    const currentIndex = checked.indexOf(switchName)
-    const newChecked = [...checked]
-
-    if (currentIndex === -1) {
-      newChecked.push(switchName)
-    } else {
-      newChecked.splice(currentIndex, 1)
+  private handleToggle = (switchName: string) => () => {
+    const state = Session.getState()
+    const allAttributes = state.task.config.attributes
+    let toggleIndex = -1
+    for (let i = 0; i < allAttributes.length; i++) {
+      if (allAttributes[i].name === switchName) {
+        toggleIndex = i
+      }
+    }
+    if (toggleIndex > -1) {
+      const currentAttributes = state.task.items[state.user.select.item].labels[
+        state.user.select.label].attributes
+      const attributes: {[key: number]: number[]} = {}
+      for (const keyStr of Object.keys(currentAttributes)) {
+        const key = Number(keyStr)
+        attributes[key] = currentAttributes[key]
+      }
+      if (Object.keys(attributes).indexOf(String(toggleIndex)) >= 0) {
+        delete attributes[toggleIndex]
+      } else {
+        attributes[toggleIndex] = [1]
+      }
+      Session.dispatch(changeLabelProps(state.user.select.item,
+        state.user.select.label, { attributes }))
+      Session.dispatch(changeCurrentAttributes(attributes))
+      this.forceUpdate()
     }
   }
+
   /**
    * helper function to get attribute index with respect to the config
    * attributes

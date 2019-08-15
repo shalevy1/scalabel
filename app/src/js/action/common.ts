@@ -122,6 +122,32 @@ export function linkLabels (
 }
 
 /**
+ * Change the current category
+ * @param {number} category
+ * @return {ChangeCurrentCategoryAction}
+ */
+export function changeCurrentCategory (
+  category: number): types.ChangeCurrentCategoryAction {
+  return {
+    type: types.CHANGE_CURRENT_CATEGORY,
+    sessionId: Session.id,
+    category }
+}
+
+/**
+ * Change the current attributes
+ * @param {[key: number]: number} attributes
+ * @return {ChangeCurrentAttributesAction}
+ */
+export function changeCurrentAttributes (
+  attributes: {[key: number]: number[]}): types.ChangeCurrentAttributesAction {
+  return {
+    type: types.CHANGE_CURRENT_ATTRIBUTES,
+    sessionId: Session.id,
+    attributes }
+}
+
+/**
  * Delete given label
  * @param {number} itemIndex
  * @param {number} labelId

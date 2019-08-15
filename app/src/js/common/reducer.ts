@@ -34,6 +34,14 @@ export const reducer: Reducer<State> = (
       return image.updateImageViewerConfig(
         state, action as types.UpdateImageViewerConfigAction
       )
+    case types.SELECT_LABEL:
+      return common.selectLabel(state, action as types.SelectLabelAction)
+    case types.CHANGE_CURRENT_CATEGORY:
+      return common.changeCurrentCategory(state,
+        action as types.ChangeCurrentCategoryAction)
+    case types.CHANGE_CURRENT_ATTRIBUTES:
+      return common.changeCurrentAttributes(state,
+        action as types.ChangeCurrentAttributesAction)
     case types.ADD_LABELS:
       return common.addLabels(state, action as types.AddLabelsAction)
     case types.CHANGE_SHAPES:

@@ -23,6 +23,8 @@ interface Props {
   leftSidebar2?: any
   /** The main div */
   main: any
+  /** Optional assistant view */
+  assistantView?: any
   /** The bottom bar */
   bottomBar?: any
   /** The top part of the right side bar */
@@ -33,22 +35,15 @@ interface Props {
   classes: ClassType
 }
 
-interface State {
-  /** The width of the left side bar */
-  left_size: number
-  /** The height of the center side bar */
-  center_size: number
-  /** The width of the right side bar */
-  right_size: number
-}
-
 interface LayoutState {
   /** The width of the left side bar */
-  left_size: number
+  leftSize: number
   /** The height of the center side bar */
-  center_size: number
+  centerSize: number
   /** The width of the right side bar */
-  right_size: number
+  rightSize: number
+  /** Whether assistant view is enabled */
+  assistantViewEnabled: boolean
 }
 
 (window as any).__MUI_USE_NEXT_TYPOGRAPHY_VARIANTS__ = true
@@ -56,7 +51,7 @@ interface LayoutState {
 /**
  * Layout of the labeling interface
  */
-class LabelLayout extends React.Component<Props, State> {
+class LabelLayout extends React.Component<Props, LayoutState> {
   /** The state of the layout */
   public layoutState: LayoutState
   /**
@@ -64,7 +59,9 @@ class LabelLayout extends React.Component<Props, State> {
    */
   constructor (props: any) {
     super(props)
-    this.layoutState = { left_size: 0, center_size: 0, right_size: 0 }
+    this.layoutState = {
+      leftSize: 0, centerSize: 0, rightSize: 0, assistantViewEnabled: false
+    }
     Session.subscribe(this.onStateUpdated.bind(this))
   }
 
@@ -72,6 +69,8 @@ class LabelLayout extends React.Component<Props, State> {
    * called on redux store update
    */
   public onStateUpdated () {
+    this.layoutState.assistantViewEnabled =
+      Session.getState().user.layout.assistantView
     this.setState(this.layoutState)
   }
 
@@ -82,14 +81,23 @@ class LabelLayout extends React.Component<Props, State> {
    */
   public handleOnChange (size: number, position: string) {
     const layoutState = this.layoutState
-    if (position === 'left' && this.layoutState.left_size !== size) {
-      layoutState.left_size = size
-    } else if (position === 'center' && this.layoutState.center_size !== size) {
-      layoutState.center_size = size
-    } else if (position === 'right' && this.layoutState.right_size !== size) {
-      layoutState.right_size = size
+    if (position === 'left' && this.layoutState.leftSize !== size) {
+      layoutState.leftSize = size
+    } else if (position === 'center' && this.layoutState.centerSize !== size) {
+      layoutState.centerSize = size
+    } else if (position === 'right' && this.layoutState.rightSize !== size) {
+      layoutState.rightSize = size
     }
     this.setState(layoutState)
+  }
+
+  /**
+   * Toggle assistant view on/off
+   */
+  public toggleAssistantView () {
+    this.layoutState.assistantViewEnabled =
+      !this.layoutState.assistantViewEnabled
+    this.setState(this.layoutState)
   }
 
   /**
@@ -144,8 +152,15 @@ class LabelLayout extends React.Component<Props, State> {
    */
   public render () {
     const {titleBar, leftSidebar1, leftSidebar2, bottomBar,
-      main, rightSidebar1, rightSidebar2, classes} = this.props
+      main, assistantView, rightSidebar1, rightSidebar2, classes} = this.props
     const mainWithProps = React.cloneElement(main, {})
+    let mainView: React.ReactFragment = mainWithProps
+    if (assistantView && this.layoutState.assistantViewEnabled) {
+      mainView = this.optionalSplit(
+        'vertical', mainWithProps, assistantView, 'mainView', 'assistantView',
+        200, 500, 1000, 'second', 'right'
+      ) as React.ReactFragment
+    }
 
     const leftDefaultWidth = 200
     const leftMaxWidth = 300
@@ -178,7 +193,7 @@ class LabelLayout extends React.Component<Props, State> {
               this.optionalSplit('vertical',
 
                 // center
-                this.optionalSplit('horizontal', mainWithProps, bottomBar,
+                this.optionalSplit('horizontal', mainView, bottomBar,
                 'main', 'bottomBar',
                 bottomMinHeight, bottomDefaultHeight, bottomMaxHeight,
                 'second', 'center'),

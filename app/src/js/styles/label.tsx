@@ -133,6 +133,11 @@ export const imageViewStyle = () => createStyles({
     outline: 'none',
     width: 'calc(100% - 20px)'
   },
+  transparent_background: {
+    display: 'block', height: 'calc(100% - 40px)',
+    position: 'absolute',
+    outline: 'none', width: '100%', background: 'none'
+  },
   background: {
     display: 'block', height: 'calc(100% - 40px)',
     position: 'absolute',

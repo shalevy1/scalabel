@@ -1,44 +1,31 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
 import EventListener, { withOptions } from 'react-event-listener'
-import { zoomImage } from '../action/image'
 import Session from '../common/session'
-import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
-import { ImageViewerConfigType, ItemType, State, ViewerConfigType } from '../functional/types'
+import { Label2DList } from '../drawable/label2d_list'
+import { decodeControlIndex, rgbToIndex } from '../drawable/util'
+import { isItemLoaded } from '../functional/state_util'
+import { State, ViewerConfigType } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
 import { imageViewStyle } from '../styles/label'
 import { Canvas2d } from './canvas2d'
+import { getCurrentItem, getCurrentViewerConfig } from './image_view'
 
 interface ClassType {
-  /** image canvas */
-  image_canvas: string
+  /** label canvas */
+  label_canvas: string
+  /** control canvas */
+  control_canvas: string
   /** image display area */
   display: string
   /** background */
-  background: string
+  transparent_background: string
 }
 
 interface Props {
   /** styles */
   classes: ClassType
-}
-
-/**
- * Get the current item in the state
- * @return {ItemType}
- */
-export function getCurrentItem (): ItemType {
-  const state = Session.getState()
-  return state.task.items[state.user.select.item]
-}
-
-/**
- * Retrieve the current viewer configuration
- * @return {ImageViewerConfigType}
- */
-export function getCurrentViewerConfig (): ImageViewerConfigType {
-  return getCurrentItemViewerConfig(Session.getState()) as ImageViewerConfigType
 }
 
 /**
@@ -56,12 +43,18 @@ export function mode (arr: number[]) {
 /**
  * Canvas Viewer
  */
-export class ImageView extends Canvas2d<Props> {
-  /** The image context */
-  public imageContext: CanvasRenderingContext2D | null
+export class Label2DView extends Canvas2d<Props> {
+  /** The label context */
+  public labelContext: CanvasRenderingContext2D | null
+  /** The control context */
+  public controlContext: CanvasRenderingContext2D | null
 
-  /** The image canvas */
-  private imageCanvas: HTMLCanvasElement | null
+  /** drawable label list */
+  private _labels: Label2DList
+  /** The label canvas */
+  private labelCanvas: HTMLCanvasElement | null
+  /** The control canvas */
+  private controlCanvas: HTMLCanvasElement | null
   /** The mask to hold the display */
   private display: HTMLDivElement | null
   /** The mask to hold the background */
@@ -74,10 +67,6 @@ export class ImageView extends Canvas2d<Props> {
   private readonly MIN_SCALE: number
   /** The boosted ratio to draw shapes sharper */
   private readonly UP_RES_RATIO: number
-  /** The zoom ratio */
-  private readonly ZOOM_RATIO: number
-  /** The scroll-zoom ratio */
-  private readonly SCROLL_ZOOM_RATIO: number
 
   // display variables
   /** The current scale */
@@ -92,10 +81,6 @@ export class ImageView extends Canvas2d<Props> {
   // keyboard and mouse status
   /** The hashed list of keys currently down */
   private _keyDownMap: { [key: string]: boolean }
-
-  // scrolling
-  /** The timer for scrolling */
-  private scrollTimer: number | undefined
 
   // grabbing
   /** Whether or not the mouse is currently grabbing the image */
@@ -117,8 +102,6 @@ export class ImageView extends Canvas2d<Props> {
     // constants
     this.MAX_SCALE = 3.0
     this.MIN_SCALE = 1.0
-    this.ZOOM_RATIO = 1.05
-    this.SCROLL_ZOOM_RATIO = 1.01
     this.UP_RES_RATIO = 2
 
     // initialization
@@ -131,11 +114,14 @@ export class ImageView extends Canvas2d<Props> {
     this.canvasHeight = 0
     this.canvasWidth = 0
     this.displayToImageRatio = 1
-    this.scrollTimer = undefined
-    this.imageContext = null
-    this.imageCanvas = null
+    this.controlContext = null
+    this.controlCanvas = null
+    this.labelContext = null
+    this.labelCanvas = null
     this.display = null
     this.background = null
+
+    this._labels = new Label2DList()
   }
 
   /**
@@ -148,11 +134,20 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
-   * Override parent updateState function
-   * @param state
+   * Set the current cursor
+   * @param {string} cursor - cursor type
    */
-  public updateState (_state: State) {
-     /* tslint:disable:no-empty */
+  public setCursor (cursor: string) {
+    if (this.labelCanvas !== null) {
+      this.labelCanvas.style.cursor = cursor
+    }
+  }
+
+  /**
+   * Set the current cursor to default
+   */
+  public setDefaultCursor () {
+    this.setCursor('crosshair')
   }
 
   /**
@@ -163,20 +158,6 @@ export class ImageView extends Canvas2d<Props> {
     const item = getCurrentItem()
     const image = Session.images[item.index]
     return new Size2D(image.width, image.height)
-  }
-
-  /**
-   * Handler for zooming
-   * @param {number} zoomRatio - the zoom ratio
-   * @param {number} offsetX - the offset of x for zooming to cursor
-   * @param {number} offsetY - the offset of y for zooming to cursor
-   */
-  public zoomHandler (zoomRatio: number,
-                      offsetX: number, offsetY: number) {
-    const newScale = getCurrentViewerConfig().viewScale * zoomRatio
-    if (newScale >= this.MIN_SCALE && newScale <= this.MAX_SCALE) {
-      Session.dispatch(zoomImage(zoomRatio, offsetX, offsetY))
-    }
   }
 
   /**
@@ -214,19 +195,36 @@ export class ImageView extends Canvas2d<Props> {
    */
   public render () {
     const { classes } = this.props
-    const imageCanvas = (<canvas
-      key='image-canvas'
-      className={classes.image_canvas}
+    const controlCanvas = (<canvas
+      key='control-canvas'
+      className={classes.control_canvas}
       ref={(canvas) => {
         if (canvas && this.display) {
-          this.imageCanvas = canvas
-          this.imageContext = canvas.getContext('2d')
+          this.controlCanvas = canvas
+          this.controlContext = canvas.getContext('2d')
           const displayRect =
             this.display.getBoundingClientRect()
           if (displayRect.width
             && displayRect.height
             && this.currentItemIsLoaded()) {
-            this.updateScale(canvas, false)
+            this.updateScale(canvas, true)
+          }
+        }
+      }}
+    />)
+    const labelCanvas = (<canvas
+      key='label-canvas'
+      className={classes.label_canvas}
+      ref={(canvas) => {
+        if (canvas && this.display) {
+          this.labelCanvas = canvas
+          this.labelContext = canvas.getContext('2d')
+          const displayRect =
+            this.display.getBoundingClientRect()
+          if (displayRect.width
+            && displayRect.height
+            && this.currentItemIsLoaded()) {
+            this.updateScale(canvas, true)
           }
         }
       }}
@@ -236,7 +234,7 @@ export class ImageView extends Canvas2d<Props> {
     if (this.display) {
       const displayRect = this.display.getBoundingClientRect()
       canvasesWithProps = React.Children.map(
-        [imageCanvas], (canvas) => {
+        [controlCanvas, labelCanvas], (canvas) => {
           return React.cloneElement(canvas,
             { height: displayRect.height, width: displayRect.width })
         }
@@ -248,7 +246,7 @@ export class ImageView extends Canvas2d<Props> {
         if (element) {
           this.background = element
         }
-      }} className={classes.background}>
+      }} className={classes.transparent_background}>
         <EventListener
           target='parent'
           onMouseDown={(e) => this.onMouseDown(e)}
@@ -276,15 +274,21 @@ export class ImageView extends Canvas2d<Props> {
    * @return {boolean}
    */
   public redraw (): boolean {
-    // redraw imageCanvas
-    if (this.currentItemIsLoaded() && this.imageCanvas && this.imageContext) {
-      const image = Session.images[this.state.session.user.select.item]
-      // redraw imageCanvas
-      this.clearCanvas(this.imageCanvas, this.imageContext)
-      this.imageContext.drawImage(image, 0, 0, image.width, image.height,
-        0, 0, this.imageCanvas.width, this.imageCanvas.height)
+    if (this.labelCanvas !== null && this.labelContext !== null &&
+      this.controlCanvas !== null && this.controlContext !== null) {
+      this.clearCanvas(this.labelCanvas, this.labelContext)
+      this.clearCanvas(this.controlCanvas, this.controlContext)
+      this._labels.redraw(this.labelContext, this.controlContext,
+        this.displayToImageRatio * this.UP_RES_RATIO)
     }
     return true
+  }
+
+  /**
+   * notify state is updated
+   */
+  protected updateState (state: State): void {
+    this._labels.updateState(state, state.user.select.item)
   }
 
   /**
@@ -305,9 +309,9 @@ export class ImageView extends Canvas2d<Props> {
    * @return {Vector2D} the x and y coordinates
    */
   private getVisibleCanvasCoords (): Vector2D {
-    if (this.display && this.imageCanvas) {
+    if (this.display && this.controlCanvas) {
       const displayRect = this.display.getBoundingClientRect() as DOMRect
-      const imgRect = this.imageCanvas.getBoundingClientRect() as DOMRect
+      const imgRect = this.controlCanvas.getBoundingClientRect() as DOMRect
       return new Vector2D(displayRect.x - imgRect.x, displayRect.y - imgRect.y)
     }
     return new Vector2D(0, 0)
@@ -338,6 +342,29 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
+   * Get the label under the mouse.
+   * @param {Vector2D} mousePos: position of the mouse
+   * @return {number[]}
+   */
+  private fetchHandleId (mousePos: Vector2D): number[] {
+    if (this.controlContext) {
+      const [x, y] = this.toCanvasCoords(mousePos,
+        true)
+      const data = this.controlContext.getImageData(x, y, 4, 4).data
+      const arr = []
+      for (let i = 0; i < 16; i++) {
+        const color = rgbToIndex(Array.from(data.slice(i * 4, i * 4 + 3)))
+        arr.push(color)
+      }
+      // finding the mode of the data array to deal with anti-aliasing
+      const hoveredIndex = mode(arr) as number
+      return decodeControlIndex(hoveredIndex)
+    } else {
+      return [-1, 0]
+    }
+  }
+
+  /**
    * Whether or not the mouse event is within the frame
    */
   private isWithinFrame (e: MouseEvent) {
@@ -360,18 +387,25 @@ export class ImageView extends Canvas2d<Props> {
     }
     // ctrl + click for dragging
     if (this.isKeyDown('Control')) {
-      if (this.display && this.imageCanvas) {
+      if (this.display && this.controlCanvas) {
         const display = this.display.getBoundingClientRect()
-        if (this.imageCanvas.width > display.width ||
-          this.imageCanvas.height > display.height) {
+        if (this.controlCanvas.width > display.width ||
+          this.controlCanvas.height > display.height) {
           // if needed, start grabbing
+          this.setCursor('grabbing')
           this._isGrabbingImage = true
           this._startGrabX = e.clientX
           this._startGrabY = e.clientY
           this._startGrabVisibleCoords = this.getVisibleCanvasCoords()
         }
       }
+    } else {
+      // get mouse position in image coordinates
+      const mousePos = this.getMousePos(e)
+      const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
+      this._labels.onMouseDown(mousePos, labelIndex, handleIndex)
     }
+    this.redraw()
   }
 
   /**
@@ -387,6 +421,11 @@ export class ImageView extends Canvas2d<Props> {
     this._startGrabX = -1
     this._startGrabY = -1
     this._startGrabVisibleCoords = []
+
+    const mousePos = this.getMousePos(e)
+    const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
+    this._labels.onMouseUp(mousePos, labelIndex, handleIndex)
+    this.redraw()
   }
 
   /**
@@ -407,17 +446,30 @@ export class ImageView extends Canvas2d<Props> {
       this.onMouseLeave(e)
       return
     }
+    // TODO: update hovered label
     // grabbing image
     if (this.isKeyDown('Control')) {
       if (this._isGrabbingImage) {
         if (this.display) {
+          this.setCursor('grabbing')
           const dx = e.clientX - this._startGrabX
           const dy = e.clientY - this._startGrabY
           this.display.scrollLeft = this._startGrabVisibleCoords[0] - dx
           this.display.scrollTop = this._startGrabVisibleCoords[1] - dy
         }
+      } else {
+        this.setCursor('grab')
       }
+    } else {
+      this.setDefaultCursor()
     }
+
+    // update the currently hovered shape
+    const mousePos = this.getMousePos(e)
+    const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
+    this._labels.onMouseMove(
+      mousePos, this.getCurrentImageSize(), labelIndex, handleIndex)
+    this.redraw()
   }
 
   /**
@@ -428,19 +480,7 @@ export class ImageView extends Canvas2d<Props> {
     if (!this.isWithinFrame(e)) {
       return
     }
-    // get mouse position in image coordinates
-    const mousePos = this.getMousePos(e)
     if (this.isKeyDown('Control')) { // control for zoom
-      e.preventDefault()
-      if (this.scrollTimer !== undefined) {
-        clearTimeout(this.scrollTimer)
-      }
-      if (e.deltaY < 0) {
-        this.zoomHandler(this.SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1])
-      } else if (e.deltaY > 0) {
-        this.zoomHandler(
-          1 / this.SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1])
-      }
       this.redraw()
     }
   }
@@ -466,13 +506,6 @@ export class ImageView extends Canvas2d<Props> {
   private onKeyDown (e: KeyboardEvent) {
     const key = e.key
     this._keyDownMap[key] = true
-    if (key === '+') {
-      // + for zooming in
-      this.zoomHandler(this.ZOOM_RATIO, -1, -1)
-    } else if (key === '-') {
-      // - for zooming out
-      this.zoomHandler(1 / this.ZOOM_RATIO, -1, -1)
-    }
   }
 
   /**
@@ -513,7 +546,7 @@ export class ImageView extends Canvas2d<Props> {
    * @param {boolean} upRes
    */
   private updateScale (canvas: HTMLCanvasElement, upRes: boolean) {
-    if (!this.display || !this.imageCanvas || !this.imageContext) {
+    if (!this.display || !this.controlCanvas || !this.controlContext) {
       return
     }
     const displayRect = this.display.getBoundingClientRect()
@@ -525,8 +558,8 @@ export class ImageView extends Canvas2d<Props> {
       upperLeftCoords = this.getVisibleCanvasCoords()
       if (config.viewOffsetX < 0 || config.viewOffsetY < 0) {
         mouseOffset = [
-          Math.min(displayRect.width, this.imageCanvas.width) / 2,
-          Math.min(displayRect.height, this.imageCanvas.height) / 2
+          Math.min(displayRect.width, this.controlCanvas.width) / 2,
+          Math.min(displayRect.height, this.controlCanvas.height) / 2
         ]
       } else {
         mouseOffset = this.toCanvasCoords(
@@ -541,7 +574,7 @@ export class ImageView extends Canvas2d<Props> {
     if (config.viewScale >= this.MIN_SCALE
       && config.viewScale < this.MAX_SCALE) {
       zoomRatio = config.viewScale / this.scale
-      this.imageContext.scale(zoomRatio, zoomRatio)
+      this.controlContext.scale(zoomRatio, zoomRatio)
     } else {
       return
     }
@@ -563,8 +596,8 @@ export class ImageView extends Canvas2d<Props> {
 
     // translate back to origin
     if (mouseOffset) {
-      this.display.scrollTop = this.imageCanvas.offsetTop
-      this.display.scrollLeft = this.imageCanvas.offsetLeft
+      this.display.scrollTop = this.controlCanvas.offsetTop
+      this.display.scrollLeft = this.controlCanvas.offsetLeft
     }
 
     // set canvas resolution
@@ -616,4 +649,4 @@ export class ImageView extends Canvas2d<Props> {
   }
 }
 
-export default withStyles(imageViewStyle, { withTheme: true })(ImageView)
+export default withStyles(imageViewStyle, { withTheme: true })(Label2DView)

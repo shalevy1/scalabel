@@ -2,6 +2,7 @@ import React from 'react'
 import Path from '../common/path'
 import Session from '../common/session'
 import ImageView from './image_view'
+import Label2DView from './label2d_view'
 import LabelLayout from './label_layout'
 import MainView from './main_view'
 import PointCloudView from './point_cloud_view'
@@ -53,6 +54,7 @@ export class Window extends React.Component {
     if (Session.itemType === 'image' || Session.itemType === 'video') {
       /* FIXME: set correct props */
       views.push(<ImageView key={'imageView'}/>)
+      views.push(<Label2DView key={'label2dView'}/>)
     } else if (Session.itemType === 'pointcloud') {
       views.push(<PointCloudView key={'pointCloudView'}/>)
     }

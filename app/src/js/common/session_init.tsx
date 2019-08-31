@@ -114,7 +114,7 @@ function loadImages (): void {
     }
     const url = item.url
     const image = new Image()
-    image.crossOrigin = 'Anonymous'
+    // image.crossOrigin = 'Anonymous'
     Session.images.push(image)
     image.onload = () => {
       config.imageHeight = image.height

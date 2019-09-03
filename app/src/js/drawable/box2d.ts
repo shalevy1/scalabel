@@ -45,6 +45,13 @@ export class Box2D extends Label2D {
     this._mouseDown = false
   }
 
+  /**
+   * Return a list of the shape for inspection and testing
+   */
+  public get shapes (): Array<Readonly<Shape>> {
+    return this._shapes
+  }
+
   /** Draw the label on viewing or control convas */
   public draw (context: Context2D, ratio: number, mode: DrawMode): void {
     const self = this

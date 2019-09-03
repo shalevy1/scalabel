@@ -132,6 +132,7 @@ export class Label2DList {
     if (labelIndex >= 0) {
       this._selectedLabel = this._labelList[labelIndex]
       this._selectedLabel.setSelected(true, handleIndex)
+      this._selectedLabel.onMouseDown(coord)
     } else {
       const state = this._state
       const label = makeDrawableLabel(

@@ -165,7 +165,6 @@ export abstract class Label2D {
   /**
    * Initialize this label to be temporary
    * @param {State} state
-   * @param {number} itemIndex
    * @param {Vector2D} start: starting coordinate of the label
    */
   public abstract initTemp (

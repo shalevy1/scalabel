@@ -27,6 +27,8 @@ const MIN_AREA = 10
 export class Box2D extends Label2D {
   /** list of shapes for this box 2d */
   private _shapes: Shape[]
+  /** cache shape for moving */
+  private _startingRect: Rect2D
 
   constructor () {
     super()
@@ -35,6 +37,8 @@ export class Box2D extends Label2D {
       new Point2D(), new Point2D(), new Point2D(), new Point2D(),
       new Point2D(), new Point2D(), new Point2D(), new Point2D()
     ]
+
+    this._startingRect = new Rect2D()
   }
 
   /**
@@ -177,14 +181,13 @@ export class Box2D extends Label2D {
     const [width, height] = [limit.width, limit.height]
     const rect = (this._shapes[0] as Rect2D).toRect()
     const delta = end.clone().substract(this._mouseDownCoord)
-    const [rw, rh] = [rect.x2 - rect.x1, rect.y2 - rect.y1]
-    rect.x1 += delta.x
-    rect.y1 += delta.y
+    rect.x1 = this._startingRect.x + delta.x
+    rect.y1 = this._startingRect.y + delta.y
     // The rect should not go outside the frame limit
-    rect.x1 = Math.min(width - rw, Math.max(0, rect.x1))
-    rect.y1 = Math.min(height - rh, Math.max(0, rect.y1))
-    rect.x2 = rect.x1 + rw
-    rect.y2 = rect.y1 + rh
+    rect.x1 = Math.min(width - this._startingRect.w, Math.max(0, rect.x1))
+    rect.y1 = Math.min(height - this._startingRect.h, Math.max(0, rect.y1))
+    rect.x2 = rect.x1 + this._startingRect.w
+    rect.y2 = rect.y1 + this._startingRect.h
     this.updateShapeValues(rect)
   }
 
@@ -201,6 +204,20 @@ export class Box2D extends Label2D {
       if (!this._shouldCommit && area >= MIN_AREA) {
         this._shouldCommit = true
       }
+      return true
+    }
+    return false
+  }
+
+  /**
+   * Handle mouse down
+   * @param coord
+   */
+  public onMouseDown (coord: Vector2D): boolean {
+    this._mouseDown = true
+    if (this._selected) {
+      this._mouseDownCoord = coord.clone()
+      this._startingRect = (this.shapes[0] as Rect2D).clone()
       return true
     }
     return false

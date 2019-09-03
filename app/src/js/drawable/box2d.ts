@@ -24,8 +24,14 @@ const DEFAULT_CONTROL_POINT_STYLE = makePoint2DStyle({ radius: 12 })
  * Box2d Label
  */
 export class Box2D extends Label2D {
+  /** mouse coordinate when pressed down */
+  private _mouseDownCoord: Vector2D
   /** list of shapes for this box 2d */
   private _shapes: Shape[]
+  /** true if label should be committed */
+  private _shouldCommit: boolean
+  /** true if mouse down */
+  private _mouseDown: boolean
 
   constructor () {
     super()
@@ -34,13 +40,9 @@ export class Box2D extends Label2D {
       new Point2D(), new Point2D(), new Point2D(), new Point2D(),
       new Point2D(), new Point2D(), new Point2D(), new Point2D()
     ]
-  }
-
-  /**
-   * Return a list of the shape for inspection and testing
-   */
-  public get shapes (): Array<Readonly<Shape>> {
-    return this._shapes
+    this._mouseDownCoord = new Vector2D()
+    this._shouldCommit = true
+    this._mouseDown = false
   }
 
   /** Draw the label on viewing or control convas */
@@ -102,7 +104,7 @@ export class Box2D extends Label2D {
    * @param {Vector2D} start: starting point
    * @param {Vector2D} end: ending point
    */
-  public resize (_start: Vector2D, end: Vector2D, _limit: Size2D): void {
+  public resize (end: Vector2D, _limit: Size2D): void {
     const c = end
     const x = c.x
     const y = c.y
@@ -170,12 +172,12 @@ export class Box2D extends Label2D {
    * Move the box
    * @param {Vector2D} start: starting point
    * @param {Vector2D} delta: how far the handle has been dragged
-   * @param {Vector2D} limit: limist of the canvas frame
+   * @param {Vector2D} limit: limit of the canvas frame
    */
-  public move (start: Vector2D, end: Vector2D, limit: Size2D): void {
+  public move (end: Vector2D, limit: Size2D): void {
     const [width, height] = [limit.width, limit.height]
     const rect = (this._shapes[0] as Rect2D).toRect()
-    const delta = end.clone().substract(start)
+    const delta = end.clone().substract(this._mouseDownCoord)
     const [rw, rh] = [rect.x2 - rect.x1, rect.y2 - rect.y1]
     rect.x1 += delta.x
     rect.y1 += delta.y
@@ -187,36 +189,78 @@ export class Box2D extends Label2D {
     this.updateShapeValues(rect)
   }
 
+  /**
+   * Handle mouse down
+   * @param coord
+   */
+  public onMouseDown (coord: Vector2D): boolean {
+    this._mouseDown = true
+    if (this._selected) {
+      this._mouseDownCoord.x = coord.x
+      this._mouseDownCoord.y = coord.y
+      return true
+    }
+    return false
+  }
+
+  /**
+   * Handle mouse up
+   * @param coord
+   */
+  public onMouseUp (coord: Vector2D): boolean {
+    this._mouseDown = false
+    if (this._selected) {
+      // TODO: Move comparison rhs to constant
+      if (
+        !this._shouldCommit &&
+        Math.abs(coord.x - this._mouseDownCoord.x) > 1 &&
+        Math.abs(coord.y - this._mouseDownCoord.y) > 1
+      ) {
+        this._shouldCommit = true
+      }
+      return true
+    }
+    return false
+  }
+
 /**
  * Drag the handle to a new position
- * @param {Vector2D} start: starting point of the dragging
- * @param {Vector2D} end: ending point of the dragging
- * @param {Vector2D} limit: limist of the canvas frame
+ * @param {Vector2D} coord: current mouse position
+ * @param {Vector2D} limit: limit of the canvas frame
  */
-  public drag (start: Vector2D, end: Vector2D, limit: Size2D): void {
-    if (this._selectedHandle > 0) {
-      this.resize(start, end, limit)
-    } else if (this._selectedHandle === 0) {
-      this.move(start, end, limit)
+  public onMouseMove (coord: Vector2D, limit: Size2D): boolean {
+    if (this._selected && this._mouseDown) {
+      if (this._selectedHandle > 0) {
+        this.resize(coord, limit)
+      } else if (this._selectedHandle === 0) {
+        this.move(coord, limit)
+      }
+      return true
     }
+
+    return false
   }
 
   /** Update the shapes of the label to the state */
-  public commitLabel (): void {
-    if (this._label !== null) {
-      if (this._labelId < 0) {
-        const r = this.toRect()
-        Session.dispatch(addBox2dLabel(
-          this._label.item, this._label.category, r.x1, r.y1, r.x2, r.y2))
-      } else {
-        Session.dispatch(changeLabelShape(
-          this._label.item, this._label.shapes[0], this.toRect()))
-      }
+  public commitLabel (): boolean {
+    if (!this._shouldCommit || !this._label) {
+      return false
     }
+
+    if (this._labelId < 0) {
+      const r = this.toRect()
+      Session.dispatch(addBox2dLabel(
+        this._label.item, this._label.category, r.x1, r.y1, r.x2, r.y2))
+    } else {
+      Session.dispatch(changeLabelShape(
+        this._label.item, this._label.shapes[0], this.toRect()))
+    }
+    return true
   }
 
   /** Initialize this label to be temporary */
   public initTemp (state: State, start: Vector2D): void {
+    this._shouldCommit = false
     const itemIndex = state.user.select.item
     this._order = state.task.status.maxOrder + 1
     this._label = makeLabel({
@@ -226,7 +270,9 @@ export class Box2D extends Label2D {
     })
     this._labelId = -1
     this._color = getColorById(state.task.status.maxLabelId + 1)
-    const rect = makeRect({ x1: start.x, y1: start.y, x2: 0, y2: 0 })
+    const rect = makeRect({
+      x1: start.x, y1: start.y, x2: start.x, y2: start.y
+    })
     this.updateShapes([rect])
     this.setSelected(true, 5)
   }

@@ -114,12 +114,25 @@ export abstract class Label2D {
   public abstract draw (canvas: Context2D, ratio: number, mode: DrawMode): void
 
   /**
-   * Drag the handle to a new position
-   * @param {Vector2D} start: starting point of the drag
-   * @param {Vector2D} delta: displacement
-   * @param {Size2D} limit: limist of the canvas frame
+   * Handle mouse down
+   * @param coord
    */
-  public abstract drag (start: Vector2D, delta: Vector2D, limit: Size2D): void
+  public abstract onMouseDown (coord: Vector2D): boolean
+
+  /**
+   * Handle mouse up
+   * @param coord
+   */
+  public abstract onMouseUp (coord: Vector2D): boolean
+
+  /**
+   * Process mouse move
+   * @param {Vector2D} coord: mouse coordinate
+   * @param {Size2D} limit: limit of the canvas frame
+   */
+  public abstract onMouseMove (
+    coord: Vector2D, limit: Size2D
+  ): boolean
 
   /**
    * Expand the primitive shapes to drawable shapes
@@ -128,7 +141,7 @@ export abstract class Label2D {
   public abstract updateShapes (shapes: ShapeType[]): void
 
   /** Update the shapes of the label to the state */
-  public abstract commitLabel (): void
+  public abstract commitLabel (): boolean
 
   /**
    * Initialize this label to be temporary

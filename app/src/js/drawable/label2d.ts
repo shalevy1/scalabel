@@ -39,6 +39,12 @@ export abstract class Label2D {
   protected _highlightedHandle: number
   /** rgba color decided by labelId */
   protected _color: number[]
+  /** true if label should be committed */
+  protected _shouldCommit: boolean
+  /** true if mouse down */
+  protected _mouseDown: boolean
+  /** mouse coordinate when pressed down */
+  protected _mouseDownCoord: Vector2D
 
   constructor () {
     this._index = -1
@@ -53,6 +59,9 @@ export abstract class Label2D {
     this._viewMode = {
       dimmed: false
     }
+    this._mouseDownCoord = new Vector2D()
+    this._shouldCommit = true
+    this._mouseDown = false
   }
 
   /** Set whether the label is highlighted */
@@ -117,13 +126,23 @@ export abstract class Label2D {
    * Handle mouse down
    * @param coord
    */
-  public abstract onMouseDown (coord: Vector2D): boolean
+  public onMouseDown (coord: Vector2D): boolean {
+    this._mouseDown = true
+    if (this._selected) {
+      this._mouseDownCoord = coord.clone()
+      return true
+    }
+    return false
+  }
 
   /**
    * Handle mouse up
    * @param coord
    */
-  public abstract onMouseUp (coord: Vector2D): boolean
+  public onMouseUp (_coord: Vector2D): boolean {
+    this._mouseDown = false
+    return false
+  }
 
   /**
    * Process mouse move

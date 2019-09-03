@@ -19,19 +19,14 @@ const DEFAULT_VIEW_POINT_STYLE = makePoint2DStyle({ radius: 8 })
 const DEFAULT_VIEW_HIGH_POINT_STYLE = makePoint2DStyle({ radius: 12 })
 const DEFAULT_CONTROL_RECT_STYLE = makeRect2DStyle({ lineWidth: 10 })
 const DEFAULT_CONTROL_POINT_STYLE = makePoint2DStyle({ radius: 12 })
+const MIN_AREA = 10
 
 /**
  * Box2d Label
  */
 export class Box2D extends Label2D {
-  /** mouse coordinate when pressed down */
-  private _mouseDownCoord: Vector2D
   /** list of shapes for this box 2d */
   private _shapes: Shape[]
-  /** true if label should be committed */
-  private _shouldCommit: boolean
-  /** true if mouse down */
-  private _mouseDown: boolean
 
   constructor () {
     super()
@@ -40,9 +35,6 @@ export class Box2D extends Label2D {
       new Point2D(), new Point2D(), new Point2D(), new Point2D(),
       new Point2D(), new Point2D(), new Point2D(), new Point2D()
     ]
-    this._mouseDownCoord = new Vector2D()
-    this._shouldCommit = true
-    this._mouseDown = false
   }
 
   /**
@@ -197,32 +189,16 @@ export class Box2D extends Label2D {
   }
 
   /**
-   * Handle mouse down
-   * @param coord
-   */
-  public onMouseDown (coord: Vector2D): boolean {
-    this._mouseDown = true
-    if (this._selected) {
-      this._mouseDownCoord.x = coord.x
-      this._mouseDownCoord.y = coord.y
-      return true
-    }
-    return false
-  }
-
-  /**
    * Handle mouse up
    * @param coord
    */
   public onMouseUp (coord: Vector2D): boolean {
     this._mouseDown = false
     if (this._selected) {
+      const area = Math.abs(coord.x - this._mouseDownCoord.x) *
+                   Math.abs(coord.y - this._mouseDownCoord.y)
       // TODO: Move comparison rhs to constant
-      if (
-        !this._shouldCommit &&
-        Math.abs(coord.x - this._mouseDownCoord.x) > 1 &&
-        Math.abs(coord.y - this._mouseDownCoord.y) > 1
-      ) {
+      if (!this._shouldCommit && area >= MIN_AREA) {
         this._shouldCommit = true
       }
       return true

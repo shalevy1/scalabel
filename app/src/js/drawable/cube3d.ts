@@ -236,6 +236,12 @@ export class Cube3D extends THREE.Group {
     this._axes.position.y = Math.floor(this._anchorIndex / 2) % 2 - 0.5
     this._axes.position.x = this._anchorIndex % 2 - 0.5
 
+    // Check if parent exists
+    if (this.parent) {
+      this.position.z = this.scale.z / 2.0
+      return
+    }
+
     // Check if shape already in scene
     for (const child of scene.children) {
       if (child === this) {

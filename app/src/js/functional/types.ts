@@ -80,7 +80,15 @@ export interface PathPoint2DType {
   type: string
 }
 
-export type ShapeType = RectType | CubeType | Point2DType | PathPoint2DType
+export interface PlaneType {
+  /** Plane origin in world */
+  offset: Vector3Type
+  /** orientation in Euler */
+  orientation: Vector3Type
+}
+
+export type ShapeType =
+  RectType | CubeType | Point2DType | PathPoint2DType | PlaneType
 
 export interface IndexedShapeType {
   /** ID of the shape */

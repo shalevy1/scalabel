@@ -2,18 +2,29 @@ import _ from 'lodash'
 import * as THREE from 'three'
 import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
+import { LabelTypes } from '../common/types'
 import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
 import { State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
+import { TransformControls } from '../thirdparty/transform_controls'
 import { Box3D } from './box3d'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
+import { Plane3D } from './plane3d'
 
 /**
  * Make a new drawable label based on the label type
  * @param {string} labelType: type of the new label
  */
-function makeDrawableLabel (_labelType: string): Label3D {
+function makeDrawableLabel (
+  labelType: string, controls: TransformControls
+): Label3D {
+  switch (labelType) {
+    case LabelTypes.BOX_3D:
+      return new Box3D(controls)
+    case LabelTypes.PLANE_3D:
+      return new Plane3D(controls)
+  }
   return new Box3D()
 }
 
@@ -44,10 +55,15 @@ export class Label3DList {
   private _labelChanged: boolean
   /** List of ThreeJS objects for raycasting */
   private _raycastableShapes: Readonly<Array<Readonly<Shape>>>
-  /** ray from where mouse was initially pressed down */
-  // private _mouseDownOnSelectionRay: THREE.Ray
+  /** Plane visualization */
+  private _plane: Plane3D
+  /** Object transformation controls */
+  private _controls: TransformControls
 
-  constructor () {
+  constructor (controls: TransformControls) {
+    this._controls = controls
+    this._plane = new Plane3D(this._controls)
+    this._plane.init(Session.getState())
     this._labels = {}
     this._raycastMap = {}
     this._selectedLabel = null
@@ -88,7 +104,15 @@ export class Label3DList {
       if (id in this._labels) {
         newLabels[id] = this._labels[id]
       } else {
-        newLabels[id] = makeDrawableLabel(item.labels[id].type)
+        if (item.labels[id].type === LabelTypes.PLANE_3D) {
+          newLabels[id] = this._plane
+        } else {
+          newLabels[id] =
+            makeDrawableLabel(item.labels[id].type, this._controls)
+          if (this._plane) {
+            this._plane.addLabel(newLabels[id])
+          }
+        }
       }
       newLabels[id].updateState(state, itemIndex, id)
       for (const shape of newLabels[id].shapes()) {
@@ -152,7 +176,7 @@ export class Label3DList {
 
         this._mouseDownOnSelection = true
 
-        this._selectedLabel.startDrag(
+        this._selectedLabel.mouseDown(
           this._viewPlaneNormal,
           (new Vector3D()).fromObject(viewerConfig.position).toThree(),
           this._intersectionPoint
@@ -168,9 +192,9 @@ export class Label3DList {
    */
   public onMouseUp (): boolean {
     this._mouseDownOnSelection = false
-    if (this._labelChanged && this._selectedLabel !== null) {
+    if ((this._labelChanged || this._plane) && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
-      this._selectedLabel.stopDrag()
+      this._selectedLabel.mouseUp()
     }
     this._labelChanged = false
     return false
@@ -191,7 +215,7 @@ export class Label3DList {
     if (this._mouseDownOnSelection && this._selectedLabel) {
       this._labelChanged = true
       const projection = this.calculateProjectionFromNDC(x, y, camera)
-      this._selectedLabel.drag(
+      this._selectedLabel.mouseMove(
         projection
       )
       return true
@@ -229,6 +253,70 @@ export class Label3DList {
             this._state.user.select.item,
             this._state.user.select.label
           ))
+        }
+        return true
+      case 'P':
+      case 'p':
+        if (this._plane) {
+          if (this._selectedLabel === this._plane) {
+            this._plane.setSelected(false)
+            this._selectedLabel = null
+            Session.dispatch(changeLabelProps(
+              this._state.user.select.item, -1, {}
+            ))
+          } else {
+            if (this._selectedLabel) {
+              this._selectedLabel.setSelected(false)
+            }
+            this._plane.setSelected(true)
+            Session.dispatch(changeLabelProps(
+              this._state.user.select.item, this._plane.labelId, {}
+            ))
+          }
+          return true
+        }
+        return false
+      case 't':
+      case 'T':
+        this._controls.mode = 'translate'
+        if (this._selectedLabel === this._plane) {
+          this._controls.showX = true
+          this._controls.showY = true
+          this._controls.showZ = true
+        } else {
+          this._controls.showX = true
+          this._controls.showY = true
+          this._controls.showZ = false
+        }
+        return true
+      case 'r':
+      case 'R':
+        if (this._selectedLabel === this._plane) {
+          this._controls.showX = true
+          this._controls.showY = true
+          this._controls.showZ = true
+        } else {
+          this._controls.showX = false
+          this._controls.showY = false
+          this._controls.showZ = true
+        }
+        this._controls.mode = 'rotate'
+        return true
+      case 's':
+      case 'S':
+        if (this._plane !== this._selectedLabel) {
+          this._controls.showX = true
+          this._controls.showY = true
+          this._controls.showZ = true
+          this._controls.mode = 'scale'
+        }
+        return true
+      case 'q':
+      case 'Q':
+        if (this._controls.space === 'local') {
+          this._controls.space = 'world'
+        } else {
+          this._controls.space = 'local'
         }
         return true
     }

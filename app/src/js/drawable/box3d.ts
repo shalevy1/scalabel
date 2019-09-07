@@ -14,10 +14,9 @@ import {
 import { Vector3D } from '../math/vector3d'
 
 import { LabelTypes } from '../common/types'
+import { TransformControls } from '../thirdparty/transform_controls'
 import { Cube3D, DrawMode } from './cube3d'
 import { Label3D } from './label3d'
-
-type Shape = Cube3D
 
 enum EditMode {
   MOVE,
@@ -30,7 +29,7 @@ enum EditMode {
  * Box3d Label
  */
 export class Box3D extends Label3D {
-  /** list of shapes for this box 2d */
+  /** ThreeJS object for rendering shape */
   private _shape: Cube3D
   /** Direction from target to camera */
   private _viewPlaneNormal: THREE.Vector3
@@ -46,9 +45,12 @@ export class Box3D extends Label3D {
   private _intersectionToCamera: THREE.Vector3
   /** True if drag started */
   private _dragging: boolean
+  /** transformation controls */
+  private _controls?: TransformControls
 
-  constructor () {
+  constructor (controls?: TransformControls) {
     super()
+    this._controls = controls
     this._shape = new Cube3D(this._index)
     this._viewPlaneNormal = new THREE.Vector3()
     this._cameraPosition = new THREE.Vector3()
@@ -91,15 +93,25 @@ export class Box3D extends Label3D {
     super.setSelected(s)
     if (s) {
       this._shape.drawMode = DrawMode.SELECTED
+      if (this._controls) {
+        this._controls.attach(this._shape)
+        this._controls.mode = 'translate'
+        this._controls.showX = true
+        this._controls.showY = true
+        this._controls.showZ = false
+      }
     } else {
       this._shape.drawMode = DrawMode.STANDBY
+      if (this._controls) {
+        this._controls.detach()
+      }
     }
   }
 
   /**
    * Return a list of the shape for inspection and testing
    */
-  public shapes (): Array<Readonly<Shape>> {
+  public shapes (): Array<Readonly<Cube3D>> {
     return [this._shape]
   }
 
@@ -109,6 +121,9 @@ export class Box3D extends Label3D {
    */
   public render (scene: THREE.Scene): void {
     this._shape.render(scene, this._highlighted)
+    if (this._controls && this._selected) {
+      scene.add(this._controls)
+    }
   }
 
   /**
@@ -117,7 +132,7 @@ export class Box3D extends Label3D {
    * @param cameraPosition
    * @param intersectionPoint
    */
-  public startDrag (
+  public mouseDown (
     viewPlaneNormal: THREE.Vector3,
     cameraPosition: THREE.Vector3,
     intersectionPoint: THREE.Vector3
@@ -139,9 +154,12 @@ export class Box3D extends Label3D {
    * Mouse movement while mouse down on box (from raycast)
    * @param {THREE.Vector3} projection
    */
-  public drag (
+  public mouseMove (
     projection: THREE.Vector3
   ): void {
+    if (this._controls) {
+      return
+    }
     switch (this._editMode) {
       case EditMode.MOVE:
         this._shape.moveAlongViewPlane(
@@ -179,7 +197,7 @@ export class Box3D extends Label3D {
   /**
    * Clean up drag action
    */
-  public stopDrag () {
+  public mouseUp () {
     this._dragging = false
     this.resetModes('')
   }

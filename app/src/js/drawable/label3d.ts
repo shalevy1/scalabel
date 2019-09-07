@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import { LabelType, ShapeType, State } from '../functional/types'
 import { Cube3D } from './cube3d'
+import { Grid3D } from './grid3d'
 import { getColorById } from './util'
 
-type Shape = Cube3D
+type Shape = Cube3D | Grid3D
 
 /**
  * Abstract class for 3D drawable labels
@@ -74,7 +75,7 @@ export abstract class Label3D {
    * @param cameraPosition
    * @param intersectionPoint
    */
-  public abstract startDrag (
+  public abstract mouseDown (
     viewPlaneNormal: THREE.Vector3,
     cameraPosition: THREE.Vector3,
     intersectionPoint: THREE.Vector3
@@ -84,7 +85,7 @@ export abstract class Label3D {
    * Mouse movement while mouse down on box (from raycast)
    * @param projection
    */
-  public abstract drag (projection: THREE.Vector3): void
+  public abstract mouseMove (projection: THREE.Vector3): void
 
   /**
    * Clean up for drag action
@@ -93,7 +94,7 @@ export abstract class Label3D {
    * @param intersectionPoint
    * @param editMode
    */
-  public abstract stopDrag (): void
+  public abstract mouseUp (): void
 
   /**
    * Handle keyboard events

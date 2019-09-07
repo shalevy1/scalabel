@@ -12,6 +12,7 @@ import {
   Vector3Type
 } from '../../js/functional/types'
 import { Vector3D } from '../../js/math/vector3d'
+import { TransformControls } from '../../js/thirdparty/transform_controls'
 import { testJson } from '../test_point_cloud_objects'
 
 /**
@@ -58,7 +59,8 @@ test('Draw 3d bbox', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  const label3dList = new Label3DList()
+  const label3dList =
+    new Label3DList(new TransformControls(new THREE.PerspectiveCamera()))
   Session.subscribe(() => {
     label3dList.updateState(Session.getState(),
       Session.getState().user.select.item)
@@ -114,7 +116,8 @@ test('Move 3d bbox', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  const label3dList = new Label3DList()
+  const label3dList =
+    new Label3DList(new TransformControls(new THREE.PerspectiveCamera()))
   Session.subscribe(() => {
     label3dList.updateState(Session.getState(),
       Session.getState().user.select.item)
@@ -202,7 +205,8 @@ test('Scale 3d bbox', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  const label3dList = new Label3DList()
+  const label3dList =
+    new Label3DList(new TransformControls(new THREE.PerspectiveCamera()))
   Session.subscribe(() => {
     label3dList.updateState(Session.getState(),
       Session.getState().user.select.item)
@@ -254,7 +258,8 @@ test('Extrude 3d bbox', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  const label3dList = new Label3DList()
+  const label3dList =
+    new Label3DList(new TransformControls(new THREE.PerspectiveCamera()))
   Session.subscribe(() => {
     label3dList.updateState(Session.getState(),
       Session.getState().user.select.item)
@@ -299,7 +304,8 @@ test('Rotate 3d bbox', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  const label3dList = new Label3DList()
+  const label3dList =
+    new Label3DList(new TransformControls(new THREE.PerspectiveCamera()))
   Session.subscribe(() => {
     label3dList.updateState(Session.getState(),
       Session.getState().user.select.item)

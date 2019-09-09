@@ -37,7 +37,7 @@ export class Plane3D extends Label3D {
    * Add label's shape to be part of grid group
    * @param label
    */
-  public addLabel (label: Label3D) {
+  public attachLabel (label: Label3D) {
     for (const shape of label.shapes()) {
       this._shape.add(shape)
     }

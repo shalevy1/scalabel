@@ -79,13 +79,13 @@ class ViewerContainer extends React.Component<{}> {
       /* FIXME: set correct props */
       views.push(<ImageViewer key={'imageView'} display={null} />)
       if (Session.getState().task.config.labelTypes[0] === 'box3d') {
-        views.push(<Label3dViewer key={'label3dView'} />)
+        views.push(<Label3dViewer key={'label3dView'} display={null}/>)
       } else {
         views.push(<Label2dViewer key={'label2dView'} display={null} />)
       }
     } else if (Session.itemType === 'pointcloud') {
       views.push(<PointCloudViewer key={'pointCloudView'}/>)
-      views.push(<Label3dViewer key={'label3dView'} />)
+      views.push(<Label3dViewer key={'label3dView'} display={null} />)
     }
 
     let viewsWithProps = views

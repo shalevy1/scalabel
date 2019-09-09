@@ -6,7 +6,6 @@ import { LabelTypes } from '../common/types'
 import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
 import { State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
-import { TransformControls } from '../thirdparty/transform_controls'
 import { Box3D } from './box3d'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
@@ -17,13 +16,13 @@ import { Plane3D } from './plane3d'
  * @param {string} labelType: type of the new label
  */
 function makeDrawableLabel (
-  labelType: string, controls: TransformControls
+  labelType: string
 ): Label3D {
   switch (labelType) {
     case LabelTypes.BOX_3D:
-      return new Box3D(controls)
+      return new Box3D()
     case LabelTypes.PLANE_3D:
-      return new Plane3D(controls)
+      return new Plane3D()
   }
   return new Box3D()
 }
@@ -57,12 +56,9 @@ export class Label3DList {
   private _raycastableShapes: Readonly<Array<Readonly<Shape>>>
   /** Plane visualization */
   private _plane: Plane3D
-  /** Object transformation controls */
-  private _controls: TransformControls
 
-  constructor (controls: TransformControls) {
-    this._controls = controls
-    this._plane = new Plane3D(this._controls)
+  constructor () {
+    this._plane = new Plane3D()
     this._plane.init(Session.getState())
     this._labels = {}
     this._raycastMap = {}
@@ -108,7 +104,7 @@ export class Label3DList {
           newLabels[id] = this._plane
         } else {
           newLabels[id] =
-            makeDrawableLabel(item.labels[id].type, this._controls)
+            makeDrawableLabel(item.labels[id].type)
           if (this._plane) {
             this._plane.addLabel(newLabels[id])
           }
@@ -276,49 +272,6 @@ export class Label3DList {
           return true
         }
         return false
-      case 't':
-      case 'T':
-        this._controls.mode = 'translate'
-        if (this._selectedLabel === this._plane) {
-          this._controls.showX = true
-          this._controls.showY = true
-          this._controls.showZ = true
-        } else {
-          this._controls.showX = true
-          this._controls.showY = true
-          this._controls.showZ = false
-        }
-        return true
-      case 'r':
-      case 'R':
-        if (this._selectedLabel === this._plane) {
-          this._controls.showX = true
-          this._controls.showY = true
-          this._controls.showZ = true
-        } else {
-          this._controls.showX = false
-          this._controls.showY = false
-          this._controls.showZ = true
-        }
-        this._controls.mode = 'rotate'
-        return true
-      case 's':
-      case 'S':
-        if (this._plane !== this._selectedLabel) {
-          this._controls.showX = true
-          this._controls.showY = true
-          this._controls.showZ = true
-          this._controls.mode = 'scale'
-        }
-        return true
-      case 'q':
-      case 'Q':
-        if (this._controls.space === 'local') {
-          this._controls.space = 'world'
-        } else {
-          this._controls.space = 'local'
-        }
-        return true
     }
     if (this._selectedLabel !== null) {
       return this._selectedLabel.onKeyDown(e)

@@ -5,7 +5,6 @@ import { LabelTypes } from '../common/types'
 import { makeLabel } from '../functional/states'
 import { PlaneType, ShapeType, State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
-import { TransformControls } from '../thirdparty/transform_controls'
 import { Grid3D } from './grid3d'
 import Label3D from './label3d'
 
@@ -15,27 +14,15 @@ import Label3D from './label3d'
 export class Plane3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Grid3D
-  /** transformation controls */
-  private _controls: TransformControls
 
-  constructor (controls: TransformControls) {
+  constructor () {
     super()
     this._shape = new Grid3D(this._index)
-    this._controls = controls
-    this._controls.detach()
   }
 
   /** select the label */
   public setSelected (s: boolean) {
     super.setSelected(s)
-    if (this._selected) {
-      this._controls.attach(this._shape)
-      this._controls.showX = true
-      this._controls.showY = true
-      this._controls.showZ = true
-    } else {
-      this._controls.detach()
-    }
   }
 
   /**
@@ -44,9 +31,6 @@ export class Plane3D extends Label3D {
    */
   public render (scene: THREE.Scene): void {
     this._shape.render(scene)
-    if (this._selected) {
-      scene.add(this._controls)
-    }
   }
 
   /**
@@ -133,9 +117,6 @@ export class Plane3D extends Label3D {
    * @param {State} state
    */
   public init (state: State): void {
-    if (!this._controls) {
-      return
-    }
     const itemIndex = state.user.select.item
     this._order = state.task.status.maxOrder + 1
     this._label = makeLabel({

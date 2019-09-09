@@ -6,7 +6,6 @@ import { Label3DList } from '../drawable/label3d_list'
 import { getCurrentPointCloudViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
 import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../helper/point_cloud'
-import { TransformControls } from '../thirdparty/transform_controls'
 import { Viewer } from './viewer'
 
 const styles = () => createStyles({
@@ -57,8 +56,6 @@ class Label3dViewer extends Viewer<Props> {
   private target: THREE.Mesh
   /** ThreeJS raycaster */
   private raycaster: THREE.Raycaster
-  /** Object transformation controls */
-  private controls?: TransformControls
   /** The hashed list of keys currently down */
   private _keyDownMap: { [key: string]: boolean }
 
@@ -283,8 +280,7 @@ class Label3dViewer extends Viewer<Props> {
       const rendererParams = { canvas: this.canvas, alpha: true }
       this.renderer = new THREE.WebGLRenderer(rendererParams)
 
-      this.controls = new TransformControls(this.camera, this.canvas)
-      this._labels = new Label3DList(this.controls)
+      this._labels = new Label3DList()
       if (isItemLoaded(this.state.session)) {
         this.updateRenderer()
       }

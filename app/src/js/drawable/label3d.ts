@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { LabelType, ShapeType, State } from '../functional/types'
 import { Cube3D } from './cube3d'
 import { Grid3D } from './grid3d'
+import { Plane3D } from './plane3d'
 import { getColorById } from './util'
 
 type Shape = Cube3D | Grid3D
@@ -25,6 +26,8 @@ export abstract class Label3D {
   protected _highlighted: boolean
   /** rgba color decided by labelId */
   protected _color: number[]
+  /** plane if attached */
+  protected _plane?: Plane3D
 
   constructor () {
     this._index = -1
@@ -61,6 +64,12 @@ export abstract class Label3D {
   /** highlight the label */
   public setHighlighted (h: boolean) {
     this._highlighted = h
+  }
+
+  /** Attach label to plane */
+  public attachToPlane (plane: Plane3D) {
+    plane.attachLabel(this)
+    this._plane = plane
   }
 
   /**

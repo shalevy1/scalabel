@@ -55,11 +55,13 @@ export class Label3DList {
   /** List of ThreeJS objects for raycasting */
   private _raycastableShapes: Readonly<Array<Readonly<Shape>>>
   /** Plane visualization */
-  private _plane: Plane3D
+  private _plane?: Plane3D
 
   constructor () {
-    this._plane = new Plane3D()
-    this._plane.init(Session.getState())
+    if (Session.itemType === 'image') {
+      this._plane = new Plane3D()
+      this._plane.init(Session.getState())
+    }
     this._labels = {}
     this._raycastMap = {}
     this._selectedLabel = null
@@ -100,13 +102,13 @@ export class Label3DList {
       if (id in this._labels) {
         newLabels[id] = this._labels[id]
       } else {
-        if (item.labels[id].type === LabelTypes.PLANE_3D) {
+        if (this._plane && item.labels[id].type === LabelTypes.PLANE_3D) {
           newLabels[id] = this._plane
         } else {
           newLabels[id] =
             makeDrawableLabel(item.labels[id].type)
           if (this._plane) {
-            this._plane.addLabel(newLabels[id])
+            this._plane.attachLabel(newLabels[id])
           }
         }
       }

@@ -1,6 +1,5 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { getCurrentImageViewerConfig } from '../functional/state_util'
 import { State } from '../functional/types'
@@ -294,7 +293,10 @@ export class Label2dViewer extends Viewer<Props> {
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
     if (this._labels.onMouseMove(
-      mousePos, getCurrentImageSize(), labelIndex, handleIndex)) {
+      mousePos,
+      getCurrentImageSize(this.state.session),
+      labelIndex, handleIndex
+    )) {
       e.stopPropagation()
       this.redraw()
     }
@@ -344,9 +346,8 @@ export class Label2dViewer extends Viewer<Props> {
     if (!this.display) {
       return
     }
-    const state = Session.getState()
     const config =
-      getCurrentImageViewerConfig(state)
+      getCurrentImageViewerConfig(this.state.session)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return
@@ -359,6 +360,7 @@ export class Label2dViewer extends Viewer<Props> {
         this.scale
       ] =
       updateCanvasScale(
+        this.state.session,
         this.display,
         canvas,
         context,

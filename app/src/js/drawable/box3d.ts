@@ -14,15 +14,8 @@ import {
 import { Vector3D } from '../math/vector3d'
 
 import { LabelTypes } from '../common/types'
-import { Cube3D, DrawMode } from './cube3d'
+import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
-
-enum EditMode {
-  MOVE,
-  SCALE,
-  EXTRUDE,
-  ROTATE
-}
 
 /**
  * Box3d Label
@@ -36,8 +29,6 @@ export class Box3D extends Label3D {
   private _cameraPosition: THREE.Vector3
   /** Intersection between ray from mouse & box */
   private _intersectionPoint: THREE.Vector3
-  /** Editing mode */
-  private _editMode: EditMode
   /** Vector from intersection point to original box position */
   private _intersectionToBox: THREE.Vector3
   /** Vector from camera to original box position */
@@ -51,7 +42,6 @@ export class Box3D extends Label3D {
     this._viewPlaneNormal = new THREE.Vector3()
     this._cameraPosition = new THREE.Vector3()
     this._intersectionPoint = new THREE.Vector3()
-    this._editMode = EditMode.MOVE
     this._intersectionToBox = new THREE.Vector3()
     this._intersectionToCamera = new THREE.Vector3()
     this._dragging = false
@@ -87,11 +77,6 @@ export class Box3D extends Label3D {
    */
   public setSelected (s: boolean) {
     super.setSelected(s)
-    if (s) {
-      this._shape.drawMode = DrawMode.SELECTED
-    } else {
-      this._shape.drawMode = DrawMode.STANDBY
-    }
   }
 
   /**
@@ -138,40 +123,9 @@ export class Box3D extends Label3D {
    * @param {THREE.Vector3} projection
    */
   public mouseMove (
-    projection: THREE.Vector3
+    _projection: THREE.Vector3
   ): void {
-    switch (this._editMode) {
-      case EditMode.MOVE:
-        this._shape.moveAlongViewPlane(
-          projection,
-          this._viewPlaneNormal,
-          this._cameraPosition,
-          this._intersectionToCamera,
-          this._intersectionToBox
-        )
-        break
-      case EditMode.SCALE:
-        this._shape.scaleToProjection(
-          projection,
-          this._intersectionPoint,
-          this._cameraPosition
-        )
-        break
-      case EditMode.EXTRUDE:
-        this._shape.extrudeToProjection(
-          projection,
-          this._cameraPosition
-        )
-        break
-      case EditMode.ROTATE:
-        this._shape.rotateToProjection(
-          projection,
-          this._viewPlaneNormal,
-          this._intersectionPoint,
-          this._cameraPosition
-        )
-        break
-    }
+    return
   }
 
   /**
@@ -179,7 +133,6 @@ export class Box3D extends Label3D {
    */
   public mouseUp () {
     this._dragging = false
-    this.resetModes('')
   }
 
   /**
@@ -228,65 +181,17 @@ export class Box3D extends Label3D {
    * @param {KeyboardEvent} e
    * @returns true if consumed, false otherwise
    */
-  public onKeyDown (e: KeyboardEvent): boolean {
-    switch (e.key) {
-      case 'a':
-      case 'A':
-        this._shape.incrementAnchorIndex()
-        this.commitLabel()
-        return true
-      case 'S':
-      case 's':
-        if (!this._dragging) {
-          this._editMode = EditMode.SCALE
-          this._shape.drawMode = DrawMode.SCALING
-          return true
-        }
-        break
-      case 'E':
-      case 'e':
-        if (!this._dragging) {
-          this._editMode = EditMode.EXTRUDE
-          this._shape.drawMode = DrawMode.EXTRUDING
-          return true
-        }
-        break
-      case 'R':
-      case 'r':
-        if (!this._dragging) {
-          this._editMode = EditMode.ROTATE
-          this._shape.drawMode = DrawMode.ROTATING
-          return true
-        }
-        break
-    }
+  public onKeyDown (_e: KeyboardEvent): boolean {
     return false
   }
 
   /**
    * Handle key up
    */
-  public onKeyUp (e: KeyboardEvent): boolean {
+  public onKeyUp (_e: KeyboardEvent): boolean {
     if (this._dragging) {
       return false
     }
-    return this.resetModes(e.key)
-  }
-
-  /**
-   * Go back to default states
-   * @returns {boolean} True if any state changed
-   */
-  private resetModes (_key: string): boolean {
-    this._editMode = EditMode.MOVE
-    if (this._selected && this._shape.drawMode !== DrawMode.SELECTED) {
-      this._shape.drawMode = DrawMode.SELECTED
-      return true
-    } else if (!this._selected && this._shape.drawMode !== DrawMode.STANDBY) {
-      this._shape.drawMode = DrawMode.STANDBY
-      return true
-    }
-
     return false
   }
 }

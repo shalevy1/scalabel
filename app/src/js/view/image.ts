@@ -178,7 +178,7 @@ export function imageDataToHandleId (data: Uint8ClampedArray) {
 export function updateCanvasScale (
   display: HTMLDivElement,
   canvas: HTMLCanvasElement,
-  context: CanvasRenderingContext2D,
+  context: CanvasRenderingContext2D | null,
   config: ImageViewerConfigType,
   zoomRatio: number,
   upRes: boolean
@@ -186,7 +186,9 @@ export function updateCanvasScale (
   const state = Session.getState()
   const displayRect = display.getBoundingClientRect()
 
-  context.scale(zoomRatio, zoomRatio)
+  if (context) {
+    context.scale(zoomRatio, zoomRatio)
+  }
 
   // resize canvas
   const item = getCurrentItem(state)

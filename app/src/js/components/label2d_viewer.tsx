@@ -21,7 +21,7 @@ import { Viewer } from './viewer'
 
 interface ClassType {
   /** label canvas */
-  label_canvas: string
+  label2d_canvas: string
   /** control canvas */
   control_canvas: string
 }
@@ -155,8 +155,8 @@ export class Label2dViewer extends Viewer<Props> {
       }}
     />)
     let labelCanvas = (<canvas
-      key='label-canvas'
-      className={classes.label_canvas}
+      key='label2d-canvas'
+      className={classes.label2d_canvas}
       ref={(canvas) => {
         if (canvas && this.display) {
           this.labelCanvas = canvas

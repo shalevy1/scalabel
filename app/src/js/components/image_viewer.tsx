@@ -125,14 +125,14 @@ export class ImageViewer extends Viewer<Props> {
     if (!this.display) {
       return
     }
-    const state = Session.getState()
     const config =
-      getCurrentImageViewerConfig(state)
+      getCurrentImageViewerConfig(this.state.session)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return
     }
     const newParams = updateCanvasScale(
+      this.state.session,
       this.display,
       canvas,
       context,

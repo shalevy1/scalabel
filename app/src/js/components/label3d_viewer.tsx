@@ -292,14 +292,14 @@ class Label3dViewer extends Viewer<Props> {
 
     if (this.canvas && this.display) {
       if (Session.itemType === 'image') {
-        const state = Session.getState()
-        const config = getCurrentImageViewerConfig(state)
+        const config = getCurrentImageViewerConfig(this.state.session)
 
         if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
           return
         }
         const newParams =
           updateCanvasScale(
+            this.state.session,
             this.display,
             this.canvas,
             null,

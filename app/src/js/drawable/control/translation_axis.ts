@@ -7,7 +7,7 @@ import { TranslationControlUnit } from './translation_control'
 export class TranslationAxis extends THREE.ArrowHelper
   implements TranslationControlUnit {
   /** Translation direction (180 degree symmetric) */
-  private _direction?: THREE.Vector3
+  private _direction: THREE.Vector3
 
   constructor (direction: THREE.Vector3, color: number) {
     super(direction, new THREE.Vector3(0, 0, 0), 1, color, 0.15, 0.09)
@@ -30,10 +30,17 @@ export class TranslationAxis extends THREE.ArrowHelper
   public getDelta (
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
-    dragPlane: THREE.Plane
+    dragPlane: THREE.Plane,
+    local: boolean
   ): THREE.Vector3 {
-    if (!this._direction) {
-      return new THREE.Vector3()
+    const direction = new THREE.Vector3()
+    direction.copy(this._direction)
+
+    if (local && this.parent) {
+      const quaternion = new THREE.Quaternion()
+      this.parent.getWorldQuaternion(quaternion)
+
+      direction.applyQuaternion(quaternion)
     }
 
     const newIntersection = new THREE.Vector3()
@@ -43,9 +50,9 @@ export class TranslationAxis extends THREE.ArrowHelper
     mouseDelta.copy(newIntersection)
     mouseDelta.sub(oldIntersection)
 
-    const projectionLength = mouseDelta.dot(this._direction)
+    const projectionLength = mouseDelta.dot(direction)
     const delta = new THREE.Vector3()
-    delta.copy(this._direction)
+    delta.copy(direction)
     delta.multiplyScalar(projectionLength)
 
     return delta

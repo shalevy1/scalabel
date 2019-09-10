@@ -258,7 +258,7 @@ export class Label3DList {
         return false
     }
     if (this._selectedLabel !== null) {
-      return this._selectedLabel.onKeyDown(e)
+      return this._control.onKeyDown(e)
     }
     return false
   }

@@ -84,7 +84,7 @@ class ViewerContainer extends React.Component<{}> {
         views.push(<Label2dViewer key={'label2dView'} display={null} />)
       }
     } else if (Session.itemType === 'pointcloud') {
-      views.push(<PointCloudViewer key={'pointCloudView'}/>)
+      views.push(<PointCloudViewer key={'pointCloudView'} display={null}/>)
       views.push(<Label3dViewer key={'label3dView'} display={null} />)
     }
 

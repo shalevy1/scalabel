@@ -62,8 +62,6 @@ class Label3dViewer extends Viewer<Props> {
   private camera: THREE.PerspectiveCamera
   /** ThreeJS sphere mesh for indicating camera target location */
   private target: THREE.Mesh
-  /** ThreeJS raycaster */
-  private raycaster: THREE.Raycaster
   /** The hashed list of keys currently down */
   private _keyDownMap: { [key: string]: boolean }
 
@@ -99,11 +97,7 @@ class Label3dViewer extends Viewer<Props> {
         }))
     this.scene.add(this.target)
 
-    this._labels = new Label3DList()
-
-    this.raycaster = new THREE.Raycaster()
-    this.raycaster.near = 1.0
-    this.raycaster.far = 100.0
+    this._labels = new Label3DList(this.camera)
 
     this.display = null
     this.canvas = null
@@ -235,7 +229,7 @@ class Label3dViewer extends Viewer<Props> {
     const x = NDC[0]
     const y = NDC[1]
 
-    if (this._labels.onMouseMove(x, y, this.camera, this.raycaster)) {
+    if (this._labels.onMouseMove(x, y)) {
       e.stopPropagation()
     }
 
@@ -286,28 +280,27 @@ class Label3dViewer extends Viewer<Props> {
       return
     }
 
-    if (component.nodeName === 'CANVAS') {
+    if (component.nodeName === 'CANVAS' && this.canvas !== component) {
       this.canvas = component
-    }
+      if (this.canvas && this.display) {
+        if (Session.itemType === 'image') {
+          const config = getCurrentImageViewerConfig(this.state.session)
 
-    if (this.canvas && this.display) {
-      if (Session.itemType === 'image') {
-        const config = getCurrentImageViewerConfig(this.state.session)
-
-        if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
-          return
+          if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
+            return
+          }
+          const newParams =
+            updateCanvasScale(
+              this.state.session,
+              this.display,
+              this.canvas,
+              null,
+              config,
+              config.viewScale / this.scale,
+              false
+            )
+          this.scale = newParams[3]
         }
-        const newParams =
-          updateCanvasScale(
-            this.state.session,
-            this.display,
-            this.canvas,
-            null,
-            config,
-            config.viewScale / this.scale,
-            false
-          )
-        this.scale = newParams[3]
       }
 
       const rendererParams = { canvas: this.canvas, alpha: true }

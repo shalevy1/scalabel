@@ -56,8 +56,12 @@ export class Label3DList {
   private _raycastableShapes: Readonly<Array<Readonly<Shape>>>
   /** Plane visualization */
   private _plane?: Plane3D
+  /** Camera */
+  private _camera: THREE.Camera
+  /** raycaster */
+  private _raycaster: THREE.Raycaster
 
-  constructor () {
+  constructor (camera: THREE.Camera) {
     if (Session.itemType === 'image') {
       this._plane = new Plane3D()
       this._plane.init(Session.getState())
@@ -71,7 +75,11 @@ export class Label3DList {
     this._mouseDownOnSelection = false
     this._labelChanged = false
     this._raycastableShapes = []
-    // this._mouseDownOnSelectionRay = new THREE.Ray()
+    this._camera = camera
+    this._raycaster = new THREE.Raycaster()
+    this._raycaster.near = 1.0
+    this._raycaster.far = 100.0
+    this._raycaster.linePrecision = 0.02
     this._state = Session.getState()
     this.updateState(this._state, this._state.user.select.item)
   }
@@ -206,19 +214,17 @@ export class Label3DList {
    */
   public onMouseMove (
     x: number,
-    y: number,
-    camera: THREE.Camera,
-    raycaster: THREE.Raycaster
+    y: number
   ): boolean {
     if (this._mouseDownOnSelection && this._selectedLabel) {
       this._labelChanged = true
-      const projection = this.calculateProjectionFromNDC(x, y, camera)
+      const projection = this.calculateProjectionFromNDC(x, y, this._camera)
       this._selectedLabel.mouseMove(
         projection
       )
       return true
     } else {
-      this.raycastLabels(x, y, camera, raycaster)
+      this.raycastLabels(x, y, this._camera, this._raycaster)
     }
     return false
   }
@@ -350,7 +356,6 @@ export class Label3DList {
     camera: THREE.Camera,
     raycaster: THREE.Raycaster
   ): void {
-    raycaster.linePrecision = 0.02
     raycaster.setFromCamera(new THREE.Vector2(x, y), camera)
 
     const shapes = this.getRaycastableShapes()

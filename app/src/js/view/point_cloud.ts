@@ -35,8 +35,8 @@ export function updateThreeCameraAndRenderer (
   camera.lookAt(target.position)
 
   if (renderer && canvas) {
-    renderer.setSize(canvas.offsetWidth,
-      canvas.offsetHeight)
+    renderer.setSize(canvas.width,
+      canvas.height)
   }
 }
 

@@ -7,6 +7,7 @@ import { PlaneType, ShapeType, State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
 import { Grid3D } from './grid3d'
 import Label3D from './label3d'
+import { TransformationControl } from './three/transformation_control'
 
 /**
  * Class for managing plane for holding 3d labels
@@ -15,7 +16,7 @@ export class Plane3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Grid3D
 
-  constructor () {
+  constructor (_control: TransformationControl) {
     super()
     this._shape = new Grid3D(this._index)
   }
@@ -55,9 +56,10 @@ export class Plane3D extends Label3D {
 
   /**
    * Mouse movement while mouse down on box (from raycast)
-   * @param projection
+   * @param x: NDC
+   * @param y: NDC
    */
-  public mouseMove (_projection: THREE.Vector3): void {
+  public mouseMove (_x: number, _y: number, _camera: THREE.Camera): void {
     return
   }
 

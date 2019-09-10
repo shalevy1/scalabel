@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { CubeType } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
+import { TransformationControl } from './three/transformation_control'
 import { getColorById } from './util'
 
 /**
@@ -23,6 +24,8 @@ export class Cube3D extends THREE.Group {
   private _size: Vector3D
   /** Redux state */
   private _orientation: Vector3D
+  /** controls */
+  private _control: TransformationControl | null
 
   /**
    * Make box with assigned id
@@ -57,6 +60,8 @@ export class Cube3D extends THREE.Group {
     this._center = new Vector3D()
     this._size = new Vector3D()
     this._orientation = new Vector3D()
+
+    this._control = null
   }
 
   /**
@@ -180,6 +185,23 @@ export class Cube3D extends THREE.Group {
   }
 
   /**
+   * Add/remove controls
+   * @param control
+   * @param show
+   */
+  public setControl (control: TransformationControl, show: boolean) {
+    if (show) {
+      this.add(control)
+      this._control = control
+      this._control.attach(this)
+    } else if (this._control) {
+      this._control.detach()
+      this.remove(control)
+      this._control = null
+    }
+  }
+
+  /**
    * Override ThreeJS raycast to intersect with box
    * @param raycaster
    * @param intersects
@@ -189,6 +211,9 @@ export class Cube3D extends THREE.Group {
     intersects: THREE.Intersection[]
   ) {
     this._box.raycast(raycaster, intersects)
+    if (this._control) {
+      this._control.raycast(raycaster, intersects)
+    }
   }
 
   /**

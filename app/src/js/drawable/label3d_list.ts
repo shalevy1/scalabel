@@ -3,28 +3,27 @@ import * as THREE from 'three'
 import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
 import { LabelTypes } from '../common/types'
-import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
 import { State } from '../functional/types'
-import { Vector3D } from '../math/vector3d'
 import { Box3D } from './box3d'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
 import { Plane3D } from './plane3d'
+import { TransformationControl } from './three/transformation_control'
 
 /**
  * Make a new drawable label based on the label type
  * @param {string} labelType: type of the new label
  */
 function makeDrawableLabel (
-  labelType: string
+  labelType: string, control: TransformationControl
 ): Label3D {
   switch (labelType) {
     case LabelTypes.BOX_3D:
-      return new Box3D()
+      return new Box3D(control)
     case LabelTypes.PLANE_3D:
-      return new Plane3D()
+      return new Plane3D(control)
   }
-  return new Box3D()
+  return new Box3D(control)
 }
 
 type Shape = Cube3D
@@ -44,8 +43,6 @@ export class Label3DList {
   private _selectedLabel: Label3D | null
   /** highlighted label */
   private _highlightedLabel: Label3D | null
-  /** Vector from target to camera */
-  private _viewPlaneNormal: THREE.Vector3
   /** whether mouse is down on the selected box */
   private _mouseDownOnSelection: boolean
   /** whether the selected label is changed */
@@ -58,17 +55,14 @@ export class Label3DList {
   private _camera: THREE.Camera
   /** raycaster */
   private _raycaster: THREE.Raycaster
+  /** transformation control */
+  private _control: TransformationControl
 
   constructor (camera: THREE.Camera) {
-    if (Session.itemType === 'image') {
-      this._plane = new Plane3D()
-      this._plane.init(Session.getState())
-    }
     this._labels = {}
     this._raycastMap = {}
     this._selectedLabel = null
     this._highlightedLabel = null
-    this._viewPlaneNormal = new THREE.Vector3()
     this._mouseDownOnSelection = false
     this._labelChanged = false
     this._raycastableShapes = []
@@ -77,6 +71,11 @@ export class Label3DList {
     this._raycaster.near = 1.0
     this._raycaster.far = 100.0
     this._raycaster.linePrecision = 0.02
+    this._control = new TransformationControl(this._camera)
+    if (Session.itemType === 'image') {
+      this._plane = new Plane3D(this._control)
+      this._plane.init(Session.getState())
+    }
     this._state = Session.getState()
     this.updateState(this._state, this._state.user.select.item)
   }
@@ -111,7 +110,7 @@ export class Label3DList {
           newLabels[id] = this._plane
         } else {
           newLabels[id] =
-            makeDrawableLabel(item.labels[id].type)
+            makeDrawableLabel(item.labels[id].type, this._control)
           if (this._plane) {
             this._plane.attachLabel(newLabels[id])
           }
@@ -167,21 +166,8 @@ export class Label3DList {
    */
   public onMouseDown (): boolean {
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
-      const viewerConfig =
-        getCurrentPointCloudViewerConfig(this._state)
-      if (viewerConfig) {
-        this._viewPlaneNormal =
-          (new Vector3D()).fromObject(viewerConfig.target).toThree()
-        this._viewPlaneNormal.sub(
-          (new Vector3D()).fromObject(viewerConfig.position).toThree()
-        )
-        this._viewPlaneNormal.normalize()
-
-        this._mouseDownOnSelection = true
-
-        this._selectedLabel.mouseDown()
-        return true
-      }
+      this._control.onMouseDown()
+      this._mouseDownOnSelection = true
     }
     return false
   }
@@ -191,9 +177,9 @@ export class Label3DList {
    */
   public onMouseUp (): boolean {
     this._mouseDownOnSelection = false
+    this._control.onMouseUp()
     if ((this._labelChanged || this._plane) && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
-      this._selectedLabel.mouseUp()
     }
     this._labelChanged = false
     return false
@@ -210,11 +196,8 @@ export class Label3DList {
     y: number
   ): boolean {
     if (this._mouseDownOnSelection && this._selectedLabel) {
+      this._control.onMouseMove(x, y)
       this._labelChanged = true
-      const projection = this.calculateProjectionFromNDC(x, y, this._camera)
-      this._selectedLabel.mouseMove(
-        projection
-      )
       return true
     } else {
       this.raycastLabels(x, y, this._camera, this._raycaster)
@@ -231,7 +214,7 @@ export class Label3DList {
     switch (e.key) {
       case ' ':
         const state = this._state
-        const label = new Box3D()
+        const label = new Box3D(this._control)
         label.init(state)
         return true
       case 'Escape':
@@ -295,23 +278,27 @@ export class Label3DList {
    * @param object
    * @param point
    */
-  private highlight (object: THREE.Object3D | null) {
-    if (object) {
+  private highlight (intersection: THREE.Intersection | null) {
+    if (this._highlightedLabel) {
+      this._highlightedLabel.setHighlighted()
+    }
+    this._highlightedLabel = null
+
+    if (intersection) {
+      let object = intersection.object
       while (object.parent && !(object.id in this._raycastMap)) {
         object = object.parent
       }
 
       if (object.id in this._raycastMap) {
         this._highlightedLabel = this._raycastMap[object.id]
-        this._highlightedLabel.setHighlighted(true)
+        this._highlightedLabel.setHighlighted(intersection)
+        if (this._highlightedLabel === this._selectedLabel) {
+          this._control.setHighlighted(intersection)
+        }
         return
       }
     }
-
-    if (this._highlightedLabel) {
-      this._highlightedLabel.setHighlighted(false)
-    }
-    this._highlightedLabel = null
   }
 
   /**
@@ -319,24 +306,6 @@ export class Label3DList {
    */
   private getRaycastableShapes (): Readonly<Array<Readonly<Shape>>> {
     return this._raycastableShapes
-  }
-
-  /**
-   * Get projection from mouse into scene
-   * @param x
-   * @param y
-   * @param camera
-   */
-  private calculateProjectionFromNDC (
-    x: number, y: number, camera: THREE.Camera
-  ): THREE.Vector3 {
-    const projection = new THREE.Vector3(x, y, -1)
-
-    projection.unproject(camera)
-    projection.sub(camera.position)
-    projection.normalize()
-
-    return projection
   }
 
   /**
@@ -359,7 +328,7 @@ export class Label3DList {
 
     if (intersects.length > 0) {
       const closestIntersect = intersects[0]
-      this.highlight(closestIntersect.object)
+      this.highlight(closestIntersect)
     } else {
       this.highlight(null)
     }

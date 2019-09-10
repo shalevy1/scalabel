@@ -91,7 +91,7 @@ export class Box3D extends Label3D {
    * @param {THREE.Scene} scene: ThreeJS Scene Object
    */
   public render (scene: THREE.Scene): void {
-    this._shape.render(scene, this._highlighted)
+    this._shape.render(scene, this._highlighted, this._selected)
   }
 
   /**

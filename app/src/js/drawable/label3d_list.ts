@@ -44,8 +44,6 @@ export class Label3DList {
   private _selectedLabel: Label3D | null
   /** highlighted label */
   private _highlightedLabel: Label3D | null
-  /** Point at which ray from mouse intersects highlighted/selected label */
-  private _intersectionPoint: THREE.Vector3
   /** Vector from target to camera */
   private _viewPlaneNormal: THREE.Vector3
   /** whether mouse is down on the selected box */
@@ -70,7 +68,6 @@ export class Label3DList {
     this._raycastMap = {}
     this._selectedLabel = null
     this._highlightedLabel = null
-    this._intersectionPoint = new THREE.Vector3()
     this._viewPlaneNormal = new THREE.Vector3()
     this._mouseDownOnSelection = false
     this._labelChanged = false
@@ -182,11 +179,7 @@ export class Label3DList {
 
         this._mouseDownOnSelection = true
 
-        this._selectedLabel.mouseDown(
-          this._viewPlaneNormal,
-          (new Vector3D()).fromObject(viewerConfig.position).toThree(),
-          this._intersectionPoint
-        )
+        this._selectedLabel.mouseDown()
         return true
       }
     }
@@ -302,16 +295,15 @@ export class Label3DList {
    * @param object
    * @param point
    */
-  private highlight (object: THREE.Object3D | null,
-                     point: THREE.Vector3 | null) {
-    if (object && point) {
+  private highlight (object: THREE.Object3D | null) {
+    if (object) {
       while (object.parent && !(object.id in this._raycastMap)) {
         object = object.parent
       }
+
       if (object.id in this._raycastMap) {
         this._highlightedLabel = this._raycastMap[object.id]
         this._highlightedLabel.setHighlighted(true)
-        this._intersectionPoint.copy(point)
         return
       }
     }
@@ -362,14 +354,14 @@ export class Label3DList {
     const intersects = raycaster.intersectObjects(
       // Need to do this middle conversion because ThreeJS does not specify
       // as readonly, but this should be readonly for all other purposes
-      shapes as unknown as THREE.Object3D[], true
+      shapes as unknown as THREE.Object3D[], false
     )
 
     if (intersects.length > 0) {
       const closestIntersect = intersects[0]
-      this.highlight(closestIntersect.object, closestIntersect.point)
+      this.highlight(closestIntersect.object)
     } else {
-      this.highlight(null, null)
+      this.highlight(null)
     }
   }
 }

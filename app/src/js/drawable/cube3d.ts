@@ -210,9 +210,10 @@ export class Cube3D extends THREE.Group {
     raycaster: THREE.Raycaster,
     intersects: THREE.Intersection[]
   ) {
-    this._box.raycast(raycaster, intersects)
     if (this._control) {
       this._control.raycast(raycaster, intersects)
+    } else {
+      this._box.raycast(raycaster, intersects)
     }
   }
 

@@ -1,28 +1,26 @@
 import * as THREE from 'three'
-import { TranslationControlUnit } from './translation_control'
+import { RotationControlUnit } from './rotation_control'
 
 /**
- * Translate along plane
+ * Single rotation ring
  */
-export class TranslationPlane extends THREE.Mesh
-  implements TranslationControlUnit {
-  /** normal direction */
+export class RotationRing extends THREE.Mesh implements RotationControlUnit {
+  /** normal */
   private _normal: THREE.Vector3
 
-  constructor (normal: THREE.Vector3, position: THREE.Vector3, color: number) {
+  constructor (normal: THREE.Vector3, color: number) {
     super(
-      new THREE.PlaneGeometry(0.25, 0.25),
-      new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
-    )
-    this._normal = new THREE.Vector3()
-    this._normal.copy(normal)
-    this._normal.normalize()
+      new THREE.TorusGeometry(1, .02, 32, 24),
+      new THREE.MeshBasicMaterial({ color })
+   )
+
+    this._normal = normal
 
     const quaternion = new THREE.Quaternion()
     quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), this._normal)
     this.quaternion.copy(quaternion)
 
-    this.position.copy(position)
+    this.setHighlighted()
   }
 
   /**
@@ -49,9 +47,12 @@ export class TranslationPlane extends THREE.Mesh
   public getDelta (
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
-    _dragPlane: THREE.Plane,
+    dragPlane: THREE.Plane,
     local: boolean
-  ): THREE.Vector3 {
+  ): [THREE.Vector3, THREE.Quaternion] {
+    const newIntersection = new THREE.Vector3()
+    newProjection.intersectPlane(dragPlane, newIntersection)
+
     const normal = new THREE.Vector3()
     normal.copy(this._normal)
 
@@ -61,14 +62,21 @@ export class TranslationPlane extends THREE.Mesh
 
       normal.applyQuaternion(quaternion)
     }
-    const plane = new THREE.Plane()
-    plane.setFromNormalAndCoplanarPoint(normal, oldIntersection)
-    const newIntersection = new THREE.Vector3()
-    newProjection.intersectPlane(plane, newIntersection)
+    console.log(normal)
 
     const delta = new THREE.Vector3()
     delta.copy(newIntersection)
     delta.sub(oldIntersection)
-    return delta
+
+    const dragDirection = new THREE.Vector3()
+    dragDirection.crossVectors(dragPlane.normal, normal)
+    dragDirection.normalize()
+
+    const dragAmount = delta.dot(dragDirection)
+
+    const rotation = new THREE.Quaternion()
+    rotation.setFromAxisAngle(normal, dragAmount)
+
+    return [delta, rotation]
   }
 }

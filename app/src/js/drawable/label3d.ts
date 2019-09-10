@@ -84,11 +84,7 @@ export abstract class Label3D {
    * @param cameraPosition
    * @param intersectionPoint
    */
-  public abstract mouseDown (
-    viewPlaneNormal: THREE.Vector3,
-    cameraPosition: THREE.Vector3,
-    intersectionPoint: THREE.Vector3
-  ): void
+  public abstract mouseDown (): void
 
   /**
    * Mouse movement while mouse down on box (from raycast)

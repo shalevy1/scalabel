@@ -49,11 +49,7 @@ export class Plane3D extends Label3D {
    * @param cameraPosition
    * @param intersectionPoint
    */
-  public mouseDown (
-    _viewPlaneNormal: THREE.Vector3,
-    _cameraPosition: THREE.Vector3,
-    _intersectionPoint: THREE.Vector3
-  ): void {
+  public mouseDown (): void {
     return
   }
 

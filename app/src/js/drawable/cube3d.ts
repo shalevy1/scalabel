@@ -17,8 +17,6 @@ export class Cube3D extends THREE.Group {
   private _color: number[]
   /** Anchor corner index */
   private _anchorIndex: number
-  /** ThreeJS Axes for visualization anchor position */
-  private _axes: THREE.Group
   /** Redux state */
   private _center: Vector3D
   /** Redux state */
@@ -53,28 +51,8 @@ export class Cube3D extends THREE.Group {
 
     this._anchorIndex = 0
 
-    const origin = new THREE.Vector3()
-    this._axes = new THREE.Group()
-    this._axes.add(new THREE.ArrowHelper(
-      new THREE.Vector3(0, 0, 1), origin, 1.1, 0xffffff
-    ))
-    this._axes.add(new THREE.ArrowHelper(
-      new THREE.Vector3(0, 1, 0), origin, 1.1, 0xffffff
-    ))
-    this._axes.add(new THREE.ArrowHelper(
-      new THREE.Vector3(1, 0, 0), origin, 1.1, 0xffffff
-    ))
-    this._axes.add(new THREE.Mesh(
-      new THREE.SphereGeometry(0.02),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    ))
-    this._axes.position.x = -0.5
-    this._axes.position.y = -0.5
-    this._axes.position.z = -0.5
-
     this.add(this._box)
     this.add(this._outline)
-    this.add(this._axes)
 
     this._center = new Vector3D()
     this._size = new Vector3D()
@@ -87,9 +65,6 @@ export class Cube3D extends THREE.Group {
    */
   public setSize (size: Vector3D): void {
     this.scale.copy(size.toThree())
-    this._axes.scale.x = 1. / size[0]
-    this._axes.scale.y = 1. / size[1]
-    this._axes.scale.z = 1. / size[2]
     this._size.copy(size)
   }
 
@@ -194,10 +169,6 @@ export class Cube3D extends THREE.Group {
       this.setColorFromRGB(this._color)
     }
 
-    this._axes.position.z = Math.floor(this._anchorIndex / 4) - 0.5
-    this._axes.position.y = Math.floor(this._anchorIndex / 2) % 2 - 0.5
-    this._axes.position.x = this._anchorIndex % 2 - 0.5
-
     // Check if shape already in scene
     for (const child of scene.children) {
       if (child === this) {
@@ -206,6 +177,18 @@ export class Cube3D extends THREE.Group {
     }
 
     scene.add(this)
+  }
+
+  /**
+   * Override ThreeJS raycast to intersect with box
+   * @param raycaster
+   * @param intersects
+   */
+  public raycast (
+    raycaster: THREE.Raycaster,
+    intersects: THREE.Intersection[]
+  ) {
+    this._box.raycast(raycaster, intersects)
   }
 
   /**

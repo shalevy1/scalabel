@@ -23,27 +23,12 @@ import { Label3D } from './label3d'
 export class Box3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Cube3D
-  /** Direction from target to camera */
-  private _viewPlaneNormal: THREE.Vector3
-  /** Camera position */
-  private _cameraPosition: THREE.Vector3
-  /** Intersection between ray from mouse & box */
-  private _intersectionPoint: THREE.Vector3
-  /** Vector from intersection point to original box position */
-  private _intersectionToBox: THREE.Vector3
-  /** Vector from camera to original box position */
-  private _intersectionToCamera: THREE.Vector3
   /** True if drag started */
   private _dragging: boolean
 
   constructor () {
     super()
     this._shape = new Cube3D(this._index)
-    this._viewPlaneNormal = new THREE.Vector3()
-    this._cameraPosition = new THREE.Vector3()
-    this._intersectionPoint = new THREE.Vector3()
-    this._intersectionToBox = new THREE.Vector3()
-    this._intersectionToCamera = new THREE.Vector3()
     this._dragging = false
   }
 
@@ -100,22 +85,8 @@ export class Box3D extends Label3D {
    * @param cameraPosition
    * @param intersectionPoint
    */
-  public mouseDown (
-    viewPlaneNormal: THREE.Vector3,
-    cameraPosition: THREE.Vector3,
-    intersectionPoint: THREE.Vector3
-  ) {
-    this._viewPlaneNormal.copy(viewPlaneNormal)
-    this._cameraPosition.copy(cameraPosition)
-    this._intersectionPoint.copy(intersectionPoint)
-    this._intersectionToBox = new THREE.Vector3()
-    this._intersectionToBox.copy(this._intersectionPoint)
-    this._intersectionToBox.sub(this._shape.position)
-    // Get vector from camera to box
-    this._intersectionToCamera = new THREE.Vector3()
-    this._intersectionToCamera.copy(this._cameraPosition)
-    this._intersectionToCamera.sub(this._intersectionPoint)
-    this._dragging = true
+  public mouseDown () {
+    return
   }
 
   /**

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { CubeType } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
-import { TransformationControl } from './three/transformation_control'
+import { TransformationControl } from './control/transformation_control'
 import { getColorById } from './util'
 
 /**
@@ -161,18 +161,18 @@ export class Cube3D extends THREE.Group {
    */
   public render (scene: THREE.Scene,
                  highlighted: boolean,
-                 selected: boolean): void {
+                 _selected: boolean): void {
     if (highlighted) {
       (this._outline.material as THREE.LineBasicMaterial).color.set(0xff0000)
     } else {
       (this._outline.material as THREE.LineBasicMaterial).color.set(0xffffff)
     }
 
-    if (selected) {
-      this.setColor(0xff0000)
-    } else {
-      this.setColorFromRGB(this._color)
-    }
+    // if (selected) {
+    //   this.setColor(0xff0000)
+    // } else {
+    //   this.setColorFromRGB(this._color)
+    // }
 
     // Check if shape already in scene
     for (const child of scene.children) {
@@ -216,37 +216,37 @@ export class Cube3D extends THREE.Group {
     }
   }
 
-  /**
-   * Set bbox face colors
-   * @param color
-   * @param faces
-   */
-  private setColor (
-    color: number,
-    faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  ) {
-    const geometry = this._box.geometry as THREE.BoxGeometry
-    for (const i of faces) {
-      geometry.faces[i].color.set(color)
-    }
+  // /**
+  //  * Set bbox face colors
+  //  * @param color
+  //  * @param faces
+  //  */
+  // private setColor (
+  //   color: number,
+  //   faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  // ) {
+  //   const geometry = this._box.geometry as THREE.BoxGeometry
+  //   for (const i of faces) {
+  //     geometry.faces[i].color.set(color)
+  //   }
 
-    geometry.colorsNeedUpdate = true
-  }
+  //   geometry.colorsNeedUpdate = true
+  // }
 
-  /**
-   * Set bbox face colors from RGB array
-   * @param color
-   * @param faces
-   */
-  private setColorFromRGB (
-    color: number[],
-    faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  ) {
-    const geometry = this._box.geometry as THREE.BoxGeometry
-    for (const i of faces) {
-      geometry.faces[i].color.setRGB(color[0], color[1], color[2])
-    }
+  // /**
+  //  * Set bbox face colors from RGB array
+  //  * @param color
+  //  * @param faces
+  //  */
+  // private setColorFromRGB (
+  //   color: number[],
+  //   faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  // ) {
+  //   const geometry = this._box.geometry as THREE.BoxGeometry
+  //   for (const i of faces) {
+  //     geometry.faces[i].color.setRGB(color[0], color[1], color[2])
+  //   }
 
-    geometry.colorsNeedUpdate = true
-  }
+  //   geometry.colorsNeedUpdate = true
+  // }
 }

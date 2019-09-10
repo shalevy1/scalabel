@@ -1,16 +1,28 @@
 import * as THREE from 'three'
-import { TransformationController } from './transformation_control'
+import { Controller } from './transformation_control'
 import { TranslationAxis } from './translation_axis'
+import { TranslationPlane } from './translation_plane'
+
+export interface TranslationControlUnit extends THREE.Object3D {
+  /** get update vector */
+  getDelta: (
+    oldIntersection: THREE.Vector3,
+    newProjection: THREE.Ray,
+    dragPlane: THREE.Plane
+  ) => THREE.Vector3
+  /** set highlight */
+  setHighlighted: (intersection ?: THREE.Intersection) => boolean
+}
 
 /**
  * Groups TranslationAxis's and TranslationPlanes to perform translation ops
  */
 export class TranslationControl extends THREE.Group
-  implements TransformationController {
+  implements Controller {
   /** translation axes */
-  private _translationAxes: TranslationAxis[]
+  private _translationUnits: TranslationControlUnit[]
   /** current axis being dragged */
-  private _highlightedAxis: TranslationAxis | null
+  private _highlightedUnit: TranslationControlUnit | null
   /** camera */
   private _camera: THREE.Camera
   /** Object to modify */
@@ -25,21 +37,42 @@ export class TranslationControl extends THREE.Group
   constructor (camera: THREE.Camera) {
     super()
     this._camera = camera
-    this._translationAxes = []
-    this._translationAxes.push(
+    this._translationUnits = []
+    this._translationUnits.push(
       new TranslationAxis(new THREE.Vector3(1, 0, 0), 0xff0000)
     )
-    this._translationAxes.push(
+    this._translationUnits.push(
       new TranslationAxis(new THREE.Vector3(0, 1, 0), 0x00ff00)
     )
-    this._translationAxes.push(
+    this._translationUnits.push(
       new TranslationAxis(new THREE.Vector3(0, 0, 1), 0x0000ff)
     )
-    for (const axis of this._translationAxes) {
-      this.add(axis)
+    this._translationUnits.push(
+      new TranslationPlane(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(0, 0.125, 0.125),
+        0xff0000
+      )
+    )
+    this._translationUnits.push(
+      new TranslationPlane(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0.125, 0, 0.125),
+        0x00ff00
+      )
+    )
+    this._translationUnits.push(
+      new TranslationPlane(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0.125, 0.125, 0),
+        0x0000ff
+      )
+    )
+    for (const unit of this._translationUnits) {
+      this.add(unit)
     }
 
-    this._highlightedAxis = null
+    this._highlightedUnit = null
 
     this._object = null
 
@@ -53,10 +86,10 @@ export class TranslationControl extends THREE.Group
    * @param raycaster
    */
   public setHighlighted (intersection?: THREE.Intersection) {
-    this._highlightedAxis = null
-    for (const axis of this._translationAxes) {
+    this._highlightedUnit = null
+    for (const axis of this._translationUnits) {
       if (axis.setHighlighted(intersection) && intersection) {
-        this._highlightedAxis = axis
+        this._highlightedUnit = axis
         this._intersectionPoint = intersection.point
       }
     }
@@ -66,7 +99,7 @@ export class TranslationControl extends THREE.Group
    * Mouse down
    */
   public onMouseDown () {
-    if (this._highlightedAxis && this._object) {
+    if (this._highlightedUnit && this._object) {
       const normal = new THREE.Vector3()
       this._camera.getWorldDirection(normal)
       this._dragPlane = new THREE.Plane()
@@ -82,8 +115,8 @@ export class TranslationControl extends THREE.Group
    * @param {THREE.Ray} projection
    */
   public onMouseMove (projection: THREE.Ray): void {
-    if (this._highlightedAxis && this._dragPlane && this._object) {
-      const delta = this._highlightedAxis.getDelta(
+    if (this._highlightedUnit && this._dragPlane && this._object) {
+      const delta = this._highlightedUnit.getDelta(
         this._intersectionPoint,
         projection,
         this._dragPlane
@@ -110,7 +143,7 @@ export class TranslationControl extends THREE.Group
     raycaster: THREE.Raycaster,
     intersects: THREE.Intersection[]
   ) {
-    for (const axis of this._translationAxes) {
+    for (const axis of this._translationUnits) {
       axis.raycast(raycaster, intersects)
     }
   }

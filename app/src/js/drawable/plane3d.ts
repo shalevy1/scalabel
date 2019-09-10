@@ -5,9 +5,9 @@ import { LabelTypes } from '../common/types'
 import { makeLabel } from '../functional/states'
 import { PlaneType, ShapeType, State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
+import { TransformationControl } from './control/transformation_control'
 import { Grid3D } from './grid3d'
 import Label3D from './label3d'
-import { TransformationControl } from './three/transformation_control'
 
 /**
  * Class for managing plane for holding 3d labels

@@ -62,8 +62,12 @@ export abstract class Label3D {
   }
 
   /** highlight the label */
-  public setHighlighted (h: boolean) {
-    this._highlighted = h
+  public setHighlighted (intersection?: THREE.Intersection) {
+    if (intersection) {
+      this._highlighted = true
+    } else {
+      this._highlighted = false
+    }
   }
 
   /** Attach label to plane */
@@ -77,29 +81,6 @@ export abstract class Label3D {
    * @param {THREE.Scene} scene: ThreeJS Scene Object
    */
   public abstract render (scene: THREE.Scene): void
-
-  /**
-   * Set up for drag action
-   * @param viewPlaneNormal
-   * @param cameraPosition
-   * @param intersectionPoint
-   */
-  public abstract mouseDown (): void
-
-  /**
-   * Mouse movement while mouse down on box (from raycast)
-   * @param projection
-   */
-  public abstract mouseMove (projection: THREE.Vector3): void
-
-  /**
-   * Clean up for drag action
-   * @param viewPlaneNormal
-   * @param cameraPosition
-   * @param intersectionPoint
-   * @param editMode
-   */
-  public abstract mouseUp (): void
 
   /**
    * Handle keyboard events

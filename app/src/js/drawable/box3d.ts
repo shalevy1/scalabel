@@ -16,6 +16,7 @@ import { Vector3D } from '../math/vector3d'
 import { LabelTypes } from '../common/types'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
+import { TransformationControl } from './three/transformation_control'
 
 /**
  * Box3d Label
@@ -23,13 +24,13 @@ import { Label3D } from './label3d'
 export class Box3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Cube3D
-  /** True if drag started */
-  private _dragging: boolean
+  /** Controls */
+  private _control: TransformationControl
 
-  constructor () {
+  constructor (control: TransformationControl) {
     super()
     this._shape = new Cube3D(this._index)
-    this._dragging = false
+    this._control = control
   }
 
   /**
@@ -62,6 +63,7 @@ export class Box3D extends Label3D {
    */
   public setSelected (s: boolean) {
     super.setSelected(s)
+    this._shape.setControl(this._control, s)
   }
 
   /**
@@ -77,33 +79,6 @@ export class Box3D extends Label3D {
    */
   public render (scene: THREE.Scene): void {
     this._shape.render(scene, this._highlighted, this._selected)
-  }
-
-  /**
-   * Set up for drag action
-   * @param viewPlaneNormal
-   * @param cameraPosition
-   * @param intersectionPoint
-   */
-  public mouseDown () {
-    return
-  }
-
-  /**
-   * Mouse movement while mouse down on box (from raycast)
-   * @param {THREE.Vector3} projection
-   */
-  public mouseMove (
-    _projection: THREE.Vector3
-  ): void {
-    return
-  }
-
-  /**
-   * Clean up drag action
-   */
-  public mouseUp () {
-    this._dragging = false
   }
 
   /**
@@ -129,6 +104,22 @@ export class Box3D extends Label3D {
     this._shape.setOrientation(
       (new Vector3D()).fromObject(newShape.orientation)
     )
+  }
+
+  /**
+   * attach control object
+   * @param {TransformationControl} control
+   */
+  public attachControl (control: TransformationControl) {
+    this._shape.setControl(control, true)
+  }
+
+  /**
+   * attach control object
+   * @param {TransformationControl} control
+   */
+  public detachControl (control: TransformationControl) {
+    this._shape.setControl(control, false)
   }
 
   /**
@@ -160,9 +151,15 @@ export class Box3D extends Label3D {
    * Handle key up
    */
   public onKeyUp (_e: KeyboardEvent): boolean {
-    if (this._dragging) {
-      return false
-    }
     return false
+  }
+
+  /**
+   * Highlight box
+   * @param h
+   * @param raycaster
+   */
+  public setHighlighted (intersection?: THREE.Intersection) {
+    super.setHighlighted(intersection)
   }
 }

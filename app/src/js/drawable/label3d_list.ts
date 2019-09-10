@@ -5,10 +5,10 @@ import Session from '../common/session'
 import { LabelTypes } from '../common/types'
 import { State } from '../functional/types'
 import { Box3D } from './box3d'
+import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
 import { Plane3D } from './plane3d'
-import { TransformationControl } from './three/transformation_control'
 
 /**
  * Make a new drawable label based on the label type
@@ -281,6 +281,7 @@ export class Label3DList {
   private highlight (intersection: THREE.Intersection | null) {
     if (this._highlightedLabel) {
       this._highlightedLabel.setHighlighted()
+      this._control.setHighlighted()
     }
     this._highlightedLabel = null
 

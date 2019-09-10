@@ -1,18 +1,18 @@
 import * as THREE from 'three'
+import { TranslationControlUnit } from './translation_control'
 
 /**
  * ThreeJS object used for moving parent object along certain axis
  */
-export class TranslationAxis extends THREE.ArrowHelper {
+export class TranslationAxis extends THREE.ArrowHelper
+  implements TranslationControlUnit {
   /** Translation direction (180 degree symmetric) */
   private _direction?: THREE.Vector3
 
   constructor (direction: THREE.Vector3, color: number) {
     super(direction, new THREE.Vector3(0, 0, 0), 1, color, 0.15, 0.09)
 
-    if (!this._direction) {
-      this._direction = new THREE.Vector3()
-    }
+    this._direction = new THREE.Vector3()
     this._direction.copy(direction)
     this._direction.normalize()
 
@@ -22,21 +22,10 @@ export class TranslationAxis extends THREE.ArrowHelper {
   }
 
   /**
-   * Set new direction
-   * @param direction
-   */
-  public setDirection (direction: THREE.Vector3) {
-    super.setDirection(direction)
-    if (!this._direction) {
-      this._direction = new THREE.Vector3()
-    }
-    this._direction.copy(direction)
-    this._direction.normalize()
-  }
-
-  /**
    * Mouse movement while mouse down on box (from raycast)
-   * @param {THREE.Ray} projection
+   * @param oldIntersection
+   * @param newProjection
+   * @param dragPlane
    */
   public getDelta (
     oldIntersection: THREE.Vector3,
@@ -67,6 +56,8 @@ export class TranslationAxis extends THREE.ArrowHelper {
    * @param object
    */
   public setHighlighted (intersection ?: THREE.Intersection): boolean {
+    { (this.line.material as THREE.Material).needsUpdate = true }
+    { (this.cone.material as THREE.Material).needsUpdate = true }
     if (
       intersection && (
         intersection.object === this ||
@@ -78,8 +69,8 @@ export class TranslationAxis extends THREE.ArrowHelper {
       { (this.cone.material as THREE.Material).opacity = 1 }
       return true
     } else {
-      { (this.line.material as THREE.Material).opacity = 0.25 }
-      { (this.cone.material as THREE.Material).opacity = 0.25 }
+      { (this.line.material as THREE.Material).opacity = 0.01 }
+      { (this.cone.material as THREE.Material).opacity = 0.01 }
       return false
     }
   }

@@ -14,9 +14,9 @@ import {
 import { Vector3D } from '../math/vector3d'
 
 import { LabelTypes } from '../common/types'
+import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
-import { TransformationControl } from './three/transformation_control'
 
 /**
  * Box3d Label

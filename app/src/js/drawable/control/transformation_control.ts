@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { projectionFromNDC } from '../../helper/point_cloud'
 import { TranslationControl } from './translation_control'
 
-export interface TransformationController {
+export interface Controller {
   /** highlight function */
   setHighlighted: (intersection?: THREE.Intersection) => void
   /** mouse down */
@@ -25,7 +25,7 @@ export interface TransformationController {
  */
 export class TransformationControl extends THREE.Group {
   /** Current controller */
-  private _currentController: TransformationController
+  private _currentController: Controller
   /** TranslationControl */
   private _translationControl: TranslationControl
   /** Camera */

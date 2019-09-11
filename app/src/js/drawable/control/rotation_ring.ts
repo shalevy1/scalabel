@@ -49,7 +49,7 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
     local: boolean
-  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3] {
+  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const newIntersection = new THREE.Vector3()
     newProjection.intersectPlane(dragPlane, newIntersection)
 
@@ -76,6 +76,11 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
     const rotation = new THREE.Quaternion()
     rotation.setFromAxisAngle(normal, dragAmount)
 
-    return [delta, rotation, new THREE.Vector3(1, 1, 1)]
+    return [
+      new THREE.Vector3(0, 0, 0),
+      rotation,
+      new THREE.Vector3(1, 1, 1),
+      newIntersection
+    ]
   }
 }

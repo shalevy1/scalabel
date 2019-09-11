@@ -32,7 +32,7 @@ export class TranslationAxis extends THREE.ArrowHelper
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
     local: boolean
-  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3] {
+  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const direction = new THREE.Vector3()
     direction.copy(this._direction)
 
@@ -55,7 +55,16 @@ export class TranslationAxis extends THREE.ArrowHelper
     delta.copy(direction)
     delta.multiplyScalar(projectionLength)
 
-    return [delta, new THREE.Quaternion(0, 0, 0, 1), new THREE.Vector3(1, 1, 1)]
+    const nextIntersection = new THREE.Vector3()
+    nextIntersection.copy(oldIntersection)
+    nextIntersection.add(delta)
+
+    return [
+      delta,
+      new THREE.Quaternion(0, 0, 0, 1),
+      new THREE.Vector3(1, 1, 1),
+      nextIntersection
+    ]
   }
 
   /**

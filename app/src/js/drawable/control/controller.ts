@@ -1,13 +1,13 @@
 import * as THREE from 'three'
 
 export interface ControlUnit extends THREE.Object3D {
-  /** get update vectors: [translation, rotation, scale] */
+  /** get update vectors: [translation, rotation, scale, new intersection] */
   getDelta: (
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
     local: boolean
-  ) => [THREE.Vector3, THREE.Quaternion, THREE.Vector3]
+  ) => [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3]
   /** set highlight */
   setHighlighted: (intersection ?: THREE.Intersection) => boolean
 }
@@ -71,7 +71,12 @@ export abstract class Controller extends THREE.Object3D {
   /** mouse move */
   public onMouseMove (projection: THREE.Ray) {
     if (this._highlightedUnit && this._dragPlane && this._object) {
-      const [delta, quaternion, multiplier] = this._highlightedUnit.getDelta(
+      const [
+        delta,
+        quaternion,
+        multiplier,
+        newIntersection
+      ] = this._highlightedUnit.getDelta(
         this._intersectionPoint,
         projection,
         this._dragPlane,
@@ -81,7 +86,7 @@ export abstract class Controller extends THREE.Object3D {
       this._object.applyQuaternion(quaternion)
       this._object.scale.multiply(multiplier)
 
-      this._intersectionPoint.add(delta)
+      this._intersectionPoint.copy(newIntersection)
     }
     this._projection.copy(projection)
   }

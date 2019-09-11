@@ -84,11 +84,18 @@ export abstract class Controller extends THREE.Object3D {
       )
       this._object.position.add(delta)
       this._object.applyQuaternion(quaternion)
-      this._object.scale.multiply(multiplier)
+      this._object.scale.add(multiplier)
 
       this._intersectionPoint.copy(newIntersection)
     }
     this._projection.copy(projection)
+
+    if (!this._local && this.parent) {
+      const worldQuaternion = new THREE.Quaternion()
+      this.parent.getWorldQuaternion(worldQuaternion)
+      this.quaternion.copy(worldQuaternion.inverse())
+      this.rotation.setFromQuaternion(this.quaternion)
+    }
   }
 
   /** mouse up */

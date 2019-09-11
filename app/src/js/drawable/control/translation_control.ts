@@ -31,21 +31,18 @@ export class TranslationControl extends Controller {
     this._controlUnits.push(
       new TranslationPlane(
         new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(0, 0.125, 0.125),
         0xff0000
       )
     )
     this._controlUnits.push(
       new TranslationPlane(
         new THREE.Vector3(0, 1, 0),
-        new THREE.Vector3(0.125, 0, 0.125),
         0x00ff00
       )
     )
     this._controlUnits.push(
       new TranslationPlane(
         new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(0.125, 0.125, 0),
         0x0000ff
       )
     )

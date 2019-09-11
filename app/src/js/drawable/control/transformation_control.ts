@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { projectionFromNDC } from '../../helper/point_cloud'
 import { Controller } from './controller'
 import { RotationControl } from './rotation_control'
+import { ScaleControl } from './scale_control'
 import { TranslationControl } from './translation_control'
 
 /**
@@ -14,6 +15,8 @@ export class TransformationControl extends THREE.Group {
   private _translationControl: TranslationControl
   /** Rotation controller */
   private _rotationControl: RotationControl
+  /** Scale controller */
+  private _scaleControl: ScaleControl
   /** Camera */
   private _camera: THREE.Camera
   /** Attached object */
@@ -24,6 +27,7 @@ export class TransformationControl extends THREE.Group {
     this._camera = camera
     this._translationControl = new TranslationControl(camera)
     this._rotationControl = new RotationControl(camera)
+    this._scaleControl = new ScaleControl(camera)
     this._currentController = this._rotationControl
     this.add(this._currentController)
     this._object = null
@@ -64,6 +68,7 @@ export class TransformationControl extends THREE.Group {
         return true
       case 'S':
       case 's':
+        this.switchController(this._scaleControl)
         return true
       case 'F':
       case 'f':

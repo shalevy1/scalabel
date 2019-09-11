@@ -1,27 +1,8 @@
 import * as THREE from 'three'
 import { projectionFromNDC } from '../../helper/point_cloud'
+import { Controller } from './controller'
 import { RotationControl } from './rotation_control'
 import { TranslationControl } from './translation_control'
-
-export interface Controller extends THREE.Object3D {
-  /** highlight function */
-  setHighlighted: (intersection?: THREE.Intersection) => void
-  /** mouse down */
-  onMouseDown: () => void
-  /** mouse move */
-  onMouseMove: (projection: THREE.Ray) => void
-  /** mouse up */
-  onMouseUp: () => void
-  /** raycast */
-  raycast:
-    (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
-  /** attach to object */
-  attach: (object: THREE.Object3D) => void
-  /** detach */
-  detach: () => void
-  /** Toggle local/world */
-  toggleFrame: () => void
-}
 
 /**
  * Group TranslationControl, RotationControl, and ScaleControl together

@@ -1,10 +1,10 @@
 import * as THREE from 'three'
-import { RotationControlUnit } from './rotation_control'
+import { ControlUnit } from './controller'
 
 /**
  * Single rotation ring
  */
-export class RotationRing extends THREE.Mesh implements RotationControlUnit {
+export class RotationRing extends THREE.Mesh implements ControlUnit {
   /** normal */
   private _normal: THREE.Vector3
 
@@ -49,7 +49,7 @@ export class RotationRing extends THREE.Mesh implements RotationControlUnit {
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
     local: boolean
-  ): [THREE.Vector3, THREE.Quaternion] {
+  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3] {
     const newIntersection = new THREE.Vector3()
     newProjection.intersectPlane(dragPlane, newIntersection)
 
@@ -62,7 +62,6 @@ export class RotationRing extends THREE.Mesh implements RotationControlUnit {
 
       normal.applyQuaternion(quaternion)
     }
-    console.log(normal)
 
     const delta = new THREE.Vector3()
     delta.copy(newIntersection)
@@ -77,6 +76,6 @@ export class RotationRing extends THREE.Mesh implements RotationControlUnit {
     const rotation = new THREE.Quaternion()
     rotation.setFromAxisAngle(normal, dragAmount)
 
-    return [delta, rotation]
+    return [delta, rotation, new THREE.Vector3(1, 1, 1)]
   }
 }

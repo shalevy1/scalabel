@@ -30,28 +30,4 @@ export class RotationControl extends Controller {
       this.add(unit)
     }
   }
-
-  /**
-   * Mouse movement while mouse down on box (from raycast)
-   * @param {THREE.Ray} projection
-   */
-  public onMouseMove (projection: THREE.Ray): void {
-    if (this._highlightedUnit && this._dragPlane && this._object) {
-      const [delta, quaternion ] = this._highlightedUnit.getDelta(
-        this._intersectionPoint,
-        projection,
-        this._dragPlane,
-        this._local
-      )
-
-      this._intersectionPoint.add(delta)
-
-      this._object.applyQuaternion(quaternion)
-
-      // if (!this._local) {
-      //   this.applyQuaternion(quaternion.inverse())
-      // }
-    }
-    this._projection.copy(projection)
-  }
 }

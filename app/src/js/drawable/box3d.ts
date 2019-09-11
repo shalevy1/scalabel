@@ -107,22 +107,6 @@ export class Box3D extends Label3D {
   }
 
   /**
-   * attach control object
-   * @param {TransformationControl} control
-   */
-  public attachControl (control: TransformationControl) {
-    this._shape.setControl(control, true)
-  }
-
-  /**
-   * attach control object
-   * @param {TransformationControl} control
-   */
-  public detachControl (control: TransformationControl) {
-    this._shape.setControl(control, false)
-  }
-
-  /**
    * move anchor to next corner
    */
   public incrementAnchorIndex (): void {

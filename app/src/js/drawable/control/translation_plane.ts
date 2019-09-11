@@ -1,11 +1,11 @@
 import * as THREE from 'three'
-import { TranslationControlUnit } from './translation_control'
+import { ControlUnit } from './controller'
 
 /**
  * Translate along plane
  */
 export class TranslationPlane extends THREE.Mesh
-  implements TranslationControlUnit {
+  implements ControlUnit {
   /** normal direction */
   private _normal: THREE.Vector3
 
@@ -51,7 +51,7 @@ export class TranslationPlane extends THREE.Mesh
     newProjection: THREE.Ray,
     _dragPlane: THREE.Plane,
     local: boolean
-  ): THREE.Vector3 {
+  ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3] {
     const normal = new THREE.Vector3()
     normal.copy(this._normal)
 
@@ -69,6 +69,6 @@ export class TranslationPlane extends THREE.Mesh
     const delta = new THREE.Vector3()
     delta.copy(newIntersection)
     delta.sub(oldIntersection)
-    return delta
+    return [delta, new THREE.Quaternion(0, 0, 0, 1), new THREE.Vector3(1, 1, 1)]
   }
 }

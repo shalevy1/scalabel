@@ -79,7 +79,7 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
     return [
       new THREE.Vector3(0, 0, 0),
       rotation,
-      new THREE.Vector3(1, 1, 1),
+      new THREE.Vector3(),
       newIntersection
     ]
   }

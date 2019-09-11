@@ -10,7 +10,7 @@ export class TranslationAxis extends THREE.ArrowHelper
   private _direction: THREE.Vector3
 
   constructor (direction: THREE.Vector3, color: number) {
-    super(direction, new THREE.Vector3(0, 0, 0), 1, color, 0.15, 0.09)
+    super(direction, new THREE.Vector3(0, 0, 0), 1, color, 0.2, 0.15)
 
     this._direction = new THREE.Vector3()
     this._direction.copy(direction)
@@ -19,6 +19,7 @@ export class TranslationAxis extends THREE.ArrowHelper
     this.setHighlighted()
 
     { (this.line.material as THREE.LineBasicMaterial).linewidth = 4 }
+    { (this.line.material as THREE.LineBasicMaterial).needsUpdate = true }
   }
 
   /**
@@ -62,7 +63,7 @@ export class TranslationAxis extends THREE.ArrowHelper
     return [
       delta,
       new THREE.Quaternion(0, 0, 0, 1),
-      new THREE.Vector3(1, 1, 1),
+      new THREE.Vector3(),
       nextIntersection
     ]
   }

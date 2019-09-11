@@ -9,9 +9,9 @@ export class TranslationPlane extends THREE.Mesh
   /** normal direction */
   private _normal: THREE.Vector3
 
-  constructor (normal: THREE.Vector3, position: THREE.Vector3, color: number) {
+  constructor (normal: THREE.Vector3, color: number) {
     super(
-      new THREE.PlaneGeometry(0.25, 0.25),
+      new THREE.PlaneGeometry(0.5, 0.5),
       new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
     )
     this._normal = new THREE.Vector3()
@@ -21,8 +21,6 @@ export class TranslationPlane extends THREE.Mesh
     const quaternion = new THREE.Quaternion()
     quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), this._normal)
     this.quaternion.copy(quaternion)
-
-    this.position.copy(position)
   }
 
   /**
@@ -72,7 +70,7 @@ export class TranslationPlane extends THREE.Mesh
     return [
       delta,
       new THREE.Quaternion(0, 0, 0, 1),
-      new THREE.Vector3(1, 1, 1),
+      new THREE.Vector3(),
       newIntersection
     ]
   }

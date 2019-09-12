@@ -13,7 +13,7 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
   private _line: THREE.Line
   /** box */
   private _box: THREE.Mesh
-  /** box side length */
+  /** side length */
   private _sideLength: number
 
   constructor (axis: 'x' | 'y' | 'z',
@@ -48,7 +48,6 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
       lineGeometry,
       new THREE.LineBasicMaterial({ color })
     )
-    this._line.matrixAutoUpdate = false
     this.add(this._line)
 
     this._box = new THREE.Mesh(
@@ -58,9 +57,9 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
     this.add(this._box)
 
     this._sideLength = sideLength
-    this._line.scale.set(1, 1 - sideLength, 1)
+    this._line.scale.set(1, 1, 1 - this._sideLength)
 
-    this._box.scale.set(sideLength, sideLength, sideLength)
+    this._box.scale.set(this._sideLength, this._sideLength, this._sideLength)
     this._box.position.z = 1
 
     const quaternion = new THREE.Quaternion()
@@ -158,18 +157,20 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
   }
 
   /**
-   * Change scale & rotation to reflect changes in parent's parameters
-   * @param local: whether in local coordinate frame
+   * Update scale according to world scale
+   * @param worldScale
    */
-  public refreshDisplayParameters (_local: boolean) {
-    const worldScale = new THREE.Vector3()
+  public updateScale (worldScale: THREE.Vector3) {
     if (this.parent) {
-      this.parent.getWorldScale(worldScale)
-    }
+      const direction = new THREE.Vector3()
+      direction.copy(this._direction)
+      // direction.applyQuaternion(worldQuaternion.inverse())
 
-    this._box.scale.x = this._sideLength / worldScale.x
-    this._box.scale.y = this._sideLength / worldScale.y
-    this._box.scale.z = this._sideLength / worldScale.z
-    this._box.scale.applyQuaternion(this.quaternion)
+      const newScale = Math.abs(direction.dot(worldScale)) * 3. / 4.
+
+      this._line.scale.set(1, 1, newScale)
+
+      this._box.position.z = newScale
+    }
   }
 }

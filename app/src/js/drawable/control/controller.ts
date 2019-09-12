@@ -10,6 +10,8 @@ export interface ControlUnit extends THREE.Object3D {
   ) => [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3]
   /** set highlight */
   setHighlighted: (intersection ?: THREE.Intersection) => boolean
+  /** Adjust display properties after parent update */
+  refreshDisplayParameters: (local: boolean) => void
 }
 
 /**
@@ -72,9 +74,9 @@ export abstract class Controller extends THREE.Object3D {
   public onMouseMove (projection: THREE.Ray) {
     if (this._highlightedUnit && this._dragPlane && this._object) {
       const [
-        delta,
-        quaternion,
-        multiplier,
+        translationDelta,
+        quaternionDelta,
+        scaleDelta,
         newIntersection
       ] = this._highlightedUnit.getDelta(
         this._intersectionPoint,
@@ -82,20 +84,16 @@ export abstract class Controller extends THREE.Object3D {
         this._dragPlane,
         this._local
       )
-      this._object.position.add(delta)
-      this._object.applyQuaternion(quaternion)
-      this._object.scale.add(multiplier)
+      this._object.position.add(translationDelta)
+      this._object.applyQuaternion(quaternionDelta)
+      this._object.scale.add(scaleDelta)
 
       this._intersectionPoint.copy(newIntersection)
     }
-    this._projection.copy(projection)
-
-    if (!this._local && this.parent) {
-      const worldQuaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(worldQuaternion)
-      this.quaternion.copy(worldQuaternion.inverse())
-      this.rotation.setFromQuaternion(this.quaternion)
+    for (const unit of this._controlUnits) {
+      unit.refreshDisplayParameters(this._local)
     }
+    this._projection.copy(projection)
   }
 
   /** mouse up */
@@ -115,17 +113,11 @@ export abstract class Controller extends THREE.Object3D {
   /** attach to object */
   public attach (object: THREE.Object3D) {
     this._object = object
-    if (this._local) {
-      this.quaternion.set(0, 0, 0, 1)
-      this.rotation.setFromQuaternion(this.quaternion)
-    } else if (this.parent) {
-      const quaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(quaternion)
-      this.quaternion.copy(quaternion.inverse())
-      this.rotation.setFromQuaternion(this.quaternion)
-    }
     this.updateMatrix()
     this.updateMatrixWorld(true)
+    for (const unit of this._controlUnits) {
+      unit.refreshDisplayParameters(this._local)
+    }
   }
 
   /** detach */

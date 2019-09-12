@@ -111,9 +111,9 @@ export class TransformationControl extends THREE.Group {
    * @param object
    */
   public attach (object: THREE.Object3D) {
+    this.updateMatrix()
+    this.updateMatrixWorld(true)
     this._currentController.attach(object)
-    this._currentController.updateMatrix()
-    this._currentController.updateMatrixWorld(true)
     this._object = object
   }
 
@@ -134,11 +134,11 @@ export class TransformationControl extends THREE.Group {
       return
     }
     const object = this._object
-    this.detach()
     this.remove(this._currentController)
+    this.detach()
 
     this._currentController = controller
-    this.attach(object)
     this.add(this._currentController)
+    this.attach(object)
   }
 }

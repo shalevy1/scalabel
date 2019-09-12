@@ -76,19 +76,10 @@ export class TranslationPlane extends THREE.Mesh
   }
 
   /**
-   * Change scale & rotation to reflect changes in parent's parameters
-   * @param local: whether in local coordinate frame
+   * Update scale according to world scale
+   * @param worldScale
    */
-  public refreshDisplayParameters (_local: boolean) {
-    const worldScale = new THREE.Vector3()
-    if (this.parent) {
-      this.parent.getWorldScale(worldScale)
-    }
-    const minScale = Math.min(worldScale.x, worldScale.y, worldScale.z)
-    this.scale.set(
-      minScale / worldScale.x,
-      minScale / worldScale.y,
-      minScale / worldScale.z
-    )
+  public updateScale (_worldScale: THREE.Vector3) {
+    return
   }
 }

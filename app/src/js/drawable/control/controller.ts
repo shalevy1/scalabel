@@ -10,8 +10,8 @@ export interface ControlUnit extends THREE.Object3D {
   ) => [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3]
   /** set highlight */
   setHighlighted: (intersection ?: THREE.Intersection) => boolean
-  /** Adjust display properties after parent update */
-  refreshDisplayParameters: (local: boolean) => void
+  /** Update scale according to world scale */
+  updateScale: (worldScale: THREE.Vector3) => void
 }
 
 /**
@@ -45,6 +45,7 @@ export abstract class Controller extends THREE.Object3D {
     this._highlightedUnit = null
     this._dragPlane = new THREE.Plane()
     this._projection = new THREE.Ray()
+    this.matrixAutoUpdate = false
   }
 
   /** highlight function */
@@ -90,9 +91,7 @@ export abstract class Controller extends THREE.Object3D {
 
       this._intersectionPoint.copy(newIntersection)
     }
-    for (const unit of this._controlUnits) {
-      unit.refreshDisplayParameters(this._local)
-    }
+    this.refreshDisplayParameters()
     this._projection.copy(projection)
   }
 
@@ -115,9 +114,7 @@ export abstract class Controller extends THREE.Object3D {
     this._object = object
     this.updateMatrix()
     this.updateMatrixWorld(true)
-    for (const unit of this._controlUnits) {
-      unit.refreshDisplayParameters(this._local)
-    }
+    this.refreshDisplayParameters()
   }
 
   /** detach */
@@ -130,6 +127,42 @@ export abstract class Controller extends THREE.Object3D {
     if (this._object) {
       this._local = !this._local
       this.attach(this._object)
+    }
+  }
+
+  /** Refresh display params */
+  protected refreshDisplayParameters () {
+    if (this.parent) {
+      // Isolate child from parent transformations first
+      this.parent.updateMatrixWorld(true)
+      this.matrix.getInverse(this.parent.matrixWorld)
+
+      this.matrix.setPosition(new THREE.Vector3())
+      if (this._local) {
+        // Move back to parent frame of reference, but do not apply scaling
+        const worldQuaternion = new THREE.Quaternion()
+        this.parent.getWorldQuaternion(worldQuaternion)
+
+        const worldPosition = new THREE.Vector3()
+        this.parent.getWorldPosition(worldPosition)
+
+        this.matrix.multiply(
+          (new THREE.Matrix4()).makeRotationFromQuaternion(worldQuaternion)
+        )
+      }
+      const rotationMatrix = new THREE.Matrix4()
+      rotationMatrix.extractRotation(this.matrix)
+
+      const quaternion = new THREE.Quaternion()
+      quaternion.setFromRotationMatrix(rotationMatrix)
+
+      const worldScale = new THREE.Vector3()
+      this.parent.getWorldScale(worldScale)
+      worldScale.applyQuaternion(quaternion)
+
+      for (const unit of this._controlUnits) {
+        unit.updateScale(worldScale)
+      }
     }
   }
 }

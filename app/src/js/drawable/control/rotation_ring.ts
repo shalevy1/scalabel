@@ -85,30 +85,10 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
   }
 
   /**
-   * Change scale & rotation to reflect changes in parent's parameters
-   * @param local: whether in local coordinate frame
+   * Update scale according to world scale
+   * @param worldScale
    */
-  public refreshDisplayParameters (local: boolean) {
-    const worldScale = new THREE.Vector3()
-    if (this.parent) {
-      this.parent.getWorldScale(worldScale)
-    }
-    const minScale = Math.min(worldScale.x, worldScale.y, worldScale.z)
-    this.scale.set(
-      minScale / worldScale.x,
-      minScale / worldScale.y,
-      minScale / worldScale.z
-    )
-
-    const quaternion = new THREE.Quaternion()
-    quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), this._normal)
-    this.quaternion.copy(quaternion)
-    this.rotation.setFromQuaternion(this.quaternion)
-    if (this.parent && !local) {
-      const worldQuaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(worldQuaternion)
-      this.applyQuaternion(worldQuaternion.inverse())
-    }
-    this.scale.applyQuaternion(this.quaternion)
+  public updateScale (_worldScale: THREE.Vector3) {
+    return
   }
 }

@@ -34,7 +34,6 @@ export class TranslationAxis extends THREE.Group
       lineGeometry,
       new THREE.LineBasicMaterial({ color })
     )
-    this._line.matrixAutoUpdate = false
     this.add(this._line)
 
     this._cone = new THREE.Mesh(
@@ -43,10 +42,10 @@ export class TranslationAxis extends THREE.Group
     )
     this.add(this._cone)
 
-    this._line.scale.set(1, 1 - coneSize, 1)
+    this._line.scale.set(1, .75 - this._coneSize, 1)
 
-    this._cone.scale.set(coneSize, coneSize, coneSize)
-    this._cone.position.y = 1
+    this._cone.scale.set(this._coneSize, this._coneSize, this._coneSize)
+    this._cone.position.y = .75
 
     const quaternion = new THREE.Quaternion()
     quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this._direction)
@@ -65,12 +64,12 @@ export class TranslationAxis extends THREE.Group
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
-    local: boolean
+    _local: boolean
   ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const direction = new THREE.Vector3()
     direction.copy(this._direction)
 
-    if (local && this.parent) {
+    if (this.parent) {
       const quaternion = new THREE.Quaternion()
       this.parent.getWorldQuaternion(quaternion)
 
@@ -139,33 +138,20 @@ export class TranslationAxis extends THREE.Group
   }
 
   /**
-   * Change scale & rotation to reflect changes in parent's parameters
-   * @param local: whether in local coordinate frame
+   * Update scale according to world scale
+   * @param worldScale
    */
-  public refreshDisplayParameters (local: boolean) {
-    const worldScale = new THREE.Vector3()
+  public updateScale (worldScale: THREE.Vector3) {
     if (this.parent) {
-      this.parent.getWorldScale(worldScale)
-    }
+      const direction = new THREE.Vector3()
+      direction.copy(this._direction)
+      // direction.applyQuaternion(worldQuaternion.inverse())
 
-    const quaternion = new THREE.Quaternion()
-    quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this._direction)
-    this.quaternion.copy(quaternion)
+      const newScale = Math.abs(direction.dot(worldScale)) * 3. / 4.
 
-    if (local) {
-      this._cone.scale.x = this._coneSize / worldScale.x
-      this._cone.scale.y = this._coneSize / worldScale.y
-      this._cone.scale.z = this._coneSize / worldScale.z
-      this._cone.scale.applyQuaternion(this.quaternion)
+      this._line.scale.set(1, newScale, 1)
 
-      this._cone.scale.x = Math.abs(this._cone.scale.x)
-      this._cone.scale.y = Math.abs(this._cone.scale.y)
-      this._cone.scale.z = Math.abs(this._cone.scale.z)
-    }
-    if (this.parent && !local) {
-      const worldQuaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(worldQuaternion)
-      this.applyQuaternion(worldQuaternion.inverse())
+      this._cone.position.y = newScale
     }
   }
 }

@@ -45,7 +45,7 @@ export class TransformationControl extends THREE.Group {
    * Mouse down
    */
   public onMouseDown () {
-    this._currentController.onMouseDown()
+    return this._currentController.onMouseDown()
   }
 
   /**
@@ -82,16 +82,16 @@ export class TransformationControl extends THREE.Group {
    * @param x: NDC
    * @param y: NDC
    */
-  public onMouseMove (x: number, y: number): void {
+  public onMouseMove (x: number, y: number) {
     const projection = projectionFromNDC(x, y, this._camera)
-    this._currentController.onMouseMove(projection)
+    return this._currentController.onMouseMove(projection)
   }
 
   /**
    * Mouse up
    */
   public onMouseUp () {
-    this._currentController.onMouseUp()
+    return this._currentController.onMouseUp()
   }
 
   /**
@@ -123,6 +123,13 @@ export class TransformationControl extends THREE.Group {
   public detach () {
     this._currentController.detach()
     this._object = null
+  }
+
+  /**
+   * Whether currently attached
+   */
+  public attached () {
+    return this._object !== null
   }
 
   /**

@@ -329,6 +329,24 @@ export class Cube3D extends THREE.Group {
     }
   }
 
+  /**
+   * Drag to mouse
+   * @param projection
+   */
+  public drag (_projection: THREE.Ray) {
+    if (!this._highlightedSphere) {
+      return false
+    }
+    return false
+  }
+
+  /**
+   * Returns true if control sphere is highlighted
+   */
+  public shouldDrag (): boolean {
+    return this._highlightedSphere !== null
+  }
+
   // /**
   //  * Set bbox face colors
   //  * @param color

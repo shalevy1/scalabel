@@ -133,19 +133,27 @@ export class Box3D extends Label3D {
   }
 
   /**
-   * Handle keyboard events
-   * @param {KeyboardEvent} e
-   * @returns true if consumed, false otherwise
+   * Handle mouse move
+   * @param projection
    */
-  public onKeyDown (_e: KeyboardEvent): boolean {
-    return false
+  public onMouseDown () {
+    return this._shape.shouldDrag()
   }
 
   /**
-   * Handle key up
+   * Handle mouse up
+   * @param projection
    */
-  public onKeyUp (_e: KeyboardEvent): boolean {
-    return false
+  public onMouseUp () {
+    return
+  }
+
+  /**
+   * Handle mouse move
+   * @param projection
+   */
+  public onMouseMove (projection: THREE.Ray): boolean {
+    return this._shape.drag(projection)
   }
 
   /**

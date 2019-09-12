@@ -4,6 +4,15 @@ import { Vector3D } from '../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 import { getColorById } from './util'
 
+const faceNormals = [
+  new THREE.Vector3(1, 0, 0),
+  new THREE.Vector3(-1, 0, 0),
+  new THREE.Vector3(0, 1, 0),
+  new THREE.Vector3(0, -1, 0),
+  new THREE.Vector3(0, 0, 1),
+  new THREE.Vector3(0, 0, -1)
+]
+
 /**
  * Shape for Box3D label
  */
@@ -26,6 +35,14 @@ export class Cube3D extends THREE.Group {
   private _orientation: Vector3D
   /** controls */
   private _control: TransformationControl | null
+  /** Normal of the closest face */
+  private _closestFaceNormal: THREE.Vector3
+  /** Control points */
+  private _controlSpheres: THREE.Mesh[]
+  /** Highlighted control point */
+  private _highlightedSphere: THREE.Mesh | null
+  /** whether highlighted */
+  private _highlighted: boolean
 
   /**
    * Make box with assigned id
@@ -62,6 +79,28 @@ export class Cube3D extends THREE.Group {
     this._orientation = new Vector3D()
 
     this._control = null
+
+    this._closestFaceNormal = new THREE.Vector3()
+    this._controlSpheres = []
+    for (let i = 0; i < 4; i += 1) {
+      this._controlSpheres.push(new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 12),
+        new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.3
+        })
+      ))
+      this.add(this._controlSpheres[i])
+      this._controlSpheres[i].visible = false
+    }
+    this._highlightedSphere = this._controlSpheres[0]
+    this._highlightedSphere.position.x = 0
+    this._highlightedSphere = null
+
+    this._highlighted = false
+
+    this.setHighlighted()
   }
 
   /**
@@ -160,12 +199,54 @@ export class Cube3D extends THREE.Group {
    * @param scene
    */
   public render (scene: THREE.Scene,
-                 highlighted: boolean,
-                 _selected: boolean): void {
-    if (highlighted) {
+                 camera: THREE.Camera): void {
+    if (this._highlighted) {
       (this._outline.material as THREE.LineBasicMaterial).color.set(0xff0000)
+      for (const sphere of this._controlSpheres) {
+        sphere.visible = true
+        sphere.scale.set(
+          1. / this.scale.x, 1. / this.scale.y, 1. / this.scale.z
+        )
+      }
+
+      // Find normal closest to camera
+      const worldQuaternion = new THREE.Quaternion()
+      this.getWorldQuaternion(worldQuaternion)
+      const cameraDirection = new THREE.Vector3()
+      camera.getWorldDirection(cameraDirection)
+      cameraDirection.applyQuaternion(worldQuaternion.inverse())
+      let maxCloseness = 0
+      for (const normal of faceNormals) {
+        const closeness = -normal.dot(cameraDirection)
+        if (closeness > maxCloseness) {
+          this._closestFaceNormal.copy(normal)
+          maxCloseness = closeness
+        }
+      }
+
+      for (let i = 0; i < this._controlSpheres.length; i += 1) {
+        const firstSign = (i % 2 === 0) ? 1 : -1
+        const secondSign = (Math.floor(i / 2) === 0) ? 1 : -1
+        if (this._closestFaceNormal.x !== 0) {
+          this._controlSpheres[i].position.set(
+            this._closestFaceNormal.x, firstSign, secondSign
+          )
+        } else if (this._closestFaceNormal.y !== 0) {
+          this._controlSpheres[i].position.set(
+             firstSign, this._closestFaceNormal.y, secondSign
+          )
+        } else {
+          this._controlSpheres[i].position.set(
+             firstSign, secondSign, this._closestFaceNormal.z
+          )
+        }
+        this._controlSpheres[i].position.multiplyScalar(0.5)
+      }
     } else {
       (this._outline.material as THREE.LineBasicMaterial).color.set(0xffffff)
+      for (const sphere of this._controlSpheres) {
+        sphere.visible = false
+      }
     }
 
     // if (selected) {
@@ -201,6 +282,26 @@ export class Cube3D extends THREE.Group {
     }
   }
 
+  /** Set highlighted */
+  public setHighlighted (intersection?: THREE.Intersection) {
+    for (const sphere of this._controlSpheres) {
+      { (sphere.material as THREE.Material).opacity = 0.3 }
+      { (sphere.material as THREE.Material).needsUpdate = true }
+    }
+    if (intersection) {
+      this._highlighted = true
+      for (const sphere of this._controlSpheres) {
+        if (intersection.object === sphere) {
+          this._highlightedSphere = sphere
+          { (sphere.material as THREE.Material).opacity = 0.8 }
+          break
+        }
+      }
+    } else {
+      this._highlighted = false
+    }
+  }
+
   /**
    * Override ThreeJS raycast to intersect with box
    * @param raycaster
@@ -210,10 +311,21 @@ export class Cube3D extends THREE.Group {
     raycaster: THREE.Raycaster,
     intersects: THREE.Intersection[]
   ) {
+    const newIntersects: THREE.Intersection[] = []
     if (this._control) {
-      this._control.raycast(raycaster, intersects)
-    } else {
+      this._control.raycast(raycaster, newIntersects)
+    }
+
+    for (const sphere of this._controlSpheres) {
+      sphere.raycast(raycaster, newIntersects)
+    }
+
+    if (newIntersects.length === 0) {
       this._box.raycast(raycaster, intersects)
+    } else {
+      for (const intersect of newIntersects) {
+        intersects.push(intersect)
+      }
     }
   }
 

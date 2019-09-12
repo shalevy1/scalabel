@@ -13,10 +13,13 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
   private _line: THREE.Line
   /** box */
   private _box: THREE.Mesh
+  /** box side length */
+  private _sideLength: number
 
   constructor (axis: 'x' | 'y' | 'z',
                negate: boolean,
-               color: number) {
+               color: number,
+               sideLength: number = 0.25) {
     super()
     this._axis = axis
     this._direction = new THREE.Vector3()
@@ -52,19 +55,19 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshBasicMaterial({ color })
     )
-    this._box.matrixAutoUpdate = false
     this.add(this._box)
 
-    this._line.scale.set(1, 0.75, 1)
-    this._line.updateMatrix()
+    this._sideLength = sideLength
+    this._line.scale.set(1, 1 - sideLength, 1)
 
-    this._box.scale.set(0.25, 0.25, 0.25)
+    this._box.scale.set(sideLength, sideLength, sideLength)
     this._box.position.z = 1
-    this._box.updateMatrix()
 
     const quaternion = new THREE.Quaternion()
     quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), this._direction)
     this.applyQuaternion(quaternion)
+
+    this.setHighlighted()
   }
 
   /** get update vectors: [translation, rotation, scale, new intersection] */
@@ -152,5 +155,21 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
   ) {
     this._line.raycast(raycaster, intersects)
     this._box.raycast(raycaster, intersects)
+  }
+
+  /**
+   * Change scale & rotation to reflect changes in parent's parameters
+   * @param local: whether in local coordinate frame
+   */
+  public refreshDisplayParameters (_local: boolean) {
+    const worldScale = new THREE.Vector3()
+    if (this.parent) {
+      this.parent.getWorldScale(worldScale)
+    }
+
+    this._box.scale.x = this._sideLength / worldScale.x
+    this._box.scale.y = this._sideLength / worldScale.y
+    this._box.scale.z = this._sideLength / worldScale.z
+    this._box.scale.applyQuaternion(this.quaternion)
   }
 }

@@ -16,7 +16,7 @@ export class Plane3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Grid3D
 
-  constructor (_control: TransformationControl) {
+  constructor () {
     super()
     this._shape = new Grid3D(this._index)
   }
@@ -30,7 +30,7 @@ export class Plane3D extends Label3D {
    * Modify ThreeJS objects to draw label
    * @param {THREE.Scene} scene: ThreeJS Scene Object
    */
-  public render (scene: THREE.Scene): void {
+  public render (scene: THREE.Scene, _camera: THREE.Camera): void {
     this._shape.render(scene)
   }
 
@@ -42,6 +42,16 @@ export class Plane3D extends Label3D {
     for (const shape of label.shapes()) {
       this._shape.add(shape)
     }
+  }
+
+  /** Attach control */
+  public attachControl (_control: TransformationControl): void {
+    return
+  }
+
+  /** Detach control */
+  public detachControl (_control: TransformationControl): void {
+    return
   }
 
   /**

@@ -15,15 +15,15 @@ import { Plane3D } from './plane3d'
  * @param {string} labelType: type of the new label
  */
 function makeDrawableLabel (
-  labelType: string, control: TransformationControl
+  labelType: string
 ): Label3D {
   switch (labelType) {
     case LabelTypes.BOX_3D:
-      return new Box3D(control)
+      return new Box3D()
     case LabelTypes.PLANE_3D:
-      return new Plane3D(control)
+      return new Plane3D()
   }
-  return new Box3D(control)
+  return new Box3D()
 }
 
 type Shape = Cube3D
@@ -73,7 +73,7 @@ export class Label3DList {
     this._raycaster.linePrecision = 0.02
     this._control = new TransformationControl(this._camera)
     if (Session.itemType === 'image') {
-      this._plane = new Plane3D(this._control)
+      this._plane = new Plane3D()
       this._plane.init(Session.getState())
     }
     this._state = Session.getState()
@@ -86,7 +86,7 @@ export class Label3DList {
    */
   public render (scene: THREE.Scene): void {
     for (const id of Object.keys(this._labels)) {
-      this._labels[Number(id)].render(scene)
+      this._labels[Number(id)].render(scene, this._camera)
     }
   }
 
@@ -110,7 +110,7 @@ export class Label3DList {
           newLabels[id] = this._plane
         } else {
           newLabels[id] =
-            makeDrawableLabel(item.labels[id].type, this._control)
+            makeDrawableLabel(item.labels[id].type)
           if (this._plane) {
             this._plane.attachLabel(newLabels[id])
           }
@@ -151,6 +151,7 @@ export class Label3DList {
       }
       this._highlightedLabel.setSelected(true)
       this._selectedLabel = this._highlightedLabel
+      this._selectedLabel.attachControl(this._control)
 
       // Set current label as selected label
       Session.dispatch(changeLabelProps(
@@ -214,13 +215,14 @@ export class Label3DList {
     switch (e.key) {
       case ' ':
         const state = this._state
-        const label = new Box3D(this._control)
+        const label = new Box3D()
         label.init(state)
         return true
       case 'Escape':
       case 'Enter':
         if (this._selectedLabel !== null) {
           this._selectedLabel.setSelected(false)
+          this._selectedLabel.detachControl(this._control)
           this._selectedLabel = null
           Session.dispatch(changeLabelProps(
             this._state.user.select.item, -1, {}

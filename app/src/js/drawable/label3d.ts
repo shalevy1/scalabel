@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { LabelType, ShapeType, State } from '../functional/types'
+import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Grid3D } from './grid3d'
 import { Plane3D } from './plane3d'
@@ -76,11 +77,17 @@ export abstract class Label3D {
     this._plane = plane
   }
 
+  /** Attach control */
+  public abstract attachControl (control: TransformationControl): void
+
+  /** Attach control */
+  public abstract detachControl (control: TransformationControl): void
+
   /**
    * Modify ThreeJS objects to draw label
    * @param {THREE.Scene} scene: ThreeJS Scene Object
    */
-  public abstract render (scene: THREE.Scene): void
+  public abstract render (scene: THREE.Scene, camera: THREE.Camera): void
 
   /**
    * Handle keyboard events

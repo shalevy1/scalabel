@@ -24,13 +24,10 @@ import { Label3D } from './label3d'
 export class Box3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Cube3D
-  /** Controls */
-  private _control: TransformationControl
 
-  constructor (control: TransformationControl) {
+  constructor () {
     super()
     this._shape = new Cube3D(this._index)
-    this._control = control
   }
 
   /**
@@ -63,7 +60,20 @@ export class Box3D extends Label3D {
    */
   public setSelected (s: boolean) {
     super.setSelected(s)
-    this._shape.setControl(this._control, s)
+  }
+
+  /**
+   * Attach control
+   */
+  public attachControl (control: TransformationControl) {
+    this._shape.setControl(control, true)
+  }
+
+  /**
+   * Attach control
+   */
+  public detachControl (control: TransformationControl) {
+    this._shape.setControl(control, false)
   }
 
   /**
@@ -77,8 +87,8 @@ export class Box3D extends Label3D {
    * Modify ThreeJS objects to draw label
    * @param {THREE.Scene} scene: ThreeJS Scene Object
    */
-  public render (scene: THREE.Scene): void {
-    this._shape.render(scene, this._highlighted, this._selected)
+  public render (scene: THREE.Scene, camera: THREE.Camera): void {
+    this._shape.render(scene, camera)
   }
 
   /**
@@ -145,5 +155,6 @@ export class Box3D extends Label3D {
    */
   public setHighlighted (intersection?: THREE.Intersection) {
     super.setHighlighted(intersection)
+    this._shape.setHighlighted(intersection)
   }
 }

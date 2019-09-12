@@ -55,33 +55,27 @@ export class Plane3D extends Label3D {
   }
 
   /**
-   * Set up for drag action
-   * @param viewPlaneNormal
-   * @param cameraPosition
-   * @param intersectionPoint
+   * Handle mouse move
+   * @param projection
    */
-  public mouseDown (): void {
+  public onMouseDown () {
+    return false
+  }
+
+  /**
+   * Handle mouse up
+   * @param projection
+   */
+  public onMouseUp () {
     return
   }
 
   /**
-   * Mouse movement while mouse down on box (from raycast)
-   * @param x: NDC
-   * @param y: NDC
+   * Handle mouse move
+   * @param projection
    */
-  public mouseMove (_x: number, _y: number, _camera: THREE.Camera): void {
-    return
-  }
-
-  /**
-   * Clean up for drag action
-   * @param viewPlaneNormal
-   * @param cameraPosition
-   * @param intersectionPoint
-   * @param editMode
-   */
-  public mouseUp (): void {
-    return
+  public onMouseMove (_projection: THREE.Ray): boolean {
+    return false
   }
 
   /**

@@ -69,6 +69,7 @@ export abstract class Controller extends THREE.Object3D {
         this._intersectionPoint
       )
     }
+    return false
   }
 
   /** mouse move */
@@ -85,19 +86,30 @@ export abstract class Controller extends THREE.Object3D {
         this._dragPlane,
         this._local
       )
-      this._object.position.add(translationDelta)
-      this._object.applyQuaternion(quaternionDelta)
-      this._object.scale.add(scaleDelta)
+
+      const newScale = new THREE.Vector3()
+      newScale.copy(this._object.scale)
+      newScale.add(scaleDelta)
+
+      if (Math.min(newScale.x, newScale.y, newScale.z) > 0.01) {
+        this._object.position.add(translationDelta)
+        this._object.applyQuaternion(quaternionDelta)
+        this._object.scale.add(scaleDelta)
+      }
 
       this._intersectionPoint.copy(newIntersection)
+      this.refreshDisplayParameters()
+      this._projection.copy(projection)
+      return true
     }
     this.refreshDisplayParameters()
     this._projection.copy(projection)
+    return false
   }
 
   /** mouse up */
   public onMouseUp () {
-    return
+    return false
   }
 
   /** raycast */

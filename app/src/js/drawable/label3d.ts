@@ -90,17 +90,22 @@ export abstract class Label3D {
   public abstract render (scene: THREE.Scene, camera: THREE.Camera): void
 
   /**
-   * Handle keyboard events
-   * @param {KeyboardEvent} e
-   * @returns true if consumed, false otherwise
+   * Handle mouse move
+   * @param projection
    */
-  public abstract onKeyDown (e: KeyboardEvent): boolean
+  public abstract onMouseDown (): boolean
 
   /**
-   * Handle keyboard events
-   * @returns true if consumed, false otherwise
+   * Handle mouse up
+   * @param projection
    */
-  public abstract onKeyUp (e: KeyboardEvent): boolean
+  public abstract onMouseUp (): void
+
+  /**
+   * Handle mouse move
+   * @param projection
+   */
+  public abstract onMouseMove (projection: THREE.Ray): boolean
 
   /**
    * Expand the primitive shapes to drawable shapes

@@ -4,6 +4,7 @@ import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
 import { LabelTypes } from '../common/types'
 import { State } from '../functional/types'
+import { projectionFromNDC } from '../helper/point_cloud'
 import { Box3D } from './box3d'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
@@ -147,7 +148,7 @@ export class Label3DList {
     if (this._highlightedLabel !== null) {
       if (this._selectedLabel !== null &&
           this._selectedLabel !== this._highlightedLabel) {
-        this._selectedLabel.setSelected(false)
+        this.deselect()
       }
       this._highlightedLabel.setSelected(true)
       this._selectedLabel = this._highlightedLabel
@@ -167,8 +168,22 @@ export class Label3DList {
    */
   public onMouseDown (): boolean {
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
-      this._control.onMouseDown()
       this._mouseDownOnSelection = true
+      if (this._control.attached()) {
+        const consumed = this._control.onMouseDown()
+        if (consumed) {
+          return false
+        }
+      }
+    }
+
+    if (this._highlightedLabel) {
+      const consumed = this._highlightedLabel.onMouseDown()
+      if (consumed) {
+        this._highlightedLabel.setSelected(true)
+        this._selectedLabel = this._highlightedLabel
+        return false
+      }
     }
     return false
   }
@@ -178,7 +193,13 @@ export class Label3DList {
    */
   public onMouseUp (): boolean {
     this._mouseDownOnSelection = false
-    this._control.onMouseUp()
+    let consumed = false
+    if (this._control.attached()) {
+      consumed = this._control.onMouseUp()
+    }
+    if (!consumed && this._selectedLabel) {
+      this._selectedLabel.onMouseUp()
+    }
     if ((this._labelChanged || this._plane) && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
     }
@@ -197,8 +218,15 @@ export class Label3DList {
     y: number
   ): boolean {
     if (this._mouseDownOnSelection && this._selectedLabel) {
-      this._control.onMouseMove(x, y)
       this._labelChanged = true
+      if (this._control.attached()) {
+        const consumed = this._control.onMouseMove(x, y)
+        if (consumed) {
+          return true
+        }
+      }
+      const projection = projectionFromNDC(x, y, this._camera)
+      this._selectedLabel.onMouseMove(projection)
       return true
     } else {
       this.raycastLabels(x, y, this._camera, this._raycaster)
@@ -220,14 +248,7 @@ export class Label3DList {
         return true
       case 'Escape':
       case 'Enter':
-        if (this._selectedLabel !== null) {
-          this._selectedLabel.setSelected(false)
-          this._selectedLabel.detachControl(this._control)
-          this._selectedLabel = null
-          Session.dispatch(changeLabelProps(
-            this._state.user.select.item, -1, {}
-          ))
-        }
+        this.deselect()
         return true
       case 'Backspace':
         if (this._selectedLabel) {
@@ -241,12 +262,9 @@ export class Label3DList {
       case 'p':
         if (this._plane) {
           if (this._selectedLabel === this._plane) {
-            this._plane.setSelected(false)
-            this._selectedLabel = null
-            Session.dispatch(changeLabelProps(
-              this._state.user.select.item, -1, {}
-            ))
+            this.deselect()
           } else {
+            this.deselect()
             if (this._selectedLabel) {
               this._selectedLabel.setSelected(false)
             }
@@ -268,10 +286,7 @@ export class Label3DList {
   /**
    * Handle key up
    */
-  public onKeyUp (e: KeyboardEvent) {
-    if (this._selectedLabel !== null) {
-      return this._selectedLabel.onKeyUp(e)
-    }
+  public onKeyUp (_e: KeyboardEvent) {
     return false
   }
 
@@ -334,6 +349,20 @@ export class Label3DList {
       this.highlight(closestIntersect)
     } else {
       this.highlight(null)
+    }
+  }
+
+  /**
+   * De-select
+   */
+  private deselect () {
+    if (this._selectedLabel !== null) {
+      this._selectedLabel.setSelected(false)
+      this._selectedLabel.detachControl(this._control)
+      this._selectedLabel = null
+      Session.dispatch(changeLabelProps(
+        this._state.user.select.item, -1, {}
+      ))
     }
   }
 }

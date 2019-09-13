@@ -62,6 +62,8 @@ export interface CubeType {
   orientation: Vector3Type
   /** Anchor corner index for reshaping */
   anchorIndex: number
+  /** ID of the surface this box is attached to */
+  surfaceId: number
 }
 
 export interface Point2DType {

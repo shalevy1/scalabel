@@ -35,7 +35,7 @@ export class Box3D extends Label3D {
    * Initialize label
    * @param {State} state
    */
-  public init (state: State): void {
+  public init (state: State, surfaceId?: number, _temporary?: boolean): void {
     const itemIndex = state.user.select.item
     this._order = state.task.status.maxOrder + 1
     this._label = makeLabel({
@@ -46,12 +46,17 @@ export class Box3D extends Label3D {
     this._labelId = -1
     const viewerConfig: PointCloudViewerConfigType =
       getCurrentPointCloudViewerConfig(state)
-    this._shape.setCenter((new Vector3D()).fromObject(viewerConfig.target))
+    const center = (new Vector3D()).fromObject(viewerConfig.target)
+    if (this._plane) {
+      center.z = 0.5
+    }
+    this._shape.setCenter(center)
     Session.dispatch(addBox3dLabel(
       this._label.item, this._label.category,
       this._shape.getCenter(),
       this._shape.getSize(),
-      this._shape.getOrientation()
+      this._shape.getOrientation(),
+      surfaceId
     ))
   }
 
@@ -67,6 +72,13 @@ export class Box3D extends Label3D {
   public attachToPlane (plane: Plane3D) {
     super.attachToPlane(plane)
     this._shape.attachToPlane(plane)
+    this.commitLabel()
+  }
+
+  /** Attach label to plane */
+  public detachFromPlane () {
+    super.detachFromPlane()
+    this._shape.detachFromPlane()
   }
 
   /**
@@ -133,8 +145,14 @@ export class Box3D extends Label3D {
   /** Update the shapes of the label to the state */
   public commitLabel (): void {
     if (this._label !== null) {
+      const cube = this._shape.toCube()
+      if (this._plane) {
+        cube.center.z = 0.5 * cube.size.z
+        cube.orientation.x = 0
+        cube.orientation.y = 0
+      }
       Session.dispatch(changeLabelShape(
-        this._label.item, this._label.shapes[0], this._shape.toCube()
+        this._label.item, this._label.shapes[0], cube
       ))
     }
   }

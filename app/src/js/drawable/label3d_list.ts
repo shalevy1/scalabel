@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
 import { LabelTypes } from '../common/types'
-import { State } from '../functional/types'
+import { CubeType, State } from '../functional/types'
 import { projectionFromNDC } from '../helper/point_cloud'
 import { Box3D } from './box3d'
 import { TransformationControl } from './control/transformation_control'
@@ -74,9 +74,20 @@ export class Label3DList {
     this._raycaster.linePrecision = 0.02
     this._control = new TransformationControl(this._camera)
     if (Session.itemType === 'image') {
-      this._plane = new Plane3D()
-      this._plane.attachControl(this._control)
-      this._plane.init(Session.getState())
+      let planeExists = false
+      const state = Session.getState()
+      const itemIndex = state.user.select.item
+      const item = state.task.items[itemIndex]
+      for (const key of Object.keys(item.labels)) {
+        if (item.labels[Number(key)].type === LabelTypes.PLANE_3D) {
+          planeExists = true
+          break
+        }
+      }
+      if (!planeExists) {
+        this._plane = new Plane3D()
+        this._plane.init(state)
+      }
     }
     this._state = Session.getState()
     this.updateState(this._state, this._state.user.select.item)
@@ -108,15 +119,11 @@ export class Label3DList {
       if (id in this._labels) {
         newLabels[id] = this._labels[id]
       } else {
-        if (this._plane && item.labels[id].type === LabelTypes.PLANE_3D) {
-          newLabels[id] = this._plane
-        } else {
-          newLabels[id] =
-            makeDrawableLabel(item.labels[id].type)
-          if (this._plane && newLabels[id] !== this._plane) {
-            newLabels[id].attachToPlane(this._plane)
-          }
-        }
+        newLabels[id] =
+          makeDrawableLabel(item.labels[id].type)
+      }
+      if (item.labels[id].type === LabelTypes.PLANE_3D) {
+        this._plane = newLabels[id] as Plane3D
       }
       newLabels[id].updateState(state, itemIndex, id)
       for (const shape of newLabels[id].shapes()) {
@@ -125,16 +132,31 @@ export class Label3DList {
       }
     }
 
+    // Attach shapes to plane
+    for (const key of Object.keys(item.labels)) {
+      const id = Number(key)
+      if (item.labels[id].type === LabelTypes.BOX_3D) {
+        const shape = item.shapes[item.labels[id].shapes[0]].shape as CubeType
+        if (shape.surfaceId >= 0) {
+          newLabels[id].attachToPlane(newLabels[shape.surfaceId] as Plane3D)
+        }
+      }
+    }
+
     this._raycastableShapes = newRaycastableShapes
     this._labels = newLabels
     this._raycastMap = newRaycastMap
 
+    if (this._selectedLabel) {
+      this._selectedLabel.setSelected(false)
+      this._selectedLabel.detachControl(this._control)
+    }
+    this._selectedLabel = null
     if (state.user.select.label >= 0 &&
-        (state.user.select.label in this._labels) &&
-        this._labels[state.user.select.label] !== this._selectedLabel) {
-      this.deselect()
+        (state.user.select.label in this._labels)) {
       this._selectedLabel = this._labels[state.user.select.label]
       this._selectedLabel.setSelected(true)
+      this._selectedLabel.attachControl(this._control)
     }
   }
 
@@ -144,17 +166,9 @@ export class Label3DList {
    */
   public onDoubleClick (): boolean {
     if (this._highlightedLabel !== null) {
-      if (this._selectedLabel !== null &&
-          this._selectedLabel !== this._highlightedLabel) {
-        this.deselect()
-      }
-      this._highlightedLabel.setSelected(true)
-      this._selectedLabel = this._highlightedLabel
-      this._selectedLabel.attachControl(this._control)
-
       // Set current label as selected label
       Session.dispatch(changeLabelProps(
-        this._state.user.select.item, this._selectedLabel.labelId, {}
+        this._state.user.select.item, this._highlightedLabel.labelId, {}
       ))
       return true
     }
@@ -165,7 +179,6 @@ export class Label3DList {
    * Process mouse down action
    */
   public onMouseDown (): boolean {
-    console.log(this._selectedLabel)
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       this._mouseDownOnSelection = true
       if (this._control.attached()) {
@@ -180,9 +193,10 @@ export class Label3DList {
       const consumed = this._highlightedLabel.onMouseDown()
       if (consumed) {
         this._mouseDownOnSelection = true
-        this.deselect()
-        this._highlightedLabel.setSelected(true)
-        this._selectedLabel = this._highlightedLabel
+        // Set current label as selected label
+        Session.dispatch(changeLabelProps(
+          this._state.user.select.item, this._highlightedLabel.labelId, {}
+        ))
         return false
       }
     }
@@ -245,11 +259,17 @@ export class Label3DList {
       case ' ':
         const state = this._state
         const label = new Box3D()
-        label.init(state)
+        if (this._plane) {
+          label.init(state, this._plane.labelId)
+        } else {
+          label.init(state)
+        }
         return true
       case 'Escape':
       case 'Enter':
-        this.deselect()
+        Session.dispatch(changeLabelProps(
+          this._state.user.select.item, -1, {}
+        ))
         return true
       case 'Backspace':
         if (this._selectedLabel) {
@@ -263,14 +283,10 @@ export class Label3DList {
       case 'p':
         if (this._plane) {
           if (this._selectedLabel === this._plane) {
-            this.deselect()
+            Session.dispatch(changeLabelProps(
+              this._state.user.select.item, -1, {}
+            ))
           } else {
-            this.deselect()
-            if (this._selectedLabel) {
-              this._selectedLabel.setSelected(false)
-            }
-            this._plane.setSelected(true)
-            this._plane.attachControl(this._control)
             Session.dispatch(changeLabelProps(
               this._state.user.select.item, this._plane.labelId, {}
             ))
@@ -351,20 +367,6 @@ export class Label3DList {
       this.highlight(closestIntersect)
     } else {
       this.highlight(null)
-    }
-  }
-
-  /**
-   * De-select
-   */
-  private deselect () {
-    if (this._selectedLabel !== null) {
-      this._selectedLabel.setSelected(false)
-      this._selectedLabel.detachControl(this._control)
-      this._selectedLabel = null
-      Session.dispatch(changeLabelProps(
-        this._state.user.select.item, -1, {}
-      ))
     }
   }
 }

@@ -189,7 +189,8 @@ export class Cube3D extends THREE.Group {
       center: this.getCenter(),
       size: this.getSize(),
       orientation: this.getOrientation(),
-      anchorIndex: this._anchorIndex
+      anchorIndex: this._anchorIndex,
+      surfaceId: -1
     }
   }
 
@@ -207,6 +208,14 @@ export class Cube3D extends THREE.Group {
   public attachToPlane (plane: Plane3D) {
     this._grid = plane.shapes()[0]
     this.position.z = 0.5
+  }
+
+  /**
+   * attach to plane
+   * @param plane
+   */
+  public detachFromPlane () {
+    this._grid = null
   }
 
   /**
@@ -393,7 +402,7 @@ export class Cube3D extends THREE.Group {
 
     scaleDelta.multiply(this._highlightedSphere.position)
     scaleDelta.multiplyScalar(2)
-    
+
     const newScale = new THREE.Vector3()
     newScale.copy(this.scale)
     newScale.add(scaleDelta)

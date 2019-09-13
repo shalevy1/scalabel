@@ -28,7 +28,7 @@ export abstract class Label3D {
   /** rgba color decided by labelId */
   protected _color: number[]
   /** plane if attached */
-  protected _plane?: Plane3D
+  protected _plane: Plane3D | null
 
   constructor () {
     this._index = -1
@@ -38,6 +38,7 @@ export abstract class Label3D {
     this._highlighted = false
     this._label = null
     this._color = [0, 0, 0, 1]
+    this._plane = null
   }
 
   /**
@@ -78,6 +79,14 @@ export abstract class Label3D {
     }
     plane.attachLabel(this)
     this._plane = plane
+  }
+
+  /** Attach label to plane */
+  public detachFromPlane () {
+    if (this._plane) {
+      this._plane.detachLabel(this)
+      this._plane = null
+    }
   }
 
   /** Attach control */
@@ -123,7 +132,9 @@ export abstract class Label3D {
    * Initialize label
    * @param {State} state
    */
-  public abstract init (state: State): void
+  public abstract init (
+    state: State, surfaceId?: number, temporary?: boolean
+  ): void
 
   /**
    * Return a list of the shape for inspection and testing

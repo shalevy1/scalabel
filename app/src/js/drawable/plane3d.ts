@@ -45,13 +45,13 @@ export class Plane3D extends Label3D {
   }
 
   /** Attach control */
-  public attachControl (_control: TransformationControl): void {
-    return
+  public attachControl (control: TransformationControl): void {
+    this._shape.setControl(control, true)
   }
 
   /** Detach control */
-  public detachControl (_control: TransformationControl): void {
-    return
+  public detachControl (control: TransformationControl): void {
+    this._shape.setControl(control, false)
   }
 
   /**

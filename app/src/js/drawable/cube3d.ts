@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { CubeType } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
+import { Grid3D } from './grid3d'
+import { Plane3D } from './plane3d'
 import { getColorById } from './util'
 
 const faceNormals = [
@@ -43,6 +45,8 @@ export class Cube3D extends THREE.Group {
   private _highlightedSphere: THREE.Mesh | null
   /** whether highlighted */
   private _highlighted: boolean
+  /** Plane shape */
+  private _grid: Readonly<Grid3D> | null
 
   /**
    * Make box with assigned id
@@ -99,6 +103,8 @@ export class Cube3D extends THREE.Group {
     this._highlightedSphere = null
 
     this._highlighted = false
+
+    this ._grid = null
 
     this.setHighlighted()
   }
@@ -195,6 +201,15 @@ export class Cube3D extends THREE.Group {
   }
 
   /**
+   * attach to plane
+   * @param plane
+   */
+  public attachToPlane (plane: Plane3D) {
+    this._grid = plane.shapes()[0]
+    this.position.z = 0.5
+  }
+
+  /**
    * Add to scene for rendering
    * @param scene
    */
@@ -249,12 +264,6 @@ export class Cube3D extends THREE.Group {
       }
     }
 
-    // if (selected) {
-    //   this.setColor(0xff0000)
-    // } else {
-    //   this.setColorFromRGB(this._color)
-    // }
-
     // Check if shape already in scene
     for (const child of scene.children) {
       if (child === this) {
@@ -262,7 +271,9 @@ export class Cube3D extends THREE.Group {
       }
     }
 
-    scene.add(this)
+    if (!this._grid) {
+      scene.add(this)
+    }
   }
 
   /**
@@ -348,9 +359,19 @@ export class Cube3D extends THREE.Group {
     localProjection.copy(projection)
     localProjection.applyMatrix4(toLocal)
 
+    const planeNormal = new THREE.Vector3()
+    if (this._grid && this._highlightedSphere.position.z < 0) {
+      planeNormal.z = 1
+      const gridQuaternion = new THREE.Quaternion()
+      this._grid.getWorldQuaternion(gridQuaternion)
+      planeNormal.applyQuaternion(gridQuaternion)
+    } else {
+      planeNormal.copy(this._closestFaceNormal)
+    }
+
     const highlightedPlane = new THREE.Plane()
     highlightedPlane.setFromNormalAndCoplanarPoint(
-      this._closestFaceNormal,
+      planeNormal,
       this._highlightedSphere.position
     )
 

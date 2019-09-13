@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { PlaneType } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
+import { TransformationControl } from './control/transformation_control'
 
 /**
  * ThreeJS class for rendering grid
@@ -10,6 +11,8 @@ export class Grid3D extends THREE.Group {
   private _lines: THREE.GridHelper
   /** label id */
   private _id: number
+  /** control */
+  private _control: TransformationControl | null
 
   constructor (id: number) {
     super()
@@ -17,6 +20,7 @@ export class Grid3D extends THREE.Group {
     this._lines = new THREE.GridHelper(6, 6, 0xffffff, 0xffffff)
     this._lines.rotation.x = Math.PI / 2
     this.add(this._lines)
+    this._control = null
   }
 
   /**
@@ -49,6 +53,37 @@ export class Grid3D extends THREE.Group {
     return {
       offset: (new Vector3D()).fromThree(this.position),
       orientation: (new Vector3D()).fromThree(this.rotation.toVector3())
+    }
+  }
+
+  /**
+   * Override ThreeJS raycast
+   * @param raycaster
+   * @param intersects
+   */
+  public raycast (
+    raycaster: THREE.Raycaster,
+    intersects: THREE.Intersection[]
+  ) {
+    if (this._control) {
+      this._control.raycast(raycaster, intersects)
+    }
+  }
+
+  /**
+   * Add/remove controls
+   * @param control
+   * @param show
+   */
+  public setControl (control: TransformationControl, show: boolean) {
+    if (show) {
+      this.add(control)
+      this._control = control
+      this._control.attach(this)
+    } else if (this._control) {
+      this._control.detach()
+      this.remove(control)
+      this._control = null
     }
   }
 }

@@ -146,20 +146,17 @@ export abstract class Controller extends THREE.Object3D {
   protected refreshDisplayParameters () {
     if (this.parent) {
       // Isolate child from parent transformations first
-      this.parent.updateMatrixWorld(true)
-      this.matrix.getInverse(this.parent.matrixWorld)
+      this.parent.updateMatrix()
+      this.matrix.getInverse(this.parent.matrix)
 
       this.matrix.setPosition(new THREE.Vector3())
       if (this._local) {
         // Move back to parent frame of reference, but do not apply scaling
-        const worldQuaternion = new THREE.Quaternion()
-        this.parent.getWorldQuaternion(worldQuaternion)
-
-        const worldPosition = new THREE.Vector3()
-        this.parent.getWorldPosition(worldPosition)
 
         this.matrix.multiply(
-          (new THREE.Matrix4()).makeRotationFromQuaternion(worldQuaternion)
+          (new THREE.Matrix4()).makeRotationFromQuaternion(
+            this.parent.quaternion
+          )
         )
       }
       const rotationMatrix = new THREE.Matrix4()

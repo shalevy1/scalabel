@@ -73,6 +73,9 @@ export abstract class Label3D {
 
   /** Attach label to plane */
   public attachToPlane (plane: Plane3D) {
+    if (plane === this._plane) {
+      return
+    }
     plane.attachLabel(this)
     this._plane = plane
   }

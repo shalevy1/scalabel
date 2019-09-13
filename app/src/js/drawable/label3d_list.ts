@@ -75,6 +75,7 @@ export class Label3DList {
     this._control = new TransformationControl(this._camera)
     if (Session.itemType === 'image') {
       this._plane = new Plane3D()
+      this._plane.attachControl(this._control)
       this._plane.init(Session.getState())
     }
     this._state = Session.getState()
@@ -112,8 +113,8 @@ export class Label3DList {
         } else {
           newLabels[id] =
             makeDrawableLabel(item.labels[id].type)
-          if (this._plane) {
-            this._plane.attachLabel(newLabels[id])
+          if (this._plane && newLabels[id] !== this._plane) {
+            newLabels[id].attachToPlane(this._plane)
           }
         }
       }
@@ -128,15 +129,12 @@ export class Label3DList {
     this._labels = newLabels
     this._raycastMap = newRaycastMap
 
-    if (this._selectedLabel) {
-      this._selectedLabel.setSelected(false)
-    }
     if (state.user.select.label >= 0 &&
-        (state.user.select.label in this._labels)) {
+        (state.user.select.label in this._labels) &&
+        this._labels[state.user.select.label] !== this._selectedLabel) {
+      this.deselect()
       this._selectedLabel = this._labels[state.user.select.label]
       this._selectedLabel.setSelected(true)
-    } else {
-      this._selectedLabel = null
     }
   }
 
@@ -167,6 +165,7 @@ export class Label3DList {
    * Process mouse down action
    */
   public onMouseDown (): boolean {
+    console.log(this._selectedLabel)
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       this._mouseDownOnSelection = true
       if (this._control.attached()) {
@@ -181,6 +180,7 @@ export class Label3DList {
       const consumed = this._highlightedLabel.onMouseDown()
       if (consumed) {
         this._mouseDownOnSelection = true
+        this.deselect()
         this._highlightedLabel.setSelected(true)
         this._selectedLabel = this._highlightedLabel
         return false
@@ -201,7 +201,7 @@ export class Label3DList {
     if (!consumed && this._selectedLabel) {
       this._selectedLabel.onMouseUp()
     }
-    if ((this._labelChanged || this._plane) && this._selectedLabel !== null) {
+    if (this._labelChanged && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
     }
     this._labelChanged = false
@@ -270,6 +270,7 @@ export class Label3DList {
               this._selectedLabel.setSelected(false)
             }
             this._plane.setSelected(true)
+            this._plane.attachControl(this._control)
             Session.dispatch(changeLabelProps(
               this._state.user.select.item, this._plane.labelId, {}
             ))

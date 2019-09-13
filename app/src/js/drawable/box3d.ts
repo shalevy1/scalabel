@@ -17,6 +17,7 @@ import { LabelTypes } from '../common/types'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'
+import { Plane3D } from './plane3d'
 
 /**
  * Box3d Label
@@ -60,6 +61,12 @@ export class Box3D extends Label3D {
    */
   public setSelected (s: boolean) {
     super.setSelected(s)
+  }
+
+  /** Attach label to plane */
+  public attachToPlane (plane: Plane3D) {
+    super.attachToPlane(plane)
+    this._shape.attachToPlane(plane)
   }
 
   /**

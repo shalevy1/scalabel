@@ -288,6 +288,7 @@ export class Cube3D extends THREE.Group {
       { (sphere.material as THREE.Material).opacity = 0.3 }
       { (sphere.material as THREE.Material).needsUpdate = true }
     }
+    this._highlightedSphere = null
     if (intersection) {
       this._highlighted = true
       for (const sphere of this._controlSpheres) {
@@ -333,11 +334,48 @@ export class Cube3D extends THREE.Group {
    * Drag to mouse
    * @param projection
    */
-  public drag (_projection: THREE.Ray) {
+  public drag (projection: THREE.Ray) {
     if (!this._highlightedSphere) {
       return false
     }
-    return false
+
+    this.updateMatrixWorld(true)
+
+    const toLocal = new THREE.Matrix4()
+    toLocal.getInverse(this.matrixWorld)
+
+    const localProjection = new THREE.Ray()
+    localProjection.copy(projection)
+    localProjection.applyMatrix4(toLocal)
+
+    const highlightedPlane = new THREE.Plane()
+    highlightedPlane.setFromNormalAndCoplanarPoint(
+      this._closestFaceNormal,
+      this._highlightedSphere.position
+    )
+
+    const intersection = new THREE.Vector3()
+    localProjection.intersectPlane(highlightedPlane, intersection)
+
+    const scaleDelta = new THREE.Vector3()
+    scaleDelta.copy(intersection)
+    scaleDelta.sub(this._highlightedSphere.position)
+    scaleDelta.multiply(this.scale)
+
+    const worldQuaternion = new THREE.Quaternion()
+    this.getWorldQuaternion(worldQuaternion)
+
+    const positionDelta = new THREE.Vector3()
+    positionDelta.copy(scaleDelta)
+    positionDelta.multiplyScalar(0.5)
+    positionDelta.applyQuaternion(worldQuaternion)
+    this.position.add(positionDelta)
+
+    scaleDelta.multiply(this._highlightedSphere.position)
+    scaleDelta.multiplyScalar(2)
+    this.scale.add(scaleDelta)
+
+    return true
   }
 
   /**

@@ -390,10 +390,19 @@ export class Cube3D extends THREE.Group {
     positionDelta.copy(scaleDelta)
     positionDelta.multiplyScalar(0.5)
     positionDelta.applyQuaternion(worldQuaternion)
-    this.position.add(positionDelta)
 
     scaleDelta.multiply(this._highlightedSphere.position)
     scaleDelta.multiplyScalar(2)
+    
+    const newScale = new THREE.Vector3()
+    newScale.copy(this.scale)
+    newScale.add(scaleDelta)
+
+    if (newScale.x < 0 || newScale.y < 0 || newScale.z < 0) {
+      return true
+    }
+
+    this.position.add(positionDelta)
     this.scale.add(scaleDelta)
 
     return true

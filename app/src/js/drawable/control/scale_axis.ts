@@ -46,13 +46,13 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
     )
     this._line = new THREE.Line(
       lineGeometry,
-      new THREE.LineBasicMaterial({ color })
+      new THREE.LineBasicMaterial({ color, transparent: true })
     )
     this.add(this._line)
 
     this._box = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshBasicMaterial({ color })
+      new THREE.MeshBasicMaterial({ color, transparent: true })
     )
     this.add(this._box)
 
@@ -133,12 +133,12 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
         intersection.object === this._box
       )
     ) {
-      { (this._box.material as THREE.Material).opacity = 1 }
-      { (this._line.material as THREE.Material).opacity = 1 }
+      { (this._box.material as THREE.Material).opacity = 0.9 }
+      { (this._line.material as THREE.Material).opacity = 0.9 }
       return true
     } else {
-      { (this._box.material as THREE.Material).opacity = 0.01 }
-      { (this._line.material as THREE.Material).opacity = 0.01 }
+      { (this._box.material as THREE.Material).opacity = 0.65 }
+      { (this._line.material as THREE.Material).opacity = 0.65 }
       return false
     }
   }

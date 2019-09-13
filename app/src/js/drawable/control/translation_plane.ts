@@ -12,7 +12,9 @@ export class TranslationPlane extends THREE.Mesh
   constructor (normal: THREE.Vector3, color: number) {
     super(
       new THREE.PlaneGeometry(0.5, 0.5),
-      new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ 
+        color, side: THREE.DoubleSide, transparent: true 
+      })
     )
     this._normal = new THREE.Vector3()
     this._normal.copy(normal)
@@ -30,10 +32,10 @@ export class TranslationPlane extends THREE.Mesh
   public setHighlighted (intersection ?: THREE.Intersection): boolean {
     { (this.material as THREE.Material).needsUpdate = true }
     if (intersection && intersection.object === this) {
-      { (this.material as THREE.Material).opacity = 1 }
+      { (this.material as THREE.Material).opacity = 0.9 }
       return true
     } else {
-      { (this.material as THREE.Material).opacity = 0.01 }
+      { (this.material as THREE.Material).opacity = 0.65 }
       return false
     }
   }

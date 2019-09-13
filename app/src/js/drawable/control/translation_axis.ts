@@ -32,13 +32,13 @@ export class TranslationAxis extends THREE.Group
     )
     this._line = new THREE.Line(
       lineGeometry,
-      new THREE.LineBasicMaterial({ color })
+      new THREE.LineBasicMaterial({ color, transparent: true })
     )
     this.add(this._line)
 
     this._cone = new THREE.Mesh(
       new THREE.ConeGeometry(1, 1.2),
-      new THREE.MeshBasicMaterial({ color })
+      new THREE.MeshBasicMaterial({ color, transparent: true })
     )
     this.add(this._cone)
 
@@ -114,12 +114,12 @@ export class TranslationAxis extends THREE.Group
         intersection.object === this._cone
       )
     ) {
-      { (this._line.material as THREE.Material).opacity = 1 }
-      { (this._cone.material as THREE.Material).opacity = 1 }
+      { (this._line.material as THREE.Material).opacity = 0.9 }
+      { (this._cone.material as THREE.Material).opacity = 0.9 }
       return true
     } else {
-      { (this._line.material as THREE.Material).opacity = 0.01 }
-      { (this._cone.material as THREE.Material).opacity = 0.01 }
+      { (this._line.material as THREE.Material).opacity = 0.65 }
+      { (this._cone.material as THREE.Material).opacity = 0.65 }
       return false
     }
   }

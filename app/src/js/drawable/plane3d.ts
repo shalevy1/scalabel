@@ -15,10 +15,13 @@ import Label3D from './label3d'
 export class Plane3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Grid3D
+  /** Attached label id's */
+  private _attachedLabels: { [id: number]: Label3D }
 
   constructor () {
     super()
     this._shape = new Grid3D(this._index)
+    this._attachedLabels = {}
   }
 
   /** select the label */
@@ -41,6 +44,17 @@ export class Plane3D extends Label3D {
   public attachLabel (label: Label3D) {
     for (const shape of label.shapes()) {
       this._shape.add(shape)
+    }
+    this._attachedLabels[label.labelId] = label
+  }
+
+  /**
+   * Add label's shape to be part of grid group
+   * @param label
+   */
+  public detachLabel (label: Label3D) {
+    for (const shape of label.shapes()) {
+      this._shape.remove(shape)
     }
   }
 
@@ -108,8 +122,9 @@ export class Plane3D extends Label3D {
   /** Update the shapes of the label to the state */
   public commitLabel (): void {
     if (this._label !== null) {
+      const shape = this._shape.toPlane()
       Session.dispatch(changeLabelShape(
-        this._label.item, this._label.shapes[0], this._shape.toPlane()
+        this._label.item, this._label.shapes[0], shape
       ))
     }
   }
@@ -118,7 +133,7 @@ export class Plane3D extends Label3D {
    * Initialize label
    * @param {State} state
    */
-  public init (state: State): void {
+  public init (state: State, _surfaceId?: number, _temporary?: boolean): void {
     const itemIndex = state.user.select.item
     this._order = state.task.status.maxOrder + 1
     this._label = makeLabel({
@@ -144,13 +159,23 @@ export class Plane3D extends Label3D {
    * Expand the primitive shapes to drawable shapes
    * @param {ShapeType[]} shapes
    */
-  public updateShapes (_shapes: ShapeType[]): void {
-    const newShape = _shapes[0] as PlaneType
+  public updateShapes (shapes: ShapeType[]): void {
+    const newShape = shapes[0] as PlaneType
     this._shape.position.copy(
       (new Vector3D()).fromObject(newShape.offset).toThree()
     )
     this._shape.rotation.setFromVector3(
       (new Vector3D()).fromObject(newShape.orientation).toThree()
     )
+  }
+
+  /**
+   * Remove all attached labels
+   */
+  public clearLabels () {
+    this._attachedLabels = []
+    for (let i = this._shape.children.length - 1; i >= 0; i--) {
+      this._shape.remove(this._shape.children[i])
+    }
   }
 }

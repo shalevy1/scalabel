@@ -180,6 +180,7 @@ export class Label3DList {
     if (this._highlightedLabel) {
       const consumed = this._highlightedLabel.onMouseDown()
       if (consumed) {
+        this._mouseDownOnSelection = true
         this._highlightedLabel.setSelected(true)
         this._selectedLabel = this._highlightedLabel
         return false

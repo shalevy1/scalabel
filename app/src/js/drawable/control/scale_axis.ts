@@ -87,8 +87,17 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
       direction.applyQuaternion(quaternion)
     }
 
+    const translationCoplanar = new THREE.Vector3()
+    translationCoplanar.crossVectors(dragPlane.normal, direction)
+    const translationNormal = new THREE.Vector3()
+    translationNormal.crossVectors(translationCoplanar, direction)
+    const translationPlane = new THREE.Plane()
+    translationPlane.setFromNormalAndCoplanarPoint(
+      translationNormal, oldIntersection
+    )
+
     const newIntersection = new THREE.Vector3()
-    newProjection.intersectPlane(dragPlane, newIntersection)
+    newProjection.intersectPlane(translationPlane, newIntersection)
 
     const mouseDelta = new THREE.Vector3()
     mouseDelta.copy(newIntersection)

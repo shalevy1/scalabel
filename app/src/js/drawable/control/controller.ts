@@ -144,18 +144,18 @@ export abstract class Controller extends THREE.Object3D {
 
   /** Refresh display params */
   protected refreshDisplayParameters () {
-    if (this.parent) {
+    if (this._object) {
       // Isolate child from parent transformations first
-      this.parent.updateMatrix()
-      this.matrix.getInverse(this.parent.matrix)
+      this._object.updateMatrix()
+      this.matrix.getInverse(this._object.matrix)
 
       this.matrix.setPosition(new THREE.Vector3())
       if (this._local) {
-        // Move back to parent frame of reference, but do not apply scaling
+        // Move back to _object frame of reference, but do not apply scaling
 
         this.matrix.multiply(
           (new THREE.Matrix4()).makeRotationFromQuaternion(
-            this.parent.quaternion
+            this._object.quaternion
           )
         )
       }
@@ -166,7 +166,7 @@ export abstract class Controller extends THREE.Object3D {
       quaternion.setFromRotationMatrix(rotationMatrix)
 
       const worldScale = new THREE.Vector3()
-      this.parent.getWorldScale(worldScale)
+      this._object.getWorldScale(worldScale)
       worldScale.applyQuaternion(quaternion)
 
       for (const unit of this._controlUnits) {

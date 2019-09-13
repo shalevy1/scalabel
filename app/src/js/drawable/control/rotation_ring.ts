@@ -11,7 +11,7 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
   constructor (normal: THREE.Vector3, color: number) {
     super(
       new THREE.TorusGeometry(1, .02, 32, 24),
-      new THREE.MeshBasicMaterial({ color })
+      new THREE.MeshBasicMaterial({ color, transparent: true })
    )
 
     this._normal = normal
@@ -30,10 +30,10 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
   public setHighlighted (intersection ?: THREE.Intersection): boolean {
     { (this.material as THREE.Material).needsUpdate = true }
     if (intersection && intersection.object === this) {
-      { (this.material as THREE.Material).opacity = 1 }
+      { (this.material as THREE.Material).opacity = 0.9 }
       return true
     } else {
-      { (this.material as THREE.Material).opacity = 0.01 }
+      { (this.material as THREE.Material).opacity = 0.65 }
       return false
     }
   }

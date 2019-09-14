@@ -117,7 +117,9 @@ export abstract class Label3D {
    * Handle mouse move
    * @param projection
    */
-  public abstract onMouseMove (projection: THREE.Ray): boolean
+  public abstract onMouseMove (
+    x: number, y: number, camera: THREE.Camera
+  ): boolean
 
   /**
    * Expand the primitive shapes to drawable shapes

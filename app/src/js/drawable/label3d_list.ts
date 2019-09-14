@@ -4,7 +4,6 @@ import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
 import { LabelTypes } from '../common/types'
 import { CubeType, State } from '../functional/types'
-import { projectionFromNDC } from '../helper/point_cloud'
 import { Box3D } from './box3d'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
@@ -240,8 +239,7 @@ export class Label3DList {
           return true
         }
       }
-      const projection = projectionFromNDC(x, y, this._camera)
-      this._selectedLabel.onMouseMove(projection)
+      this._selectedLabel.onMouseMove(x, y, this._camera)
       return true
     } else {
       this.raycastLabels(x, y, this._camera, this._raycaster)

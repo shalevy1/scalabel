@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { CubeType } from '../functional/types'
+import { projectionFromNDC } from '../helper/point_cloud'
 import { Vector3D } from '../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 import { Grid3D } from './grid3d'
@@ -354,10 +355,12 @@ export class Cube3D extends THREE.Group {
    * Drag to mouse
    * @param projection
    */
-  public drag (projection: THREE.Ray) {
+  public drag (x: number, y: number, camera: THREE.Camera) {
     if (!this._highlightedSphere) {
       return false
     }
+
+    const projection = projectionFromNDC(x, y, camera)
 
     this.updateMatrixWorld(true)
 
@@ -368,39 +371,94 @@ export class Cube3D extends THREE.Group {
     localProjection.copy(projection)
     localProjection.applyMatrix4(toLocal)
 
-    const planeNormal = new THREE.Vector3()
-    if (this._grid && this._highlightedSphere.position.z < 0) {
-      planeNormal.z = 1
-      const gridQuaternion = new THREE.Quaternion()
-      this._grid.getWorldQuaternion(gridQuaternion)
-      planeNormal.applyQuaternion(gridQuaternion)
-    } else {
-      planeNormal.copy(this._closestFaceNormal)
-    }
+    const highlightedPlaneNormal = new THREE.Vector3()
+    highlightedPlaneNormal.copy(this._closestFaceNormal)
 
     const highlightedPlane = new THREE.Plane()
+
+    const intersection = new THREE.Vector3()
+
     highlightedPlane.setFromNormalAndCoplanarPoint(
-      planeNormal,
+      highlightedPlaneNormal,
       this._highlightedSphere.position
     )
 
-    const intersection = new THREE.Vector3()
-    localProjection.intersectPlane(highlightedPlane, intersection)
+    const startingPosition = new THREE.Vector3()
+    startingPosition.copy(this._highlightedSphere.position)
+
+    if (this._grid && this._highlightedSphere.position.z < 0) {
+      const gridNormal = new THREE.Vector3()
+      gridNormal.z = 1
+      const gridPlane = new THREE.Plane()
+      gridPlane.setFromNormalAndCoplanarPoint(
+        gridNormal, this._highlightedSphere.position
+      )
+
+      const newHighlightedLocalPosition = new THREE.Vector3()
+      localProjection.intersectPlane(gridPlane, newHighlightedLocalPosition)
+
+      const highlightedPositionDelta = new THREE.Vector3()
+      highlightedPositionDelta.copy(newHighlightedLocalPosition)
+      highlightedPositionDelta.sub(this._highlightedSphere.position)
+
+      const noTranslationMatrix = new THREE.Matrix3()
+      noTranslationMatrix.setFromMatrix4(this.matrix)
+      highlightedPositionDelta.applyMatrix3(noTranslationMatrix)
+
+      const oppositeCorner = new THREE.Vector3()
+      oppositeCorner.copy(this._highlightedSphere.position)
+      oppositeCorner.multiplyScalar(-1)
+
+      if (this._closestFaceNormal.x !== 0) {
+        oppositeCorner.x *= -1
+      } else if (this._closestFaceNormal.y !== 0) {
+        oppositeCorner.y *= -1
+      } else {
+        oppositeCorner.z *= -1
+      }
+
+      const oppositeLocal = new THREE.Vector3()
+      oppositeLocal.copy(oppositeCorner)
+
+      oppositeCorner.applyMatrix4(this.matrixWorld)
+
+      this.position.add(highlightedPositionDelta)
+      this.updateMatrixWorld(true)
+
+      const rayDirection = new THREE.Vector3()
+      rayDirection.copy(oppositeCorner)
+      rayDirection.sub(camera.position)
+      rayDirection.normalize()
+
+      const cameraPosition = new THREE.Vector3()
+      cameraPosition.copy(camera.position)
+
+      const rayToCorner = new THREE.Ray(cameraPosition, rayDirection)
+      toLocal.getInverse(this.matrixWorld, true)
+      rayToCorner.applyMatrix4(toLocal)
+
+      rayToCorner.intersectPlane(highlightedPlane, intersection)
+
+      startingPosition.copy(oppositeLocal)
+    } else {
+      localProjection.intersectPlane(highlightedPlane, intersection)
+    }
 
     const scaleDelta = new THREE.Vector3()
+    const positionDelta = new THREE.Vector3()
+
     scaleDelta.copy(intersection)
-    scaleDelta.sub(this._highlightedSphere.position)
+    scaleDelta.sub(startingPosition)
     scaleDelta.multiply(this.scale)
 
     const worldQuaternion = new THREE.Quaternion()
     this.getWorldQuaternion(worldQuaternion)
 
-    const positionDelta = new THREE.Vector3()
     positionDelta.copy(scaleDelta)
     positionDelta.multiplyScalar(0.5)
     positionDelta.applyQuaternion(worldQuaternion)
 
-    scaleDelta.multiply(this._highlightedSphere.position)
+    scaleDelta.multiply(startingPosition)
     scaleDelta.multiplyScalar(2)
 
     const newScale = new THREE.Vector3()

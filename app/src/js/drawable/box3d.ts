@@ -177,8 +177,8 @@ export class Box3D extends Label3D {
    * Handle mouse move
    * @param projection
    */
-  public onMouseMove (projection: THREE.Ray): boolean {
-    return this._shape.drag(projection)
+  public onMouseMove (x: number, y: number, camera: THREE.Camera) {
+    return this._shape.drag(x, y, camera)
   }
 
   /**

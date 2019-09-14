@@ -88,7 +88,9 @@ export class Plane3D extends Label3D {
    * Handle mouse move
    * @param projection
    */
-  public onMouseMove (_projection: THREE.Ray): boolean {
+  public onMouseMove (
+    _x: number, _y: number, _camera: THREE.Camera
+  ): boolean {
     return false
   }
 

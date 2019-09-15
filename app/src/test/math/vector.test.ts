@@ -1,4 +1,4 @@
-import _ from  'lodash'
+import _ from 'lodash'
 import { Vector } from '../../js/math/vector'
 import { Vector2D } from '../../js/math/vector2d'
 

@@ -47,11 +47,10 @@ export class Box3D extends Label3D {
     const viewerConfig: PointCloudViewerConfigType =
       getCurrentPointCloudViewerConfig(state)
     const center = (new Vector3D()).fromObject(viewerConfig.target)
-    if (this._plane) {
+    if (surfaceId && surfaceId >= 0) {
       center.z = 0.5
     }
     this._shape.setCenter(center)
-    console.log(surfaceId)
     Session.dispatch(addBox3dLabel(
       this._label.item, this._label.category,
       this._shape.getCenter(),

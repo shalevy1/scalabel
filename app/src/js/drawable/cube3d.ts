@@ -221,7 +221,6 @@ export class Cube3D extends THREE.Group {
   public attachToPlane (plane: Plane3D) {
     this._grid = plane.shapes()[0]
     this._grid.add(this)
-    this.position.z = 0.5
   }
 
   /**

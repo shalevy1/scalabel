@@ -77,14 +77,12 @@ export abstract class Label3D {
     if (plane === this._plane) {
       return
     }
-    plane.attachLabel(this)
     this._plane = plane
   }
 
   /** Attach label to plane */
   public detachFromPlane () {
     if (this._plane) {
-      this._plane.detachLabel(this)
       this._plane = null
     }
   }

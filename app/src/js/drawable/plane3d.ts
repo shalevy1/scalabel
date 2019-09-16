@@ -15,13 +15,10 @@ import Label3D from './label3d'
 export class Plane3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Grid3D
-  /** Attached label id's */
-  private _attachedLabels: { [id: number]: Label3D }
 
   constructor () {
     super()
     this._shape = new Grid3D(this._index)
-    this._attachedLabels = {}
   }
 
   /** select the label */
@@ -35,27 +32,6 @@ export class Plane3D extends Label3D {
    */
   public render (scene: THREE.Scene, _camera: THREE.Camera): void {
     this._shape.render(scene)
-  }
-
-  /**
-   * Add label's shape to be part of grid group
-   * @param label
-   */
-  public attachLabel (label: Label3D) {
-    for (const shape of label.shapes()) {
-      this._shape.add(shape)
-    }
-    this._attachedLabels[label.labelId] = label
-  }
-
-  /**
-   * Add label's shape to be part of grid group
-   * @param label
-   */
-  public detachLabel (label: Label3D) {
-    for (const shape of label.shapes()) {
-      this._shape.remove(shape)
-    }
   }
 
   /** Attach control */
@@ -169,15 +145,5 @@ export class Plane3D extends Label3D {
     this._shape.rotation.setFromVector3(
       (new Vector3D()).fromObject(newShape.orientation).toThree()
     )
-  }
-
-  /**
-   * Remove all attached labels
-   */
-  public clearLabels () {
-    this._attachedLabels = []
-    for (let i = this._shape.children.length - 1; i >= 0; i--) {
-      this._shape.remove(this._shape.children[i])
-    }
   }
 }

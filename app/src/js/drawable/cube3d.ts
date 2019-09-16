@@ -48,6 +48,8 @@ export class Cube3D extends THREE.Group {
   private _highlighted: boolean
   /** Plane shape */
   private _grid: Readonly<Grid3D> | null
+  /** Id of surface */
+  private _surfaceId: number
 
   /**
    * Make box with assigned id
@@ -106,6 +108,8 @@ export class Cube3D extends THREE.Group {
     this._highlighted = false
 
     this ._grid = null
+
+    this._surfaceId = -1
 
     this.setHighlighted()
   }
@@ -183,6 +187,14 @@ export class Cube3D extends THREE.Group {
   }
 
   /**
+   * Set surface id
+   * @param id
+   */
+  public setSurfaceId (id: number) {
+    this._surfaceId = id
+  }
+
+  /**
    * Convert to state representation
    */
   public toCube (): CubeType {
@@ -191,7 +203,7 @@ export class Cube3D extends THREE.Group {
       size: this.getSize(),
       orientation: this.getOrientation(),
       anchorIndex: this._anchorIndex,
-      surfaceId: -1
+      surfaceId: this._surfaceId
     }
   }
 
@@ -208,6 +220,7 @@ export class Cube3D extends THREE.Group {
    */
   public attachToPlane (plane: Plane3D) {
     this._grid = plane.shapes()[0]
+    this._grid.add(this)
     this.position.z = 0.5
   }
 
@@ -216,6 +229,9 @@ export class Cube3D extends THREE.Group {
    * @param plane
    */
   public detachFromPlane () {
+    if (this._grid) {
+      this._grid.remove(this)
+    }
     this._grid = null
   }
 

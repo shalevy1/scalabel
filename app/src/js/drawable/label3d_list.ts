@@ -113,6 +113,14 @@ export class Label3DList {
     const newRaycastMap: {[id: number]: Label3D} = {}
     const item = state.task.items[itemIndex]
 
+    for (const key of Object.keys(this._labels)) {
+      const id = Number(key)
+      if (!(id in item.labels)) {
+        this._labels[id].detachFromPlane()
+        this._labels[id].detachControl(this._control)
+      }
+    }
+
     for (const key of Object.keys(item.labels)) {
       const id = Number(key)
       if (id in this._labels) {

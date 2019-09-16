@@ -51,6 +51,7 @@ export class Box3D extends Label3D {
       center.z = 0.5
     }
     this._shape.setCenter(center)
+    console.log(surfaceId)
     Session.dispatch(addBox3dLabel(
       this._label.item, this._label.category,
       this._shape.getCenter(),
@@ -72,13 +73,12 @@ export class Box3D extends Label3D {
   public attachToPlane (plane: Plane3D) {
     super.attachToPlane(plane)
     this._shape.attachToPlane(plane)
-    this.commitLabel()
   }
 
   /** Attach label to plane */
   public detachFromPlane () {
-    super.detachFromPlane()
     this._shape.detachFromPlane()
+    super.detachFromPlane()
   }
 
   /**
@@ -126,13 +126,17 @@ export class Box3D extends Label3D {
    * Expand the primitive shapes to drawable shapes
    * @param {ShapeType[]} shapes
    */
-  public updateShapes (_shapes: ShapeType[]): void {
-    const newShape = _shapes[0] as CubeType
+  public updateShapes (shapes: ShapeType[]): void {
+    const newShape = shapes[0] as CubeType
     this._shape.setCenter((new Vector3D()).fromObject(newShape.center))
     this._shape.setSize((new Vector3D()).fromObject(newShape.size))
     this._shape.setOrientation(
       (new Vector3D()).fromObject(newShape.orientation)
     )
+    this._shape.setSurfaceId(newShape.surfaceId)
+    if (newShape.surfaceId < 0) {
+      this.detachFromPlane()
+    }
   }
 
   /**

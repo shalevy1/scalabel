@@ -12,8 +12,8 @@ export class TranslationPlane extends THREE.Mesh
   constructor (normal: THREE.Vector3, color: number) {
     super(
       new THREE.PlaneGeometry(0.5, 0.5),
-      new THREE.MeshBasicMaterial({ 
-        color, side: THREE.DoubleSide, transparent: true 
+      new THREE.MeshBasicMaterial({
+        color, side: THREE.DoubleSide, transparent: true
       })
     )
     this._normal = new THREE.Vector3()
@@ -50,16 +50,13 @@ export class TranslationPlane extends THREE.Mesh
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     _dragPlane: THREE.Plane,
-    local: boolean
+    object?: THREE.Object3D
   ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const normal = new THREE.Vector3()
     normal.copy(this._normal)
 
-    if (local && this.parent) {
-      const quaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(quaternion)
-
-      normal.applyQuaternion(quaternion)
+    if (object) {
+      normal.applyQuaternion(object.quaternion)
     }
     const plane = new THREE.Plane()
     plane.setFromNormalAndCoplanarPoint(normal, oldIntersection)

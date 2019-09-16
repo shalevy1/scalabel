@@ -84,10 +84,19 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
       direction.applyQuaternion(object.quaternion)
     }
 
+    const worldDirection = new THREE.Vector3()
+    worldDirection.copy(this._direction)
+
+    if (this.parent) {
+      const worldQuaternion = new THREE.Quaternion()
+      this.parent.getWorldQuaternion(worldQuaternion)
+      worldDirection.applyQuaternion(worldQuaternion)
+    }
+
     const translationCoplanar = new THREE.Vector3()
-    translationCoplanar.crossVectors(dragPlane.normal, direction)
+    translationCoplanar.crossVectors(dragPlane.normal, worldDirection)
     const translationNormal = new THREE.Vector3()
-    translationNormal.crossVectors(translationCoplanar, direction)
+    translationNormal.crossVectors(translationCoplanar, worldDirection)
     const translationPlane = new THREE.Plane()
     translationPlane.setFromNormalAndCoplanarPoint(
       translationNormal, oldIntersection
@@ -100,9 +109,9 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
     mouseDelta.copy(newIntersection)
     mouseDelta.sub(oldIntersection)
 
-    const projectionLength = mouseDelta.dot(direction)
+    const projectionLength = mouseDelta.dot(worldDirection)
     const worldDelta = new THREE.Vector3()
-    worldDelta.copy(direction)
+    worldDelta.copy(worldDirection)
     worldDelta.multiplyScalar(projectionLength)
 
     const nextIntersection = new THREE.Vector3()

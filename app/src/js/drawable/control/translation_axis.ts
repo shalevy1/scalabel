@@ -98,19 +98,21 @@ export class TranslationAxis extends THREE.Group
     mouseDelta.copy(newIntersection)
     mouseDelta.sub(oldIntersection)
 
-    const projectionLength = mouseDelta.dot(worldDirection)
-    const delta = new THREE.Vector3()
-    delta.copy(direction)
-    delta.multiplyScalar(projectionLength)
+    const projectionLength = mouseDelta.dot(direction)
+    const positionDelta = new THREE.Vector3()
+    positionDelta.copy(direction)
+    positionDelta.multiplyScalar(projectionLength)
+
+    const intersectionDelta = new THREE.Vector3()
+    intersectionDelta.copy(worldDirection)
+    intersectionDelta.multiplyScalar(projectionLength)
 
     const nextIntersection = new THREE.Vector3()
     nextIntersection.copy(oldIntersection)
-    nextIntersection.add(delta)
-
-    console.log(oldIntersection, translationPlane, newIntersection, mouseDelta, worldDirection, projectionLength, delta, nextIntersection)
+    nextIntersection.add(intersectionDelta)
 
     return [
-      delta,
+      positionDelta,
       new THREE.Quaternion(0, 0, 0, 1),
       new THREE.Vector3(),
       nextIntersection

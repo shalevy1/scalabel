@@ -48,7 +48,7 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
-    local: boolean
+    object?: THREE.Object3D
   ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const newIntersection = new THREE.Vector3()
     newProjection.intersectPlane(dragPlane, newIntersection)
@@ -56,11 +56,8 @@ export class RotationRing extends THREE.Mesh implements ControlUnit {
     const normal = new THREE.Vector3()
     normal.copy(this._normal)
 
-    if (local && this.parent) {
-      const quaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(quaternion)
-
-      normal.applyQuaternion(quaternion)
+    if (object) {
+      normal.applyQuaternion(object.quaternion)
     }
 
     const delta = new THREE.Vector3()

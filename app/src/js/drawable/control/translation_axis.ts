@@ -64,22 +64,28 @@ export class TranslationAxis extends THREE.Group
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
-    _local: boolean
+    object?: THREE.Object3D
   ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const direction = new THREE.Vector3()
     direction.copy(this._direction)
 
-    if (this.parent) {
-      const quaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(quaternion)
+    if (object) {
+      direction.applyQuaternion(object.quaternion)
+    }
 
-      direction.applyQuaternion(quaternion)
+    const worldDirection = new THREE.Vector3()
+    worldDirection.copy(this._direction)
+
+    if (this.parent) {
+      const worldQuaternion = new THREE.Quaternion()
+      this.parent.getWorldQuaternion(worldQuaternion)
+      worldDirection.applyQuaternion(worldQuaternion)
     }
 
     const translationCoplanar = new THREE.Vector3()
-    translationCoplanar.crossVectors(dragPlane.normal, direction)
+    translationCoplanar.crossVectors(dragPlane.normal, worldDirection)
     const translationNormal = new THREE.Vector3()
-    translationNormal.crossVectors(translationCoplanar, direction)
+    translationNormal.crossVectors(translationCoplanar, worldDirection)
     const translationPlane = new THREE.Plane()
     translationPlane.setFromNormalAndCoplanarPoint(
       translationNormal, oldIntersection
@@ -92,7 +98,7 @@ export class TranslationAxis extends THREE.Group
     mouseDelta.copy(newIntersection)
     mouseDelta.sub(oldIntersection)
 
-    const projectionLength = mouseDelta.dot(direction)
+    const projectionLength = mouseDelta.dot(worldDirection)
     const delta = new THREE.Vector3()
     delta.copy(direction)
     delta.multiplyScalar(projectionLength)
@@ -100,6 +106,8 @@ export class TranslationAxis extends THREE.Group
     const nextIntersection = new THREE.Vector3()
     nextIntersection.copy(oldIntersection)
     nextIntersection.add(delta)
+
+    console.log(oldIntersection, translationPlane, newIntersection, mouseDelta, worldDirection, projectionLength, delta, nextIntersection)
 
     return [
       delta,

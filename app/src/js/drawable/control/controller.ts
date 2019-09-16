@@ -6,7 +6,7 @@ export interface ControlUnit extends THREE.Object3D {
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
-    local: boolean
+    object?: THREE.Object3D
   ) => [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3]
   /** set highlight */
   setHighlighted: (intersection ?: THREE.Intersection) => boolean
@@ -75,6 +75,7 @@ export abstract class Controller extends THREE.Object3D {
   /** mouse move */
   public onMouseMove (projection: THREE.Ray) {
     if (this._highlightedUnit && this._dragPlane && this._object) {
+      const object = (this._local) ? this._object : undefined
       const [
         translationDelta,
         quaternionDelta,
@@ -84,7 +85,7 @@ export abstract class Controller extends THREE.Object3D {
         this._intersectionPoint,
         projection,
         this._dragPlane,
-        this._local
+        object
       )
 
       const newScale = new THREE.Vector3()
@@ -146,7 +147,7 @@ export abstract class Controller extends THREE.Object3D {
   protected refreshDisplayParameters () {
     if (this._object) {
       // Isolate child from parent transformations first
-      this._object.updateMatrix()
+      this._object.updateMatrixWorld(true)
       this.matrix.getInverse(this._object.matrix)
 
       this.matrix.setPosition(new THREE.Vector3())

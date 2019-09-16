@@ -74,17 +74,14 @@ export class ScaleAxis extends THREE.Group implements ControlUnit {
     oldIntersection: THREE.Vector3,
     newProjection: THREE.Ray,
     dragPlane: THREE.Plane,
-    _local: boolean
+    object?: THREE.Object3D
   ): [THREE.Vector3, THREE.Quaternion, THREE.Vector3, THREE.Vector3] {
     const direction = new THREE.Vector3()
     direction.copy(this._direction)
 
     // Only works in local frame
-    if (this.parent) {
-      const quaternion = new THREE.Quaternion()
-      this.parent.getWorldQuaternion(quaternion)
-
-      direction.applyQuaternion(quaternion)
+    if (object) {
+      direction.applyQuaternion(object.quaternion)
     }
 
     const translationCoplanar = new THREE.Vector3()

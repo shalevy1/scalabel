@@ -55,17 +55,37 @@ export class TranslationPlane extends THREE.Mesh
     const normal = new THREE.Vector3()
     normal.copy(this._normal)
 
-    if (object) {
-      normal.applyQuaternion(object.quaternion)
+    const toLocal = new THREE.Matrix4()
+    if (this.parent) {
+      toLocal.getInverse(this.parent.matrixWorld)
     }
+    console.log(toLocal)
+
+    const localIntersection = new THREE.Vector3()
+    localIntersection.copy(oldIntersection)
+    localIntersection.applyMatrix4(toLocal)
+
+    const localProjection = new THREE.Ray()
+    localProjection.copy(newProjection)
+    localProjection.applyMatrix4(toLocal)
+
     const plane = new THREE.Plane()
-    plane.setFromNormalAndCoplanarPoint(normal, oldIntersection)
+    plane.setFromNormalAndCoplanarPoint(normal, localIntersection)
     const newIntersection = new THREE.Vector3()
-    newProjection.intersectPlane(plane, newIntersection)
+    localProjection.intersectPlane(plane, newIntersection)
 
     const delta = new THREE.Vector3()
     delta.copy(newIntersection)
-    delta.sub(oldIntersection)
+    delta.sub(localIntersection)
+
+    if (object) {
+      delta.applyQuaternion(object.quaternion)
+    }
+
+    if (this.parent) {
+      newIntersection.applyMatrix4(this.parent.matrixWorld)
+    }
+
     return [
       delta,
       new THREE.Quaternion(0, 0, 0, 1),

@@ -48,7 +48,7 @@ export class Plane3D extends Label3D {
    * Handle mouse move
    * @param projection
    */
-  public onMouseDown () {
+  public onMouseDown (_x: number, _y: number, _camera: THREE.Camera) {
     return false
   }
 

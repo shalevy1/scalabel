@@ -25,17 +25,20 @@ import { Plane3D } from './plane3d'
 export class Box3D extends Label3D {
   /** ThreeJS object for rendering shape */
   private _shape: Cube3D
+  /** Whether this is temporary */
+  private _temporary: boolean
 
   constructor () {
     super()
     this._shape = new Cube3D(this._index)
+    this._temporary = false
   }
 
   /**
    * Initialize label
    * @param {State} state
    */
-  public init (state: State, surfaceId?: number, _temporary?: boolean): void {
+  public init (state: State, surfaceId?: number, temporary?: boolean): void {
     const itemIndex = state.user.select.item
     this._order = state.task.status.maxOrder + 1
     this._label = makeLabel({
@@ -51,13 +54,18 @@ export class Box3D extends Label3D {
       center.z = 0.5
     }
     this._shape.setCenter(center)
-    Session.dispatch(addBox3dLabel(
-      this._label.item, this._label.category,
-      this._shape.getCenter(),
-      this._shape.getSize(),
-      this._shape.getOrientation(),
-      surfaceId
-    ))
+
+    if (temporary && surfaceId && surfaceId >= 0) {
+      this._temporary = temporary
+    } else if (!temporary) {
+      Session.dispatch(addBox3dLabel(
+        this._label.item, this._label.category,
+        this._shape.getCenter(),
+        this._shape.getSize(),
+        this._shape.getOrientation(),
+        surfaceId
+      ))
+    }
   }
 
   /**
@@ -154,9 +162,21 @@ export class Box3D extends Label3D {
         cube.orientation.x = 0
         cube.orientation.y = 0
       }
-      Session.dispatch(changeLabelShape(
-        this._label.item, this._label.shapes[0], cube
-      ))
+
+      if (this.labelId < 0) {
+        Session.dispatch(addBox3dLabel(
+          this._label.item,
+          this._label.category,
+          cube.center,
+          cube.size,
+          cube.orientation,
+          cube.surfaceId
+        ))
+      } else {
+        Session.dispatch(changeLabelShape(
+          this._label.item, this._label.shapes[0], cube
+        ))
+      }
     }
   }
 
@@ -164,7 +184,10 @@ export class Box3D extends Label3D {
    * Handle mouse move
    * @param projection
    */
-  public onMouseDown () {
+  public onMouseDown (x: number, y: number, camera: THREE.Camera) {
+    if (this._temporary) {
+      this._shape.clickInit(x, y, camera)
+    }
     return this._shape.shouldDrag()
   }
 
@@ -181,6 +204,9 @@ export class Box3D extends Label3D {
    * @param projection
    */
   public onMouseMove (x: number, y: number, camera: THREE.Camera) {
+    if (this._temporary) {
+      this._temporary = false
+    }
     return this._shape.drag(x, y, camera)
   }
 

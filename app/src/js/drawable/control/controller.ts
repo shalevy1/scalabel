@@ -68,6 +68,7 @@ export abstract class Controller extends THREE.Object3D {
         normal,
         this._intersectionPoint
       )
+      return true
     }
     return false
   }

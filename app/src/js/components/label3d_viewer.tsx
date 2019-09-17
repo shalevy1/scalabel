@@ -190,7 +190,20 @@ class Label3dViewer extends Viewer<Props> {
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
   private onMouseDown (e: React.MouseEvent<HTMLCanvasElement>) {
-    if (this._labels.onMouseDown()) {
+    if (!this.canvas) {
+      return
+    }
+    const normalized = normalizeCoordinatesToCanvas(
+      e.clientX, e.clientY, this.canvas
+    )
+    const NDC = convertMouseToNDC(
+      normalized[0],
+      normalized[1],
+      this.canvas
+    )
+    const x = NDC[0]
+    const y = NDC[1]
+    if (this._labels.onMouseDown(x, y)) {
       e.stopPropagation()
     }
   }
@@ -200,6 +213,9 @@ class Label3dViewer extends Viewer<Props> {
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
   private onMouseUp (e: React.MouseEvent<HTMLCanvasElement>) {
+    if (!this.canvas) {
+      return
+    }
     if (this._labels.onMouseUp()) {
       e.stopPropagation()
     }

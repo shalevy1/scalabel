@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { CubeType } from '../functional/types'
 import { projectionFromNDC } from '../helper/point_cloud'
+import { Vector2D } from '../math/vector2d'
 import { Vector3D } from '../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 import { Grid3D } from './grid3d'
@@ -50,6 +51,8 @@ export class Cube3D extends THREE.Group {
   private _grid: Readonly<Grid3D> | null
   /** Id of surface */
   private _surfaceId: number
+  /** First corner for temp init */
+  private _firstCorner: Vector2D | null
 
   /**
    * Make box with assigned id
@@ -112,6 +115,8 @@ export class Cube3D extends THREE.Group {
     this._surfaceId = -1
 
     this.setHighlighted()
+
+    this._firstCorner = null
   }
 
   /**
@@ -249,39 +254,7 @@ export class Cube3D extends THREE.Group {
         )
       }
 
-      // Find normal closest to camera
-      const worldQuaternion = new THREE.Quaternion()
-      this.getWorldQuaternion(worldQuaternion)
-      const cameraDirection = new THREE.Vector3()
-      camera.getWorldDirection(cameraDirection)
-      cameraDirection.applyQuaternion(worldQuaternion.inverse())
-      let maxCloseness = 0
-      for (const normal of faceNormals) {
-        const closeness = -normal.dot(cameraDirection)
-        if (closeness > maxCloseness) {
-          this._closestFaceNormal.copy(normal)
-          maxCloseness = closeness
-        }
-      }
-
-      for (let i = 0; i < this._controlSpheres.length; i += 1) {
-        const firstSign = (i % 2 === 0) ? 1 : -1
-        const secondSign = (Math.floor(i / 2) === 0) ? 1 : -1
-        if (this._closestFaceNormal.x !== 0) {
-          this._controlSpheres[i].position.set(
-            this._closestFaceNormal.x, firstSign, secondSign
-          )
-        } else if (this._closestFaceNormal.y !== 0) {
-          this._controlSpheres[i].position.set(
-             firstSign, this._closestFaceNormal.y, secondSign
-          )
-        } else {
-          this._controlSpheres[i].position.set(
-             firstSign, secondSign, this._closestFaceNormal.z
-          )
-        }
-        this._controlSpheres[i].position.multiplyScalar(0.5)
-      }
+      this.setControlSpheres(camera)
     } else {
       (this._outline.material as THREE.LineBasicMaterial).color.set(0xffffff)
       for (const sphere of this._controlSpheres) {
@@ -367,10 +340,47 @@ export class Cube3D extends THREE.Group {
   }
 
   /**
+   * Init params for click creation
+   * @param x
+   * @param y
+   * @param camera
+   */
+  public clickInit (x: number, y: number, _camera: THREE.Camera) {
+    this._firstCorner = new Vector2D(x, y)
+  }
+
+  /**
    * Drag to mouse
    * @param projection
    */
   public drag (x: number, y: number, camera: THREE.Camera) {
+    if (this._firstCorner && this._grid) {
+      this.setControlSpheres(camera)
+
+      const sign = new Vector2D(
+        Math.sign(x - this._firstCorner.x),
+        Math.sign(y - this._firstCorner.y)
+      )
+
+      const highlightedIndex = (sign.y + 1) + (sign.x + 1) / 2.
+      console.log(highlightedIndex)
+      this._highlightedSphere = this._controlSpheres[highlightedIndex]
+      console.log(sign, this._highlightedSphere.position, this._closestFaceNormal)
+
+      const initialProjection = projectionFromNDC(
+        this._firstCorner.x, this._firstCorner.y, camera
+      )
+      const planeNormal = new THREE.Vector3(0, 0, 1)
+      planeNormal.applyQuaternion(this._grid.quaternion)
+      const plane = new THREE.Plane()
+      plane.setFromNormalAndCoplanarPoint(planeNormal, this._grid.position)
+      const initialIntersect = new THREE.Vector3()
+      initialProjection.intersectPlane(plane, initialIntersect)
+
+      // this._firstCorner = null
+      return true
+    }
+
     if (!this._highlightedSphere) {
       return false
     }
@@ -494,40 +504,46 @@ export class Cube3D extends THREE.Group {
    * Returns true if control sphere is highlighted
    */
   public shouldDrag (): boolean {
-    return this._highlightedSphere !== null
+    return this._highlightedSphere !== null || this._firstCorner !== null
   }
 
-  // /**
-  //  * Set bbox face colors
-  //  * @param color
-  //  * @param faces
-  //  */
-  // private setColor (
-  //   color: number,
-  //   faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  // ) {
-  //   const geometry = this._box.geometry as THREE.BoxGeometry
-  //   for (const i of faces) {
-  //     geometry.faces[i].color.set(color)
-  //   }
+  /**
+   * Set sphere positions from normal
+   * @param normal
+   */
+  private setControlSpheres (camera: THREE.Camera) {
+    // Find normal closest to camera
+    const worldQuaternion = new THREE.Quaternion()
+    this.getWorldQuaternion(worldQuaternion)
+    const cameraDirection = new THREE.Vector3()
+    camera.getWorldDirection(cameraDirection)
+    cameraDirection.applyQuaternion(worldQuaternion.inverse())
+    let maxCloseness = 0
+    for (const normal of faceNormals) {
+      const closeness = -normal.dot(cameraDirection)
+      if (closeness > maxCloseness) {
+        this._closestFaceNormal.copy(normal)
+        maxCloseness = closeness
+      }
+    }
 
-  //   geometry.colorsNeedUpdate = true
-  // }
-
-  // /**
-  //  * Set bbox face colors from RGB array
-  //  * @param color
-  //  * @param faces
-  //  */
-  // private setColorFromRGB (
-  //   color: number[],
-  //   faces: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  // ) {
-  //   const geometry = this._box.geometry as THREE.BoxGeometry
-  //   for (const i of faces) {
-  //     geometry.faces[i].color.setRGB(color[0], color[1], color[2])
-  //   }
-
-  //   geometry.colorsNeedUpdate = true
-  // }
+    for (let i = 0; i < this._controlSpheres.length; i += 1) {
+      const firstSign = (i % 2 === 0) ? -1 : 1
+      const secondSign = (Math.floor(i / 2) === 0) ? -1 : 1
+      if (this._closestFaceNormal.x !== 0) {
+        this._controlSpheres[i].position.set(
+          this._closestFaceNormal.x, firstSign, secondSign
+        )
+      } else if (this._closestFaceNormal.y !== 0) {
+        this._controlSpheres[i].position.set(
+           firstSign, this._closestFaceNormal.y, secondSign
+        )
+      } else {
+        this._controlSpheres[i].position.set(
+           firstSign, secondSign, this._closestFaceNormal.z
+        )
+      }
+      this._controlSpheres[i].position.multiplyScalar(0.5)
+    }
+  }
 }

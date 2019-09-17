@@ -172,20 +172,20 @@ export class Label3DList {
    * @returns true if consumed, false otherwise
    */
   public onDoubleClick (): boolean {
-    if (this._highlightedLabel !== null) {
-      // Set current label as selected label
-      Session.dispatch(changeLabelProps(
-        this._state.user.select.item, this._highlightedLabel.labelId, {}
-      ))
-      return true
-    }
+    // if (this._highlightedLabel !== null) {
+    //   // Set current label as selected label
+    //   Session.dispatch(changeLabelProps(
+    //     this._state.user.select.item, this._highlightedLabel.labelId, {}
+    //   ))
+    //   return true
+    // }
     return false
   }
 
   /**
    * Process mouse down action
    */
-  public onMouseDown (): boolean {
+  public onMouseDown (x: number, y: number): boolean {
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       this._mouseDownOnSelection = true
       if (this._control.attached()) {
@@ -197,7 +197,7 @@ export class Label3DList {
     }
 
     if (this._highlightedLabel) {
-      const consumed = this._highlightedLabel.onMouseDown()
+      const consumed = this._highlightedLabel.onMouseDown(x, y, this._camera)
       if (consumed) {
         this._mouseDownOnSelection = true
         // Set current label as selected label
@@ -207,6 +207,26 @@ export class Label3DList {
         return false
       }
     }
+
+    if (this._plane) {
+      const newLabel = new Box3D()
+      newLabel.init(this._state, this._plane.labelId, true)
+      this._labels[-1] = newLabel
+      newLabel.attachToPlane(this._plane)
+      if (this._highlightedLabel) {
+        this._highlightedLabel.setHighlighted()
+      }
+      if (this._selectedLabel) {
+        this._selectedLabel.setSelected(false)
+        this._selectedLabel.detachControl(this._control)
+      }
+      this._highlightedLabel = newLabel
+      this._selectedLabel = newLabel
+      this._mouseDownOnSelection = true
+
+      this._highlightedLabel.onMouseDown(x, y, this._camera)
+    }
+
     return false
   }
 

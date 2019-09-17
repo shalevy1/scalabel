@@ -103,7 +103,9 @@ export abstract class Label3D {
    * Handle mouse move
    * @param projection
    */
-  public abstract onMouseDown (): boolean
+  public abstract onMouseDown (
+    x: number, y: number, camera: THREE.Camera
+  ): boolean
 
   /**
    * Handle mouse up

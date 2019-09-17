@@ -53,6 +53,8 @@ export class Cube3D extends THREE.Group {
   private _surfaceId: number
   /** First corner for temp init */
   private _firstCorner: Vector2D | null
+  /** intersection for temp init */
+  private _firstIntersection: THREE.Vector3
 
   /**
    * Make box with assigned id
@@ -117,6 +119,7 @@ export class Cube3D extends THREE.Group {
     this.setHighlighted()
 
     this._firstCorner = null
+    this._firstIntersection = new THREE.Vector3()
   }
 
   /**
@@ -345,8 +348,16 @@ export class Cube3D extends THREE.Group {
    * @param y
    * @param camera
    */
-  public clickInit (x: number, y: number, _camera: THREE.Camera) {
-    this._firstCorner = new Vector2D(x, y)
+  public clickInit (x: number, y: number, camera: THREE.Camera) {
+    if (this._grid) {
+      this._firstCorner = new Vector2D(x, y)
+      const projection = projectionFromNDC(x, y, camera)
+      const plane = new THREE.Plane()
+      const normal = new THREE.Vector3(0, 0, 1)
+      normal.applyQuaternion(this._grid.quaternion)
+      plane.setFromNormalAndCoplanarPoint(normal, this._grid.position)
+      projection.intersectPlane(plane, this._firstIntersection)
+    }
   }
 
   /**

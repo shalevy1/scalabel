@@ -59,7 +59,6 @@ export class TranslationPlane extends THREE.Mesh
     if (this.parent) {
       toLocal.getInverse(this.parent.matrixWorld)
     }
-    console.log(toLocal)
 
     const localIntersection = new THREE.Vector3()
     localIntersection.copy(oldIntersection)

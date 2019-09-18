@@ -53,8 +53,6 @@ export class Cube3D extends THREE.Group {
   private _surfaceId: number
   /** First corner for temp init */
   private _firstCorner: Vector2D | null
-  /** intersection for temp init */
-  private _firstIntersection: THREE.Vector3
 
   /**
    * Make box with assigned id
@@ -119,7 +117,6 @@ export class Cube3D extends THREE.Group {
     this.setHighlighted()
 
     this._firstCorner = null
-    this._firstIntersection = new THREE.Vector3()
   }
 
   /**
@@ -352,11 +349,25 @@ export class Cube3D extends THREE.Group {
     if (this._grid) {
       this._firstCorner = new Vector2D(x, y)
       const projection = projectionFromNDC(x, y, camera)
-      const plane = new THREE.Plane()
+
       const normal = new THREE.Vector3(0, 0, 1)
       normal.applyQuaternion(this._grid.quaternion)
+
+      const plane = new THREE.Plane()
       plane.setFromNormalAndCoplanarPoint(normal, this._grid.position)
-      projection.intersectPlane(plane, this._firstIntersection)
+
+      const newPosition = new THREE.Vector3()
+      projection.intersectPlane(plane, newPosition)
+
+      const toGrid = new THREE.Matrix4()
+      toGrid.getInverse(this._grid.matrixWorld)
+
+      newPosition.applyMatrix4(toGrid)
+      this.position.copy(newPosition)
+
+      this.updateMatrixWorld(true)
+
+      this.visible = false
     }
   }
 
@@ -365,35 +376,10 @@ export class Cube3D extends THREE.Group {
    * @param projection
    */
   public drag (x: number, y: number, camera: THREE.Camera) {
-    if (this._firstCorner && this._grid) {
-      this.setControlSpheres(camera)
-
-      const sign = new Vector2D(
-        Math.sign(x - this._firstCorner.x),
-        Math.sign(y - this._firstCorner.y)
-      )
-
-      const highlightedIndex = (sign.y + 1) + (sign.x + 1) / 2.
-      console.log(highlightedIndex)
-      this._highlightedSphere = this._controlSpheres[highlightedIndex]
-      console.log(sign, this._highlightedSphere.position, this._closestFaceNormal)
-
-      const initialProjection = projectionFromNDC(
-        this._firstCorner.x, this._firstCorner.y, camera
-      )
-      const planeNormal = new THREE.Vector3(0, 0, 1)
-      planeNormal.applyQuaternion(this._grid.quaternion)
-      const plane = new THREE.Plane()
-      plane.setFromNormalAndCoplanarPoint(planeNormal, this._grid.position)
-      const initialIntersect = new THREE.Vector3()
-      initialProjection.intersectPlane(plane, initialIntersect)
-
-      // this._firstCorner = null
-      return true
-    }
-
-    if (!this._highlightedSphere) {
+    if (!this._highlightedSphere && (!this._firstCorner || !this._grid)) {
       return false
+    } else if (!this._highlightedSphere) {
+      this._highlightedSphere = this._controlSpheres[0]
     }
 
     const projection = projectionFromNDC(x, y, camera)
@@ -412,12 +398,77 @@ export class Cube3D extends THREE.Group {
 
     const highlightedPlane = new THREE.Plane()
 
-    const intersection = new THREE.Vector3()
-
     highlightedPlane.setFromNormalAndCoplanarPoint(
       highlightedPlaneNormal,
       this._highlightedSphere.position
     )
+
+    if (this._firstCorner && this._grid) {
+      this.setControlSpheres(camera)
+
+      const delta = new THREE.Vector2(
+        x - this._firstCorner.x,
+        y - this._firstCorner.y
+      )
+
+      if (delta.length() < 0.01) {
+        return false
+      }
+
+      const normal = new THREE.Vector3()
+      normal.copy(this._closestFaceNormal)
+      const planePoint = new THREE.Vector3()
+      planePoint.copy(this._controlSpheres[0].position)
+
+      const plane = new THREE.Plane()
+      plane.setFromNormalAndCoplanarPoint(normal, planePoint)
+
+      const initialIntersect = new THREE.Vector3()
+
+      localProjection.intersectPlane(highlightedPlane, initialIntersect)
+
+      let closestDistance = Infinity
+
+      for (const sphere of this._controlSpheres) {
+        const initialDelta = new THREE.Vector3()
+        initialDelta.copy(sphere.position)
+        initialDelta.sub(initialIntersect)
+        const dist = initialDelta.length()
+        if (dist < closestDistance) {
+          closestDistance = dist
+          this._highlightedSphere = sphere
+        }
+      }
+
+      if (this._highlightedSphere.position.z < 0) {
+        return false
+      }
+
+      const oppositeCornerInit = new THREE.Vector3()
+      oppositeCornerInit.copy(this._highlightedSphere.position)
+      oppositeCornerInit.multiplyScalar(-1)
+
+      if (this._closestFaceNormal.x !== 0) {
+        oppositeCornerInit.x *= -1
+      } else if (this._closestFaceNormal.y !== 0) {
+        oppositeCornerInit.y *= -1
+      } else {
+        oppositeCornerInit.z *= -1
+      }
+
+      oppositeCornerInit.applyMatrix4(this.matrix)
+
+      this.position.add(this.position)
+      this.position.sub(oppositeCornerInit)
+
+      this.updateMatrixWorld(true)
+
+      this._firstCorner = null
+
+      this.visible = true
+    }
+
+    const intersection = new THREE.Vector3()
 
     const startingPosition = new THREE.Vector3()
     startingPosition.copy(this._highlightedSphere.position)
@@ -492,7 +543,7 @@ export class Cube3D extends THREE.Group {
 
     positionDelta.copy(scaleDelta)
     positionDelta.multiplyScalar(0.5)
-    positionDelta.applyQuaternion(worldQuaternion)
+    positionDelta.applyQuaternion(this.quaternion)
 
     scaleDelta.multiply(startingPosition)
     scaleDelta.multiplyScalar(2)

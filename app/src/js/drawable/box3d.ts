@@ -52,6 +52,7 @@ export class Box3D extends Label3D {
     const center = (new Vector3D()).fromObject(viewerConfig.target)
     if (surfaceId && surfaceId >= 0) {
       center.z = 0.5
+      this._shape.setSurfaceId(surfaceId)
     }
     this._shape.setCenter(center)
 
@@ -204,10 +205,11 @@ export class Box3D extends Label3D {
    * @param projection
    */
   public onMouseMove (x: number, y: number, camera: THREE.Camera) {
-    if (this._temporary) {
+    const success = this._shape.drag(x, y, camera)
+    if (this._temporary && success) {
       this._temporary = false
     }
-    return this._shape.drag(x, y, camera)
+    return success
   }
 
   /**

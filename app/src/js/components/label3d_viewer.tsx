@@ -6,8 +6,8 @@ import Session from '../common/session'
 import { Label3DList } from '../drawable/label3d_list'
 import { getCurrentImageViewerConfig, getCurrentPointCloudViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
-import { MAX_SCALE, MIN_SCALE, updateCanvasScale } from '../helper/image'
-import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../helper/point_cloud'
+import { MAX_SCALE, MIN_SCALE, updateCanvasScale } from '../view/image'
+import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../view/point_cloud'
 import { Viewer } from './viewer'
 
 const styles = () => createStyles({

@@ -164,7 +164,7 @@ export class Box3D extends Label3D {
         cube.orientation.y = 0
       }
 
-      if (this.labelId < 0) {
+      if (this.labelId < 0 && !this._temporary) {
         Session.dispatch(addBox3dLabel(
           this._label.item,
           this._label.category,

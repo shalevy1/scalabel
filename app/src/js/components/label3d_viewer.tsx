@@ -296,8 +296,13 @@ class Label3dViewer extends Viewer<Props> {
       return
     }
 
-    if (component.nodeName === 'CANVAS' && this.canvas !== component) {
-      this.canvas = component
+    if (component.nodeName === 'CANVAS') {
+      if (this.canvas !== component) {
+        this.canvas = component
+        const rendererParams = { canvas: this.canvas, alpha: true }
+        this.renderer = new THREE.WebGLRenderer(rendererParams)
+      }
+
       if (this.canvas && this.display) {
         if (Session.itemType === 'image') {
           const config = getCurrentImageViewerConfig(this.state.session)
@@ -318,9 +323,6 @@ class Label3dViewer extends Viewer<Props> {
           this.scale = newParams[3]
         }
       }
-
-      const rendererParams = { canvas: this.canvas, alpha: true }
-      this.renderer = new THREE.WebGLRenderer(rendererParams)
 
       if (isItemLoaded(this.state.session)) {
         this.updateRenderer()

@@ -376,12 +376,6 @@ export class Cube3D extends THREE.Group {
    * @param projection
    */
   public drag (x: number, y: number, camera: THREE.Camera) {
-    if (!this._highlightedSphere && (!this._firstCorner || !this._grid)) {
-      return false
-    } else if (!this._highlightedSphere) {
-      this._highlightedSphere = this._controlSpheres[0]
-    }
-
     const projection = projectionFromNDC(x, y, camera)
 
     this.updateMatrixWorld(true)
@@ -396,12 +390,7 @@ export class Cube3D extends THREE.Group {
     const highlightedPlaneNormal = new THREE.Vector3()
     highlightedPlaneNormal.copy(this._closestFaceNormal)
 
-    const highlightedPlane = new THREE.Plane()
-
-    highlightedPlane.setFromNormalAndCoplanarPoint(
-      highlightedPlaneNormal,
-      this._highlightedSphere.position
-    )
+    const highlightedPlane = new THREE.Plane(highlightedPlaneNormal)
 
     if (this._firstCorner && this._grid) {
       this.setControlSpheres(camera)
@@ -428,6 +417,7 @@ export class Cube3D extends THREE.Group {
       localProjection.intersectPlane(highlightedPlane, initialIntersect)
 
       let closestDistance = Infinity
+      this._highlightedSphere = this._controlSpheres[0]
 
       for (const sphere of this._controlSpheres) {
         const initialDelta = new THREE.Vector3()
@@ -467,6 +457,15 @@ export class Cube3D extends THREE.Group {
 
       this.visible = true
     }
+
+    if (!this._highlightedSphere) {
+      return false
+    }
+
+    highlightedPlane.setFromNormalAndCoplanarPoint(
+      highlightedPlaneNormal,
+      this._highlightedSphere.position
+    )
 
     const intersection = new THREE.Vector3()
 

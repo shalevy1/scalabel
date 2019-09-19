@@ -204,9 +204,9 @@ export class Cube3D extends THREE.Group {
    */
   public toCube (): CubeType {
     return {
-      center: this.getCenter(),
-      size: this.getSize(),
-      orientation: this.getOrientation(),
+      center: this.getCenter().toObject(),
+      size: this.getSize().toObject(),
+      orientation: this.getOrientation().toObject(),
       anchorIndex: this._anchorIndex,
       surfaceId: this._surfaceId
     }

@@ -51,7 +51,6 @@
     "go.lintFlags": [
         "--fast"
     ],
-    "files.autoSave": "afterDelay",
     "spellright.language": [
         "en"
     ],

@@ -188,11 +188,14 @@ function addTrackToTask (
   const labelList = labels.map((l) => [l])
   const shapeTypeList = shapeTypes.map((s) => [s])
   const shapeList = shapes.map((s) => [s])
+  const track = makeTrack(task.status.maxTrackId + 1)
+  for (const label of labels) {
+    label.track = track.id
+  }
   const [newItems, newLabels, status] = addLabelstoItems(
     pickArray(task.items, itemIndices),
     task.status, labelList, shapeTypeList, shapeList)
   const items = assignToArray(task.items, newItems, itemIndices)
-  const track = makeTrack(task.status.maxTrackId + 1)
   newLabels.map((l) => {
     track.labels[l.item] = l.id
   })

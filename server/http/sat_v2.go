@@ -52,6 +52,7 @@ type TaskStatus struct {
 	MaxLabelId int `json:"maxLabelId" yaml:"maxLabelId"`
 	MaxShapeId int `json:"maxShapeId" yaml:"maxShapeId"`
 	MaxOrder   int `json:"maxOrder" yaml:"maxOrder"`
+	MaxTrackId int `json:"maxTrackId" yaml:"maxTrackId"`
 }
 
 //Contains data for single item

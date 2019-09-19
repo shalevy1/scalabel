@@ -18,10 +18,10 @@ export function addDuplicatedTrack (
   startIndex: number,
   stopIndex?: number
 ): AddTrackAction {
-  const trackLabels = []
-  const trackShapeTypes = []
-  const trackShapes = []
-  const itemIndices = []
+  const trackLabels: LabelType[] = []
+  const trackShapeTypes: string[][] = []
+  const trackShapes: ShapeType[][] = []
+  const itemIndices: number[] = []
 
   const itemLength = (Session.itemType === 'image') ? Session.images.length :
     Session.pointClouds.length
@@ -30,11 +30,14 @@ export function addDuplicatedTrack (
   const end = (stopIndex) ? Math.min(stopIndex, itemLength) :
     Math.min(startIndex + state.task.config.maxTrackLength, itemLength)
 
-  for (let index = 0; index < end; index += 1) {
+  for (let index = startIndex; index < end; index += 1) {
     trackLabels.push(JSON.parse(JSON.stringify(label)))
     trackShapeTypes.push(JSON.parse(JSON.stringify(shapeTypes)))
     trackShapes.push(JSON.parse(JSON.stringify(shapes)))
     itemIndices.push(index)
+    if (index > startIndex) {
+      trackLabels[trackLabels.length - 1].manual = false
+    }
   }
 
   return addTrack(itemIndices, trackLabels, trackShapeTypes, trackShapes)

@@ -1,8 +1,7 @@
 import _ from 'lodash'
 import * as THREE from 'three'
 
-import { addBox3dDuplicatedTrack } from '../action/box3d'
-import { changeLabelShape } from '../action/common'
+import { addBox3dDuplicatedTrack, commitCube } from '../action/box3d'
 import Session from '../common/session'
 
 import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
@@ -171,8 +170,8 @@ export class Box3D extends Label3D {
           this._shape.getOrientation().toObject()
         ))
       } else {
-        Session.dispatch(changeLabelShape(
-          this._label.item, this._label.shapes[0], cube
+        Session.dispatch(commitCube(
+          this._label.item, this._label.track, this._label.shapes[0], cube
         ))
       }
     }

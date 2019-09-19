@@ -162,6 +162,8 @@ export interface ConfigType {
   itemType: string
   /** Label types available for the session */
   labelTypes: string[]
+  /** max track length */
+  maxTrackLength: number
   /** Task size */
   taskSize: number
   /** Handler URL */

@@ -161,6 +161,7 @@ export function makeTaskConfig (params: Partial<ConfigType> = {}): ConfigType {
     itemType: '',
     labelTypes: [],
     taskSize: 0,
+    maxTrackLength: 1,
     handlerUrl: '',
     pageTitle: '',
     instructionPage: '', // instruction url

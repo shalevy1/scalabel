@@ -35,6 +35,7 @@ type ConfigData struct {
 	ProjectName     string      `json:"projectName" yaml:"projectName"`
 	ItemType        string      `json:"itemType" yaml:"itemType"`
 	LabelTypes      []string    `json:"labelTypes" yaml:"labelTypes"`
+	MaxTrackLength  int         `json:"maxTrackLength" yaml:"maxTrackLength"`
 	TaskSize        int         `json:"taskSize" yaml:"taskSize"`
 	HandlerUrl      string      `json:"handlerUrl" yaml:"handlerUrl"`
 	PageTitle       string      `json:"pageTitle" yaml:"pageTitle"`
@@ -343,6 +344,7 @@ func assignmentToSat(assignment *Assignment) Sat {
 		ProjectName:     projectOptions.Name,
 		ItemType:        projectOptions.ItemType,
 		LabelTypes:      []string{projectOptions.LabelType},
+		MaxTrackLength:  len(assignment.Task.Items),
 		TaskSize:        projectOptions.TaskSize,
 		HandlerUrl:      projectOptions.HandlerUrl,
 		PageTitle:       projectOptions.PageTitle,

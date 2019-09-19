@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import * as THREE from 'three'
 
-import { addBox3dLabel } from '../action/box3d'
+import { addBox3dDuplicatedTrack } from '../action/box3d'
 import { changeLabelShape } from '../action/common'
 import Session from '../common/session'
 
@@ -59,12 +59,11 @@ export class Box3D extends Label3D {
     if (temporary && surfaceId && surfaceId >= 0) {
       this._temporary = temporary
     } else if (!temporary) {
-      Session.dispatch(addBox3dLabel(
+      Session.dispatch(addBox3dDuplicatedTrack(
         this._label.item, this._label.category,
-        this._shape.getCenter(),
-        this._shape.getSize(),
-        this._shape.getOrientation(),
-        surfaceId
+        this._shape.getCenter().toObject(),
+        this._shape.getSize().toObject(),
+        this._shape.getOrientation().toObject()
       ))
     }
   }
@@ -165,13 +164,11 @@ export class Box3D extends Label3D {
       }
 
       if (this.labelId < 0 && !this._temporary) {
-        Session.dispatch(addBox3dLabel(
-          this._label.item,
-          this._label.category,
-          cube.center,
-          cube.size,
-          cube.orientation,
-          cube.surfaceId
+        Session.dispatch(addBox3dDuplicatedTrack(
+          this._label.item, this._label.category,
+          this._shape.getCenter().toObject(),
+          this._shape.getSize().toObject(),
+          this._shape.getOrientation().toObject()
         ))
       } else {
         Session.dispatch(changeLabelShape(

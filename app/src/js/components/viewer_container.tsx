@@ -6,8 +6,8 @@ import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
 import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
-import PointCloudViewer from './point_cloud_viewer'
 import PlayerControl from './player_control'
+import PointCloudViewer from './point_cloud_viewer'
 
 /**
  * Canvas Viewer

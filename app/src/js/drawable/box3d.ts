@@ -12,6 +12,7 @@ import {
 
 import { Vector3D } from '../math/vector3d'
 
+import { changeLabelProps } from '../action/common'
 import { LabelTypes } from '../common/types'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
@@ -170,6 +171,9 @@ export class Box3D extends Label3D {
           this._shape.getOrientation().toObject()
         ))
       } else {
+        Session.dispatch(changeLabelProps(
+          this._label.item, this._label.id, { manual: true }
+        ))
         Session.dispatch(commitCube(
           this._label.item, this._label.track, this._label.shapes[0], cube
         ))

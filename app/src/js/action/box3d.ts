@@ -85,24 +85,49 @@ export function commitCube (
     const numItemsBefore = itemIndex - lastManualIndex
 
     const firstCenter = (new Vector3D()).fromObject(lastManualCube.center)
+    const firstOrientation =
+      (new Vector3D()).fromObject(lastManualCube.orientation)
+    const firstSize = (new Vector3D()).fromObject(lastManualCube.size)
 
     const positionDelta = new Vector3D()
     positionDelta.fromObject(cube.center)
     positionDelta.subtract(firstCenter)
     positionDelta.scale(1. / numItemsBefore)
+
+    const rotationDelta = new Vector3D()
+    rotationDelta.fromObject(cube.orientation)
+    rotationDelta.subtract(firstOrientation)
+    rotationDelta.scale(1. / numItemsBefore)
+
+    const scaleDelta = new Vector3D()
+    scaleDelta.fromObject(cube.size)
+    scaleDelta.subtract(firstSize)
+    scaleDelta.scale(1. / numItemsBefore)
+
     for (let i = itemIndex - 1; i > lastManualIndex; i -= 1) {
       if (i in track.labels) {
+        const indexDelta = i - lastManualIndex
         const labelId = track.labels[i]
         const label = items[i].labels[labelId]
 
         const newCenter = (new Vector3D()).fromObject(positionDelta)
-        newCenter.multiplyScalar(i)
+        newCenter.multiplyScalar(indexDelta)
         newCenter.add((new Vector3D()).fromObject(firstCenter))
+
+        const newOrientation = (new Vector3D()).fromObject(rotationDelta)
+        newOrientation.multiplyScalar(indexDelta)
+        newOrientation.add((new Vector3D().fromObject(firstOrientation)))
+
+        const newSize = (new Vector3D()).fromObject(scaleDelta)
+        newSize.multiplyScalar(indexDelta)
+        newSize.add((new Vector3D().fromObject(firstSize)))
 
         updatedIndices.push(i)
         updatedShapeIds.push([label.shapes[0]])
         updatedShapes.push([{
-          center: newCenter
+          center: newCenter,
+          orientation: newOrientation,
+          size: newSize
         }])
       }
     }
@@ -111,7 +136,7 @@ export function commitCube (
   // Go forward
   let nextManualIndex = -1
   let nextManualLabel
-  for (let i = itemIndex + 1; i <= items.length; i += 1) {
+  for (let i = itemIndex + 1; i < items.length; i += 1) {
     if (i in track.labels) {
       const labelId = track.labels[i]
       const label = items[i].labels[labelId]
@@ -126,27 +151,52 @@ export function commitCube (
   if (nextManualIndex >= 0 && nextManualLabel) {
     const nextManualCube =
       items[nextManualIndex].shapes[nextManualLabel.shapes[0]].shape as CubeType
-    const numItemsBefore = nextManualIndex - itemIndex
+    const numItemsAfter = nextManualIndex - itemIndex
 
     const firstCenter = (new Vector3D()).fromObject(cube.center)
+    const firstOrientation =
+      (new Vector3D()).fromObject(cube.orientation)
+    const firstSize = (new Vector3D()).fromObject(cube.size)
 
     const positionDelta = new Vector3D()
     positionDelta.fromObject(nextManualCube.center)
     positionDelta.subtract(firstCenter)
-    positionDelta.scale(1. / numItemsBefore)
-    for (let i = itemIndex + 1; i < nextManualIndex; i += 1) {
+    positionDelta.scale(1. / numItemsAfter)
+
+    const rotationDelta = new Vector3D()
+    rotationDelta.fromObject(nextManualCube.orientation)
+    rotationDelta.subtract(firstOrientation)
+    rotationDelta.scale(1. / numItemsAfter)
+
+    const scaleDelta = new Vector3D()
+    scaleDelta.fromObject(nextManualCube.size)
+    scaleDelta.subtract(firstSize)
+    scaleDelta.scale(1. / numItemsAfter)
+
+    for (let i = itemIndex + 1; i <= nextManualIndex; i += 1) {
       if (i in track.labels) {
+        const indexDelta = i - itemIndex
         const labelId = track.labels[i]
         const label = items[i].labels[labelId]
 
         const newCenter = (new Vector3D()).fromObject(positionDelta)
-        newCenter.multiplyScalar(i)
+        newCenter.multiplyScalar(indexDelta)
         newCenter.add((new Vector3D()).fromObject(firstCenter))
+
+        const newOrientation = (new Vector3D()).fromObject(rotationDelta)
+        newOrientation.multiplyScalar(indexDelta)
+        newOrientation.add((new Vector3D().fromObject(firstOrientation)))
+
+        const newSize = (new Vector3D()).fromObject(scaleDelta)
+        newSize.multiplyScalar(indexDelta)
+        newSize.add((new Vector3D().fromObject(firstSize)))
 
         updatedIndices.push(i)
         updatedShapeIds.push([label.shapes[0]])
         updatedShapes.push([{
-          center: newCenter
+          center: newCenter,
+          orientation: newOrientation,
+          size: newSize
         }])
       }
     }

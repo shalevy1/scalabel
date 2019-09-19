@@ -172,7 +172,6 @@ export class Label3DList {
    * @returns true if consumed, false otherwise
    */
   public onDoubleClick (): boolean {
-    console.log('double')
     if (this._highlightedLabel !== null) {
       // Set current label as selected label
       Session.dispatch(changeLabelProps(

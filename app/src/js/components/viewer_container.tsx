@@ -7,6 +7,7 @@ import Label2dViewer from './label2d_viewer'
 import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
 import PointCloudViewer from './point_cloud_viewer'
+import PlayerControl from './player_control'
 
 /**
  * Canvas Viewer
@@ -105,6 +106,10 @@ class ViewerContainer extends React.Component<{}> {
       )
     }
 
+    const playerControl = (<PlayerControl key='player-control'
+      num_frames={Session.getState().task.items.length}
+    />)
+
     return (
         <div
           ref={(element) => {
@@ -150,6 +155,7 @@ class ViewerContainer extends React.Component<{}> {
             />
             {viewsWithProps}
           </div>
+          { playerControl }
         </div >
     )
   }

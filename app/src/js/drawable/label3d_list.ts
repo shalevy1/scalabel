@@ -120,7 +120,6 @@ export class Label3DList {
         this._labels[id].detachControl(this._control)
       }
     }
-
     for (const key of Object.keys(item.labels)) {
       const id = Number(key)
       if (id in this._labels) {

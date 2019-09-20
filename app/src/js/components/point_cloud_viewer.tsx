@@ -106,7 +106,6 @@ class PointCloudViewer extends Viewer<Props> {
   public redraw (): boolean {
     const state = this.state.session
     const item = state.user.select.item
-    console.log('item', item)
     const loaded = state.session.items[item].loaded
     if (loaded) {
       if (this.canvas) {

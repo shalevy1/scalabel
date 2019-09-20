@@ -467,6 +467,7 @@ export function changeSelect (
  */
 export function loadItem (state: State, action: types.LoadItemAction): State {
   const itemIndex = action.itemIndex
+  console.log('load', itemIndex)
   let session = state.session
   session = updateObject(session, {
     items:

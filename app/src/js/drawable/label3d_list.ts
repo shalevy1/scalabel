@@ -57,6 +57,8 @@ export class Label3DList {
   private _raycaster: THREE.Raycaster
   /** transformation control */
   private _control: TransformationControl
+  /** The hashed list of keys currently down */
+  private _keyDownMap: { [key: string]: boolean }
 
   constructor (camera: THREE.Camera) {
     this._labels = {}
@@ -89,6 +91,7 @@ export class Label3DList {
       }
     }
     this._state = Session.getState()
+    this._keyDownMap = {}
     this.updateState(this._state, this._state.user.select.item)
   }
 
@@ -183,6 +186,10 @@ export class Label3DList {
    * Process mouse down action
    */
   public onMouseDown (x: number, y: number): boolean {
+    if (this._keyDownMap.Control || this._keyDownMap.Meta) {
+      return false
+    }
+
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       this._mouseDownOnSelection = true
       if (this._control.attached()) {
@@ -229,6 +236,9 @@ export class Label3DList {
    * Process mouse up action
    */
   public onMouseUp (): boolean {
+    if (this._keyDownMap.Control || this._keyDownMap.Meta) {
+      return false
+    }
     this._mouseDownOnSelection = false
     let consumed = false
     if (this._control.attached()) {
@@ -254,6 +264,9 @@ export class Label3DList {
     x: number,
     y: number
   ): boolean {
+    if (this._keyDownMap.Control || this._keyDownMap.Meta) {
+      return false
+    }
     if (this._mouseDownOnSelection && this._selectedLabel) {
       this._labelChanged = true
       if (this._control.attached()) {
@@ -276,6 +289,7 @@ export class Label3DList {
    * @returns true if consumed, false otherwise
    */
   public onKeyDown (e: KeyboardEvent): boolean {
+    this._keyDownMap[e.key] = true
     switch (e.key) {
       case ' ':
         const state = this._state
@@ -319,7 +333,8 @@ export class Label3DList {
   /**
    * Handle key up
    */
-  public onKeyUp (_e: KeyboardEvent) {
+  public onKeyUp (e: KeyboardEvent) {
+    delete this._keyDownMap[e.key]
     return false
   }
 

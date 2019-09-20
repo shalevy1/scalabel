@@ -125,9 +125,9 @@ export function commitCube (
         updatedIndices.push(i)
         updatedShapeIds.push([label.shapes[0]])
         updatedShapes.push([{
-          center: newCenter,
-          orientation: newOrientation,
-          size: newSize
+          center: newCenter.toObject(),
+          orientation: newOrientation.toObject(),
+          size: newSize.toObject()
         }])
       }
     }
@@ -194,9 +194,9 @@ export function commitCube (
         updatedIndices.push(i)
         updatedShapeIds.push([label.shapes[0]])
         updatedShapes.push([{
-          center: newCenter,
-          orientation: newOrientation,
-          size: newSize
+          center: newCenter.toObject(),
+          orientation: newOrientation.toObject(),
+          size: newSize.toObject()
         }])
       }
     }

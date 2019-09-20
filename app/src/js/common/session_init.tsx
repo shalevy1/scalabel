@@ -60,6 +60,7 @@ export function initSession (containerName: string): void {
  * @param {{}}} stateJson: json state from backend
  */
 export function initStore (stateJson: {}): void {
+  console.log(stateJson)
   Session.store = configureStore(stateJson, Session.devMode)
   Session.dispatch(initSessionAction())
   const state = Session.getState()

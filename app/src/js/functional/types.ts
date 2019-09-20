@@ -125,8 +125,12 @@ export interface PointCloudViewerConfigType {
   verticalAxis: Vector3Type
 }
 
-export type ViewerConfigType =
-  ImageViewerConfigType | PointCloudViewerConfigType
+export interface ViewerConfigType {
+  /** img viewer config */
+  imageViewerConfig: ImageViewerConfigType
+  /** pc viewer config */
+  pointCloudViewerConfig: PointCloudViewerConfigType
+}
 
 export interface ItemType {
   /** The ID of the item */
@@ -240,10 +244,8 @@ export interface UserType {
   select: Select
   /** interface layout */
   layout: LayoutType
-  /** Viewer configuration for images */
-  imageViewerConfig: ImageViewerConfigType
-  /** Viewer configuration for point clouds */
-  pointCloudViewerConfig: PointCloudViewerConfigType
+  /** viewer config */
+  viewerConfig: ViewerConfigType
 }
 
 export interface ItemStatus {

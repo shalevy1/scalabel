@@ -6,13 +6,8 @@ import { sprintf } from 'sprintf-js'
 import * as THREE from 'three'
 import { initSessionAction, loadItem, updateAll } from '../action/common'
 import Window from '../components/window'
-import {
-  makeImageViewerConfig,
-  makePointCloudViewerConfig
-} from '../functional/states'
-import {
-  ImageViewerConfigType, PointCloudViewerConfigType
-} from '../functional/types'
+import { makeViewerConfig } from '../functional/states'
+import { ViewerConfigType } from '../functional/types'
 import { myTheme } from '../styles/theme'
 import { PLYLoader } from '../thirdparty/PLYLoader'
 import { configureStore } from './configure_store'
@@ -107,19 +102,19 @@ function loadImages (): void {
   const items = state.task.items
   for (const item of items) {
     // Copy item config
-    let config: ImageViewerConfigType = {
-      ...(state.user.imageViewerConfig)
+    let config: ViewerConfigType = {
+      ...(state.user.viewerConfig)
     }
     if (_.isEmpty(config)) {
-      config = makeImageViewerConfig()
+      config = makeViewerConfig()
     }
     const url = item.url
     const image = new Image()
     image.crossOrigin = 'Anonymous'
     Session.images.push(image)
     image.onload = () => {
-      config.imageHeight = image.height
-      config.imageWidth = image.width
+      config.imageViewerConfig.imageHeight = image.height
+      config.imageViewerConfig.imageWidth = image.width
       Session.dispatch(loadItem(item.index, config))
     }
     image.onerror = () => {
@@ -175,11 +170,11 @@ function loadPointClouds (): void {
   }
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i]
-    let config: PointCloudViewerConfigType = {
-      ...(state.user.pointCloudViewerConfig)
+    let config: ViewerConfigType = {
+      ...(state.user.viewerConfig)
     }
     if (_.isEmpty(config)) {
-      config = makePointCloudViewerConfig()
+      config = makeViewerConfig()
     }
     // tslint:disable-next-line
     loader.load(item.url, (geometry: THREE.BufferGeometry) => {

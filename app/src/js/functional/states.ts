@@ -14,7 +14,8 @@ import {
   TaskStatus,
   TaskType,
   TrackType,
-  UserType
+  UserType,
+  ViewerConfigType
 } from './types'
 
 /**
@@ -105,6 +106,16 @@ export function makeIndexedShape (
   ): IndexedShapeType {
   return {
     id, label: [...label], type, shape: { ...shape }
+  }
+}
+
+/**
+ * Make viewer config
+ */
+export function makeViewerConfig (): ViewerConfigType {
+  return {
+    imageViewerConfig: makeImageViewerConfig(),
+    pointCloudViewerConfig: makePointCloudViewerConfig()
   }
 }
 
@@ -214,8 +225,10 @@ function makeUser (params: Partial<UserType>= {}): UserType {
     id: '',
     select: makeSelect(),
     layout: makeLayout(),
-    imageViewerConfig: makeImageViewerConfig(),
-    pointCloudViewerConfig: makePointCloudViewerConfig(),
+    viewerConfig: {
+      imageViewerConfig: makeImageViewerConfig(),
+      pointCloudViewerConfig: makePointCloudViewerConfig()
+    },
     ...params
   }
 }

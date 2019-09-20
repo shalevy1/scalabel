@@ -4,7 +4,7 @@ import {
   setCurrentImageViewerConfig
 } from './state_util'
 import { makeItem } from './states'
-import { ItemType, State, ViewerConfigType } from './types'
+import { ImageViewerConfigType, ItemType, State } from './types'
 import { updateObject } from './util'
 
 /**
@@ -25,7 +25,7 @@ export function createItem (id: number, url: string): ItemType {
  */
 export function updateImageViewerConfig (
   state: State, action: types.UpdateImageViewerConfigAction): State {
-  let config: ViewerConfigType
+  let config: ImageViewerConfigType
     = getCurrentImageViewerConfig(state)
   config = updateObject(config, action.newFields)
   return setCurrentImageViewerConfig(state, config)

@@ -30,7 +30,7 @@ export function getCurrentItem (state: State): ItemType {
  */
 export function getCurrentImageViewerConfig (state: State):
   ImageViewerConfigType {
-  return state.user.imageViewerConfig
+  return state.user.viewerConfig.imageViewerConfig
 }
 
 /**
@@ -40,7 +40,7 @@ export function getCurrentImageViewerConfig (state: State):
  */
 export function getCurrentPointCloudViewerConfig (state: State):
   PointCloudViewerConfigType {
-  return state.user.pointCloudViewerConfig
+  return state.user.viewerConfig.pointCloudViewerConfig
 }
 
 /**
@@ -50,9 +50,12 @@ export function getCurrentPointCloudViewerConfig (state: State):
  * @return {State}
  */
 export function setCurrentImageViewerConfig (
-    state: State, config: ViewerConfigType): State {
+    state: State, config: ImageViewerConfigType): State {
+  const newConfig: ViewerConfigType = updateObject(state.user.viewerConfig, {
+    imageViewerConfig: config
+  })
   const newUser: UserType = updateObject(state.user, {
-    imageViewerConfig: config as ImageViewerConfigType
+    viewerConfig: newConfig
   })
   return updateObject(state, { user: newUser })
 }
@@ -64,9 +67,12 @@ export function setCurrentImageViewerConfig (
  * @return {State}
  */
 export function setCurrentPointCloudViewerConfig (
-    state: State, config: ViewerConfigType): State {
+    state: State, config: PointCloudViewerConfigType): State {
+  const newConfig: ViewerConfigType = updateObject(state.user.viewerConfig, {
+    pointCloudViewerConfig: config
+  })
   const newUser: UserType = updateObject(state.user, {
-    pointCloudViewerConfig: config as PointCloudViewerConfigType
+    viewerConfig: newConfig
   })
   return updateObject(state, { user: newUser })
 }

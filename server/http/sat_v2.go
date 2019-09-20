@@ -92,11 +92,10 @@ type TrackMap map[int]interface{}
 
 //User specific data
 type UserData struct {
-	UserId               string                 `json:"id" yaml:"id"`
-	Selection            SelectedData           `json:"select" yaml:"select"`
-	Layout               LayoutData             `json:"layout" yaml:"layout"`
-	ImageViewConfig      ImageViewerConfig      `json:"imageViewerConfig" yaml:"imageViewerConfig"`
-	PointCloudViewConfig PointCloudViewerConfig `json:"pointCloudViewerConfig" yaml:"pointCloudViewerConfig"`
+	UserId     string       `json:"id" yaml:"id"`
+	Selection  SelectedData `json:"select" yaml:"select"`
+	Layout     LayoutData   `json:"layout" yaml:"layout"`
+	ViewConfig ViewerConfig `json:"viewerConfig" yaml:"viewerConfig"`
 }
 
 //User's currently selected data
@@ -113,6 +112,11 @@ type LayoutData struct {
 	ToolbarWidth       int     `json:"toolbarWidth" yaml:"toolbarWidth"`
 	AssistantView      bool    `json:"assistantView" yaml:"assistantView"`
 	AssistantViewRatio float32 `json:"assistantViewRatio" yaml:"assistantViewRatio"`
+}
+
+type ViewerConfig struct {
+	ImageViewConfig      ImageViewerConfig      `json:"imageViewerConfig" yaml:"imageViewerConfig"`
+	PointCloudViewConfig PointCloudViewerConfig `json:"pointCloudViewerConfig" yaml:"pointCloudViewerConfig"`
 }
 
 type ImageViewerConfig struct {
@@ -400,11 +404,15 @@ func assignmentToSat(assignment *Assignment) Sat {
 		VerticalAxis: verticalAxis,
 	}
 
-	userData := UserData{
-		UserId:               assignment.WorkerId,
-		Selection:            selectedData,
+	viewConfig := ViewerConfig{
 		ImageViewConfig:      imageViewConfig,
 		PointCloudViewConfig: pointCloudViewConfig,
+	}
+
+	userData := UserData{
+		UserId:     assignment.WorkerId,
+		Selection:  selectedData,
+		ViewConfig: viewConfig,
 	}
 
 	uuid := getUuidV4()

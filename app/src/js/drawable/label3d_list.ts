@@ -323,6 +323,9 @@ export class Label3DList {
           return true
         }
         return false
+      case 'F':
+      case 'f':
+        return false
     }
     if (this._selectedLabel !== null) {
       return this._control.onKeyDown(e)

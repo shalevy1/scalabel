@@ -47,7 +47,7 @@ export function makeLabel (params: Partial<LabelType> = {}): LabelType {
  */
 export function makeTrack (
   id: number, labels: {[key: number]: number} = {}): TrackType {
-  return { id, labels }
+  return { id, labels, trackConfigurations: {} }
 }
 
 /**

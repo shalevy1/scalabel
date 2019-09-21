@@ -27,8 +27,6 @@ export interface LabelType {
 }
 
 export interface CubeTrackConfigurationType extends TrackType {
-  /** Whether to maintain all shapes to be the same */
-  identical: boolean
   /** Whether to maintain only the sizes to be the same */
   sameSize: boolean
 }

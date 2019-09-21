@@ -1,5 +1,4 @@
-import { changeLabelShape } from '../action/common'
-import { addPlaneLabel } from '../action/plane3d'
+import { addPlaneTrack, commitPlane } from '../action/plane3d'
 import Session from '../common/session'
 import { LabelTypes } from '../common/types'
 import { makeLabel } from '../functional/states'
@@ -101,8 +100,8 @@ export class Plane3D extends Label3D {
   public commitLabel (): void {
     if (this._label !== null) {
       const shape = this._shape.toPlane()
-      Session.dispatch(changeLabelShape(
-        this._label.item, this._label.shapes[0], shape
+      Session.dispatch(commitPlane(
+        this._label.track, shape
       ))
     }
   }
@@ -121,8 +120,8 @@ export class Plane3D extends Label3D {
     })
     this._labelId = -1
     const plane = this._shape.toPlane()
-    Session.dispatch(addPlaneLabel(
-      this._label.item, plane.offset, plane.orientation
+    Session.dispatch(addPlaneTrack(
+      plane.offset, plane.orientation
     ))
   }
 

@@ -51,7 +51,6 @@ export function commitPlane (
   const state = Session.getState()
   const track = state.task.tracks[trackId]
   const items = state.task.items
-  console.log(track, trackId, state.task.tracks)
 
   const updatedIndices = []
   const updatedShapeIds = []

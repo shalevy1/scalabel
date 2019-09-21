@@ -166,9 +166,10 @@ export class Box3D extends Label3D {
       if (this.labelId < 0 && !this._temporary) {
         Session.dispatch(addBox3dDuplicatedTrack(
           this._label.item, this._label.category,
-          this._shape.getCenter().toObject(),
-          this._shape.getSize().toObject(),
-          this._shape.getOrientation().toObject()
+          cube.center,
+          cube.size,
+          cube.orientation,
+          cube.surfaceId
         ))
       } else {
         Session.dispatch(changeLabelProps(

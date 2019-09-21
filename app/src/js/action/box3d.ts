@@ -1,10 +1,9 @@
 import Session from '../common/session'
 import { LabelTypes, ShapeTypes } from '../common/types'
 import { makeCube, makeLabel } from '../functional/states'
-import { CubeType, ItemType, Vector3Type } from '../functional/types'
+import { CubeType, ItemType, LabelType, ShapeType, Vector3Type } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
 import * as actions from './common'
-import { addDuplicatedTrack } from './track'
 import { AddLabelsAction, AddTrackAction, CHANGE_SHAPES, ChangeShapesAction } from './types'
 
 /**
@@ -37,11 +36,44 @@ export function addBox3dLabel (
 export function addBox3dDuplicatedTrack (
   itemIndex: number, category: number[],
   center: Vector3Type, size: Vector3Type,
-  orientation: Vector3Type): AddTrackAction {
+  orientation: Vector3Type, surfaceId: number = -1): AddTrackAction {
   // create the rect object
   const cube = makeCube({ center, size, orientation })
   const label = makeLabel({ type: LabelTypes.BOX_3D, category })
-  return addDuplicatedTrack(label, [ShapeTypes.CUBE], [cube], itemIndex)
+
+  const trackLabels: LabelType[] = []
+  const trackShapeTypes: string[][] = []
+  const trackShapes: ShapeType[][] = []
+  const itemIndices: number[] = []
+
+  const state = Session.getState()
+
+  let surfaceTrackId = -1
+  let surfaceLabels
+  if (surfaceId >= 0) {
+    surfaceTrackId =
+      state.task.items[itemIndex].labels[surfaceId].track
+    surfaceLabels = state.task.tracks[surfaceTrackId].labels
+  }
+
+  for (let index = itemIndex; index < state.task.items.length; index += 1) {
+    let itemSurfaceId = -1
+    if (surfaceTrackId >= 0 && surfaceLabels && index in surfaceLabels) {
+      itemSurfaceId =
+        state.task.items[index].labels[surfaceLabels[index]].id
+    }
+    trackLabels.push({ ...label })
+    trackShapeTypes.push([LabelTypes.BOX_3D])
+    trackShapes.push([{ ...cube, surfaceId: itemSurfaceId }])
+    itemIndices.push(index)
+    if (index > itemIndex) {
+      trackLabels[trackLabels.length - 1].manual = false
+    }
+  }
+
+  return actions.addTrack(
+    itemIndices, trackLabels, trackShapeTypes, trackShapes
+  )
 }
 
 /**
@@ -192,7 +224,7 @@ export function commitCube (
       itemIndex,
       nextManualIndex,
       cube,
-      items[lastManualIndex].shapes[nextLabel.shapes[0]].shape as CubeType,
+      items[nextManualIndex].shapes[nextLabel.shapes[0]].shape as CubeType,
       updatedIndices,
       updatedShapeIds,
       updatedShapes

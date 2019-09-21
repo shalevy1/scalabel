@@ -8,7 +8,7 @@ import * as types from '../action/types'
 import { makeIndexedShape, makeTrack } from './states'
 import {
   IndexedShapeType, ItemType, LabelType, Select, ShapeType, State,
-  TaskStatus, TaskType, TrackMapType, TrackType, UserType
+  TaskStatus, TaskType, TrackConfigurationType, TrackMapType, TrackType, UserType
 } from './types'
 import {
   assignToArray, getObjectKeys,
@@ -225,6 +225,34 @@ export function addTrack (state: State, action: types.AddTrackAction): State {
     }
   }
   return { ...state, user, task }
+}
+
+/**
+ * Change/add track configurations to a track
+ * @param state
+ * @param action
+ */
+export function changeTrackConfigurations (
+  state: State, action: types.ChangeTrackConfigurationsAction
+): State {
+  const track = state.task.tracks[action.trackId]
+  const configs = track.trackConfigurations
+  const newConfigs: {[labelType: string]: TrackConfigurationType} = {}
+  for (const labelType of Object.keys(action.configs)) {
+    if (labelType in configs) {
+      newConfigs[labelType] = updateObject(
+        configs[labelType], action.configs[labelType]
+      )
+    } else {
+      newConfigs[labelType] =
+        action.configs[labelType] as TrackConfigurationType
+    }
+  }
+
+  const newTrack = updateObject(track, { trackConfigurations: newConfigs })
+  const tracks = updateObject(state.task.tracks, { [track.id]: newTrack })
+  const task = { ...state.task, tracks }
+  return updateObject(state, { task })
 }
 
 /**

@@ -4,7 +4,11 @@
 import {
   ImageViewerConfigType,
   LabelType,
-  PointCloudViewerConfigType, Select, ShapeType, ViewerConfigType
+  PointCloudViewerConfigType,
+  Select,
+  ShapeType,
+  TrackConfigurationType,
+  ViewerConfigType
 } from '../functional/types'
 
 export const INIT_SESSION = 'INIT_SESSION'
@@ -21,6 +25,7 @@ export const DELETE_LABELS = 'DELETE_LABELS'
 
 export const ADD_TRACK = 'ADD_TRACK'
 export const MERGE_TRACKS = 'MERGE_TRACKS'
+export const CHANGE_TRACK_CONFIGURATIONS = 'CHANGE_TRACK_CONFIGURATIONS'
 
 // Image specific actions
 export const UPDATE_IMAGE_VIEWER_CONFIG = 'UPDATE_IMAGE_VIEWER_CONFIG'
@@ -85,6 +90,13 @@ export interface AddTrackAction extends BaseAction {
 export interface MergeTrackAction extends BaseAction {
   /** item of the added label */
   trackIds: number[]
+}
+
+export interface ChangeTrackConfigurationsAction extends BaseAction {
+  /** Track id */
+  trackId: number
+  /** Map between label type and new track configuration */
+  configs: {[labelType: string]: Partial<TrackConfigurationType>}
 }
 
 export interface ChangeShapesAction extends BaseAction {

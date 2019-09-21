@@ -26,11 +26,22 @@ export interface LabelType {
   manual: boolean
 }
 
+export interface CubeTrackConfigurationType extends TrackType {
+  /** Whether to maintain all shapes to be the same */
+  identical: boolean
+  /** Whether to maintain only the sizes to be the same */
+  sameSize: boolean
+}
+
+export type TrackConfigurationType = CubeTrackConfigurationType
+
 export interface TrackType {
   /** ID of the track */
   id: number
   /** labels in this track {item index: label id} */
   labels: {[key: number]: number}
+  /** configuration */
+  trackConfigurations: {[labelType: string]: TrackConfigurationType}
 }
 
 export interface RectType {

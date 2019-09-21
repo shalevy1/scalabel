@@ -43,6 +43,10 @@ export const reducer: Reducer<State> = (
     case types.CHANGE_LABELS:
       return common.changeLabels(
         state, action as types.ChangeLabelsAction)
+    case types.CHANGE_TRACK_CONFIGURATIONS:
+      return common.changeTrackConfigurations(
+        state, action as types.ChangeTrackConfigurationsAction
+      )
     case types.LINK_LABELS:
       return common.linkLabels(state, action as types.LinkLabelsAction)
     case types.DELETE_LABELS:

@@ -1,7 +1,7 @@
 import React from 'react'
 import Session from '../common/session'
 import { getCurrentImageViewerConfig } from '../functional/state_util'
-import ViewerConfigUpdater from '../view/viewer_config'
+import ViewerConfigUpdater from '../view_config/viewer_config'
 import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
 import Label3dViewer from './label3d_viewer'

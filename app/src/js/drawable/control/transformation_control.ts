@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { projectionFromNDC } from '../../view/point_cloud'
+import { projectionFromNDC } from '../../view_config/point_cloud'
 import { Controller } from './controller'
 import { RotationControl } from './rotation_control'
 import { ScaleControl } from './scale_control'

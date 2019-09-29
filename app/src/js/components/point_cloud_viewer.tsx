@@ -5,8 +5,8 @@ import * as THREE from 'three'
 import Session from '../common/session'
 import { getCurrentImageViewerConfig, getCurrentPointCloudViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
-import { MAX_SCALE, MIN_SCALE, updateCanvasScale } from '../view/image'
-import { updateThreeCameraAndRenderer } from '../view/point_cloud'
+import { MAX_SCALE, MIN_SCALE, updateCanvasScale } from '../view_config/image'
+import { updateThreeCameraAndRenderer } from '../view_config/point_cloud'
 import { Viewer } from './viewer'
 
 const styles = () => createStyles({

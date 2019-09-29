@@ -9,7 +9,7 @@ import {
   MAX_SCALE,
   MIN_SCALE,
   updateCanvasScale
-} from '../view/image'
+} from '../view_config/image'
 import { Viewer } from './viewer'
 
 interface ClassType {

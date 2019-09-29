@@ -15,7 +15,7 @@ import {
   toCanvasCoords,
   UP_RES_RATIO,
   updateCanvasScale
-} from '../view/image'
+} from '../view_config/image'
 import { Viewer } from './viewer'
 
 interface ClassType {

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { PlaneType } from '../functional/types'
-import { Vector3D } from '../math/vector3d'
+import { PlaneType } from '../../functional/types'
+import { Vector3D } from '../../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 
 /**

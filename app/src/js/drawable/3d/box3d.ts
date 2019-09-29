@@ -1,19 +1,19 @@
 import _ from 'lodash'
 import * as THREE from 'three'
 
-import { addBox3dLabel } from '../action/box3d'
-import { changeLabelShape } from '../action/common'
-import Session from '../common/session'
+import { addBox3dLabel } from '../../action/box3d'
+import { changeLabelShape } from '../../action/common'
+import Session from '../../common/session'
 
-import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
-import { makeLabel } from '../functional/states'
+import { getCurrentPointCloudViewerConfig } from '../../functional/state_util'
+import { makeLabel } from '../../functional/states'
 import {
   CubeType, PointCloudViewerConfigType, ShapeType, State
-} from '../functional/types'
+} from '../../functional/types'
 
-import { Vector3D } from '../math/vector3d'
+import { Vector3D } from '../../math/vector3d'
 
-import { LabelTypes } from '../common/types'
+import { LabelTypes } from '../../common/types'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Label3D } from './label3d'

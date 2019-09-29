@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import { CubeType } from '../functional/types'
-import { Vector2D } from '../math/vector2d'
-import { Vector3D } from '../math/vector3d'
-import { projectionFromNDC } from '../view_config/point_cloud'
+import { CubeType } from '../../functional/types'
+import { Vector2D } from '../../math/vector2d'
+import { Vector3D } from '../../math/vector3d'
+import { projectionFromNDC } from '../../view_config/point_cloud'
+import { getColorById } from '../util'
 import { TransformationControl } from './control/transformation_control'
 import { Grid3D } from './grid3d'
 import { Plane3D } from './plane3d'
-import { getColorById } from './util'
 
 const faceNormals = [
   new THREE.Vector3(1, 0, 0),

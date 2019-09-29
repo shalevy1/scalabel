@@ -1,6 +1,6 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import { Label2DList } from '../drawable/label2d_list'
+import { Label2DList } from '../drawable/2d/label2d_list'
 import { getCurrentImageViewerConfig } from '../functional/state_util'
 import { State } from '../functional/types'
 import { Vector2D } from '../math/vector2d'

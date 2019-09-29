@@ -1,10 +1,10 @@
 import * as THREE from 'three'
-import { LabelType, ShapeType, State } from '../functional/types'
+import { LabelType, ShapeType, State } from '../../functional/types'
+import { getColorById } from '../util'
 import { TransformationControl } from './control/transformation_control'
 import { Cube3D } from './cube3d'
 import { Grid3D } from './grid3d'
 import { Plane3D } from './plane3d'
-import { getColorById } from './util'
 
 type Shape = Cube3D | Grid3D
 

@@ -205,7 +205,6 @@ function loadPointClouds (): void {
       })
 
       const particles = new THREE.Points(geometry, material)
-      Session.pointClouds.push(particles)
 
       Session.pointClouds[i] = particles
       Session.dispatch(loadItem(i, config))

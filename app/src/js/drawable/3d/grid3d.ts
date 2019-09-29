@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { PlaneType } from '../../functional/types'
+import { Plane3DType } from '../../functional/types'
 import { Vector3D } from '../../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 
@@ -49,9 +49,9 @@ export class Grid3D extends THREE.Group {
   /**
    * Object representation
    */
-  public toPlane (): PlaneType {
+  public toPlane (): Plane3DType {
     return {
-      offset: (new Vector3D()).fromThree(this.position),
+      center: (new Vector3D()).fromThree(this.position),
       orientation: (new Vector3D()).fromThree(this.rotation.toVector3())
     }
   }

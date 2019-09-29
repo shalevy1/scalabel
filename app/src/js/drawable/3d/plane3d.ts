@@ -3,7 +3,7 @@ import { addPlaneLabel } from '../../action/plane3d'
 import Session from '../../common/session'
 import { LabelTypes } from '../../common/types'
 import { makeLabel } from '../../functional/states'
-import { PlaneType, ShapeType, State } from '../../functional/types'
+import { Plane3DType, ShapeType, State } from '../../functional/types'
 import { Vector3D } from '../../math/vector3d'
 import { TransformationControl } from './control/transformation_control'
 import { Grid3D } from './grid3d'
@@ -122,7 +122,7 @@ export class Plane3D extends Label3D {
     this._labelId = -1
     const plane = this._shape.toPlane()
     Session.dispatch(addPlaneLabel(
-      this._label.item, plane.offset, plane.orientation
+      this._label.item, plane.center, plane.orientation
     ))
   }
 
@@ -138,9 +138,9 @@ export class Plane3D extends Label3D {
    * @param {ShapeType[]} shapes
    */
   public updateShapes (shapes: ShapeType[]): void {
-    const newShape = shapes[0] as PlaneType
+    const newShape = shapes[0] as Plane3DType
     this._shape.position.copy(
-      (new Vector3D()).fromObject(newShape.offset).toThree()
+      (new Vector3D()).fromObject(newShape.center).toThree()
     )
     this._shape.rotation.setFromVector3(
       (new Vector3D()).fromObject(newShape.orientation).toThree()

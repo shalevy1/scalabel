@@ -4,7 +4,7 @@ import {
   ConfigType, CubeType,
   ImageViewerConfigType, IndexedShapeType,
   ItemStatus, ItemType, LabelType, LayoutType,
-  PlaneType,
+  Plane3DType,
   PointCloudViewerConfigType,
   RectType,
   Select,
@@ -83,11 +83,11 @@ export function makeCube (params: Partial<CubeType> = {}): CubeType {
 /**
  * Initialize a 3d box shape
  * @param {{}} params
- * @return {PlaneType}
+ * @return {Plane3DType}
  */
-export function makePlane (params: {} = {}): PlaneType {
+export function makePlane (params: {} = {}): Plane3DType {
   return {
-    offset: { x: 0, y: 0, z: 0 },
+    center: { x: 0, y: 0, z: 0 },
     orientation: { x: 0, y: 0, z: 0 },
     ...params
   }

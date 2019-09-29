@@ -57,7 +57,7 @@ class PlayerControl extends Component<Props> {
   public constructor (props: Readonly<Props>) {
     super(props)
     this.playing = false
-    this.currentFrame = 1
+    this.currentFrame = Session.getState().user.select.item + 1
     this.intervalId = -1
     const { num_frames } = this.props
     this.numFrames = num_frames

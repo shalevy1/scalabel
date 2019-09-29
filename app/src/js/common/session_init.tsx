@@ -169,7 +169,12 @@ function loadPointClouds (): void {
 
   const state = Session.getState()
   const items = state.task.items
-  for (const item of items) {
+  for (const _item of items) {
+    Session.pointClouds.push(new THREE.Points())
+  }
+
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i]
     let config: PointCloudViewerConfigType = {
       ...(state.user.pointCloudViewerConfig)
     }
@@ -202,7 +207,8 @@ function loadPointClouds (): void {
       const particles = new THREE.Points(geometry, material)
       Session.pointClouds.push(particles)
 
-      Session.dispatch(loadItem(item.index, config))
+      Session.pointClouds[i] = particles
+      Session.dispatch(loadItem(i, config))
     },
 
       () => null,

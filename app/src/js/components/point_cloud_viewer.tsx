@@ -104,7 +104,7 @@ class PointCloudViewer extends Viewer<Props> {
    * @return {boolean}
    */
   public redraw (): boolean {
-    const state = this.state.session
+    const state = this.state
     const item = state.user.select.item
     const loaded = state.session.items[item].loaded
     if (loaded) {
@@ -148,14 +148,14 @@ class PointCloudViewer extends Viewer<Props> {
     if (component.nodeName === 'CANVAS') {
       if (this.canvas && this.display) {
         if (Session.itemType === 'image') {
-          const config = getCurrentImageViewerConfig(this.state.session)
+          const config = getCurrentImageViewerConfig(this.state)
 
           if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
             return
           }
           const newParams =
             updateCanvasScale(
-              this.state.session,
+              this.state,
               this.display,
               component,
               null,
@@ -173,7 +173,7 @@ class PointCloudViewer extends Viewer<Props> {
         this.renderer = new THREE.WebGLRenderer(rendererParams)
       }
 
-      if (isItemLoaded(this.state.session)) {
+      if (isItemLoaded(this.state)) {
         this.updateRenderer()
       }
     }
@@ -199,7 +199,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Get point cloud view config
    */
   private getCurrentViewerConfig (): PointCloudViewerConfigType {
-    return (getCurrentPointCloudViewerConfig(this.state.session))
+    return (getCurrentPointCloudViewerConfig(this.state))
   }
 }
 

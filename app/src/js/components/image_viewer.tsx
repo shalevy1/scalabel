@@ -98,7 +98,7 @@ export class ImageViewer extends Viewer<Props> {
    */
   public redraw (): boolean {
     if (this.currentItemIsLoaded() && this.imageCanvas && this.imageContext) {
-      const image = Session.images[this.state.session.user.select.item]
+      const image = Session.images[this.state.user.select.item]
       // redraw imageCanvas
       drawImageOnCanvas(this.imageCanvas, this.imageContext, image)
     }
@@ -126,13 +126,13 @@ export class ImageViewer extends Viewer<Props> {
       return
     }
     const config =
-      getCurrentImageViewerConfig(this.state.session)
+      getCurrentImageViewerConfig(this.state)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return
     }
     const newParams = updateCanvasScale(
-      this.state.session,
+      this.state,
       this.display,
       canvas,
       context,
@@ -148,7 +148,7 @@ export class ImageViewer extends Viewer<Props> {
    * @return {boolean}
    */
   private currentItemIsLoaded (): boolean {
-    return isItemLoaded(this.state.session)
+    return isItemLoaded(this.state)
   }
 }
 

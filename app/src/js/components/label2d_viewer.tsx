@@ -294,7 +294,7 @@ export class Label2dViewer extends Viewer<Props> {
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
     if (this._labels.onMouseMove(
       mousePos,
-      getCurrentImageSize(this.state.session),
+      getCurrentImageSize(this.state),
       labelIndex, handleIndex
     )) {
       e.stopPropagation()
@@ -347,7 +347,7 @@ export class Label2dViewer extends Viewer<Props> {
       return
     }
     const config =
-      getCurrentImageViewerConfig(this.state.session)
+      getCurrentImageViewerConfig(this.state)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return
@@ -360,7 +360,7 @@ export class Label2dViewer extends Viewer<Props> {
         this.scale
       ] =
       updateCanvasScale(
-        this.state.session,
+        this.state,
         this.display,
         canvas,
         context,

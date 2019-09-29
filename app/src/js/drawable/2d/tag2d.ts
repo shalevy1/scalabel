@@ -2,8 +2,8 @@ import _ from 'lodash'
 import { sprintf } from 'sprintf-js'
 import Session from '../../common/session'
 import { Attribute } from '../../functional/types'
-import { Label2D } from './label2d'
 import { Context2D } from '../util'
+import { Label2D } from './label2d'
 
 /**
  * Tag2D drawable class

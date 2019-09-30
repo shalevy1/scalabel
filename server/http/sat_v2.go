@@ -362,13 +362,12 @@ func assignmentToSat(assignment *Assignment) Sat {
 	}
 
 	attributes := make(map[int][]int)
-	for i, _ := range projectOptions.Attributes {
+	for i := 0; i < len(projectOptions.Attributes); i++ {
 		attributes[i] = []int{0}
 	}
 	selectedData := SelectedData{
 		Item:  0,
 		Label: 0,
-		Category: 0,
 		Attributes: attributes,
 	}
 

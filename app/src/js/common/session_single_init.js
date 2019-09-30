@@ -88,7 +88,7 @@ function initImageLabelingSingle(): void {
     self.connectControllers();
     self.loadImages();
 
-    document.getElementsByTagName('BODY')[0].onresize = function() {
+    document.getElementsByTagName('BODY')[0].onresize = function () {
         // imageViewer.setScale(imageViewer.scale);
         // imageViewer.redraw();
         // tagViewer.setScale(tagViewer.scale);
@@ -97,26 +97,6 @@ function initImageLabelingSingle(): void {
             type: types.UPDATE_ALL,
         });
     };
-
-    // TODO: move to TitleBarViewer
-    let increaseButton = document.getElementById('increase-btn');
-    if (increaseButton) {
-        increaseButton.onclick = function() {
-            self.dispatch({
-                type: types.IMAGE_ZOOM,
-                ratio: 1.05,
-            });
-        };
-    }
-    let decreaseButton = document.getElementById('decrease-btn');
-    if (decreaseButton) {
-        decreaseButton.onclick = function() {
-            self.dispatch({
-                type: types.IMAGE_ZOOM,
-                ratio: 1.0 / 1.05,
-            });
-        };
-    }
 }
 
 /**

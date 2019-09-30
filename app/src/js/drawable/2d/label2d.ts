@@ -160,16 +160,20 @@ export abstract class Label2D {
     const config = Session.getState().task.config
     const category = self._label ?
     config.categories[self._label.category[0]] : ''
-    const attributes = self._label ? self._label.attributes : {}
+    const attributes = self._label && self._label.attributes ?
+                       self._label.attributes : {}
     const words = category.split(' ')
     let tw = TAG_WIDTH
     // abbreviate tag as the first 3 chars of the last word
     let abbr = words[words.length - 1].substring(0, 3)
+
     for (const attributeId of Object.keys(attributes)) {
       const attribute = config.attributes[Number(attributeId)]
       if (attribute.toolType === 'switch') {
-        abbr += ',' + attribute.tagText
-        tw += 36
+        if (attributes[Number(attributeId)][0] > 0) {
+          abbr += ',' + attribute.tagText
+          tw += 36
+        }
       } else if (attribute.toolType === 'list') {
         if (attribute &&
           attributes[Number(attributeId)][0] > 0) {

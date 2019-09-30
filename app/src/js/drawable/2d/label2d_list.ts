@@ -135,9 +135,7 @@ export class Label2DList {
     if (labelIndex >= 0) {
       this._selectedLabel = this._labelList[labelIndex]
       this._selectedLabel.setSelected(true, handleIndex)
-      const state = Session.getState()
-      const itemIndex = state.user.select.item
-      Session.dispatch(selectLabel(itemIndex, this._selectedLabel.labelId))
+      Session.dispatch(selectLabel(this._selectedLabel.labelId))
       Session.dispatch(
         changeCurrentCategory(
           this._selectedLabel.category[0]))

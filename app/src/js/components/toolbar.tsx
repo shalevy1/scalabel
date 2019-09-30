@@ -150,10 +150,10 @@ export class ToolBar extends Component<Props> {
         const key = Number(keyStr)
         attributes[key] = currentAttributes[key]
       }
-      if (Object.keys(attributes).indexOf(String(toggleIndex)) >= 0) {
-        delete attributes[toggleIndex]
+      if (attributes[toggleIndex][0] > 0) {
+        attributes[toggleIndex][0] = 0
       } else {
-        attributes[toggleIndex] = [1]
+        attributes[toggleIndex][0] = 1
       }
       Session.dispatch(changeLabelProps(state.user.select.item,
         state.user.select.label, { attributes }))

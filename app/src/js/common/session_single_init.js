@@ -1,30 +1,30 @@
 import {
     ImageViewer,
-} from '../viewers/image_viewer';
+} from "../viewers/image_viewer";
 import {
     AssistantViewer,
-} from '../viewers/assistant_viewer';
+} from "../viewers/assistant_viewer";
 import {
     TagViewer,
-} from '../viewers/tag_viewer';
+} from "../viewers/tag_viewer";
 import {
     TitleBarController,
-} from '../controllers/title_bar_controller';
+} from "../controllers/title_bar_controller";
 import {
     TitleBarViewer,
-} from '../viewers/title_bar_viewer';
+} from "../viewers/title_bar_viewer";
 import {
     ToolboxController,
-} from '../controllers/toolbox_controller';
+} from "../controllers/toolbox_controller";
 import {
     ToolboxViewer,
-} from '../viewers/toolbox_viewer';
+} from "../viewers/toolbox_viewer";
 import {
     BaseController,
-} from '../controllers/base_controller';
-import * as types from '../action/types';
+} from "../controllers/base_controller";
+import * as types from "../action/types";
 
-import Session from './session_single';
+import Session from "./session_single";
 
 /**
  * Init image tagging mode
@@ -80,15 +80,15 @@ function initImageBox2DLabeling(): void {
  */
 function initImageLabelingSingle(): void {
     let self = Session;
-    if (self.labelType === 'tag') {
+    if (self.labelType === "tag") {
         initImageTagging();
-    } else if (self.labelType === 'box2dv2') {
+    } else if (self.labelType === "box2dv2") {
         initImageBox2DLabeling();
     }
     self.connectControllers();
     self.loadImages();
 
-    document.getElementsByTagName('BODY')[0].onresize = function () {
+    document.getElementsByTagName("BODY")[0].onresize = function() {
         // imageViewer.setScale(imageViewer.scale);
         // imageViewer.redraw();
         // tagViewer.setScale(tagViewer.scale);
@@ -107,7 +107,7 @@ function initImageLabelingSingle(): void {
 export function initSingle(stateJson: Object): void {
     Session.initStore(stateJson);
 
-    if (Session.itemType === 'image') {
+    if (Session.itemType === "image") {
         initImageLabelingSingle();
     }
 }

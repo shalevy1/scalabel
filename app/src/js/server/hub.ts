@@ -60,8 +60,9 @@ io.on(EventName.CONNECTION, (socket: socketio.Socket) => {
   socket.on(EventName.REGISTER, (state: State) => {
     const taskId = state.task.config.taskId
     const projectName = state.task.config.projectName
+    const workerId = state.user.id
 
-    const syncPath = path.getPath(dataDir, projectName, taskId)
+    const syncPath = path.getPath(dataDir, projectName, taskId, workerId)
     const room = path.roomName(projectName, taskId)
     // If there's no store in memory, try to load it
     if (!stores[room]) {
@@ -103,8 +104,9 @@ io.on(EventName.CONNECTION, (socket: socketio.Socket) => {
     const data = JSON.parse(rawData)
     const taskId = data.id
     const projectName = data.project
+    const workerId = data.worker
     const actionList = data.actions
-    const syncPath = path.getPath(dataDir, projectName, taskId)
+    const syncPath = path.getPath(dataDir, projectName, taskId, workerId)
     // Make sure file exists before saving to it
     fs.ensureDirSync(syncPath)
     const room = path.roomName(projectName, taskId)

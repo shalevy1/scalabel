@@ -1,16 +1,16 @@
 import _ from 'lodash'
+import * as THREE from 'three'
 // import * as THREE from 'three'
 import * as action from '../../js/action/common'
-import { moveCameraAndTarget, moveCamera } from '../../js/action/point_cloud'
+import { moveCamera, moveCameraAndTarget } from '../../js/action/point_cloud'
 import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
 import { Label3DList } from '../../js/drawable/3d/label3d_list'
 import { getCurrentPointCloudViewerConfig, getShape } from '../../js/functional/state_util'
 import { CubeType, Vector3Type } from '../../js/functional/types'
 import { Vector3D } from '../../js/math/vector3d'
-import { testJson } from '../test_point_cloud_objects'
-import * as THREE from 'three'
 import { updateThreeCameraAndRenderer } from '../../js/view_config/point_cloud'
+import { testJson } from '../test_point_cloud_objects'
 
 /**
  * Check equality between two Vector3Type objects
@@ -133,7 +133,7 @@ test('Move axis aligned 3d bbox along z axis', () => {
   raycaster.linePrecision = 0.02
 
   raycaster.setFromCamera(new THREE.Vector2(0, 0.1), camera)
-  let intersections = 
+  let intersections =
     raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
   expect(intersections.length).toBeGreaterThan(0)
 
@@ -144,8 +144,10 @@ test('Move axis aligned 3d bbox along z axis', () => {
 
   state = Session.getState()
   let cube = getShape(state, 0, 0, 0) as CubeType
-
-  expect((new Vector3D()).fromObject(cube.center)[2]).toBeGreaterThan(0)
+  const center = (new Vector3D()).fromObject(cube.center)
+  expect(center[2]).toBeGreaterThan(0)
+  expect(center[0]).toBeCloseTo(0)
+  expect(center[1]).toBeCloseTo(0)
 
   raycaster.setFromCamera(new THREE.Vector2(0, 0.5), camera)
   intersections =
@@ -159,5 +161,5 @@ test('Move axis aligned 3d bbox along z axis', () => {
 
   state = Session.getState()
   cube = getShape(state, 0, 0, 0) as CubeType
-  expect((new Vector3D()).fromObject(cube.center)[2]).toBeCloseTo(0)
+  expectVector3TypesClose(cube.center, { x: 0, y: 0, z: 0 })
 })

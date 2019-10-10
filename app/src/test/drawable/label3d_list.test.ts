@@ -79,7 +79,7 @@ test('Add 3d bbox', () => {
   }
 })
 
-test('Move 3d bbox along axis', () => {
+test('Move axis aligned 3d bbox along z axis', () => {
   Session.devMode = false
   initStore(testJson)
   const itemIndex = 0

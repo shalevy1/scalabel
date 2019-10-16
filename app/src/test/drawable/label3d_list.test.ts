@@ -17,51 +17,61 @@ import { testJson } from '../test_point_cloud_objects'
  * @param v1
  * @param v2
  */
-function expectVector3TypesClose (v1: Vector3Type, v2: Vector3Type, digits = 2) {
-  expect(v1.x).toBeCloseTo(v2.x, digits)
-  expect(v1.y).toBeCloseTo(v2.y, digits)
-  expect(v1.z).toBeCloseTo(v2.z, digits)
+function expectVector3TypesClose (v1: Vector3Type, v2: Vector3Type, num = 2) {
+  expect(v1.x).toBeCloseTo(v2.x, num)
+  expect(v1.y).toBeCloseTo(v2.y, num)
+  expect(v1.z).toBeCloseTo(v2.z, num)
 }
 
+/**
+ * Get active axis given camLoc and axis
+ * @param camLoc
+ * @param axis
+ */
 function getActiveAxis (camLoc: number, axis: number) {
-  if (Math.floor(camLoc/2) == 0) {
-    if (axis <=1) {
+  if (Math.floor(camLoc / 2) === 0) {
+    if (axis <= 1) {
       return 2
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 1
     }
-  } else if (Math.floor(camLoc/2) == 1) {
-    if (axis <=1) {
+  } else if (Math.floor(camLoc / 2) === 1) {
+    if (axis <= 1) {
       return 2
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 0
     }
-  } else if (Math.floor(camLoc/2) == 2) {
-    if (axis <=1) {
+  } else if (Math.floor(camLoc / 2) === 2) {
+    if (axis <= 1) {
       return 0
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 1
     }
   }
 }
 
+/**
+ * Get active axis for rotation given camLoc and axis
+ * @param camLoc
+ * @param axis
+ */
 function getActiveAxisForRotation (camLoc: number, axis: number) {
-  if (Math.floor(camLoc/2) == 0) {
-    if (axis <=1) {
+  if (Math.floor(camLoc / 2) === 0) {
+    if (axis <= 1) {
       return 1
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 2
     }
-  } else if (Math.floor(camLoc/2) == 1) {
-    if (axis <=1) {
+  } else if (Math.floor(camLoc / 2) === 1) {
+    if (axis <= 1) {
       return 0
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 2
     }
-  } else if (Math.floor(camLoc/2) == 2) {
-    if (axis <=1) {
+  } else if (Math.floor(camLoc / 2) === 2) {
+    if (axis <= 1) {
       return 1
-    } else if (axis >=2) {
+    } else if (axis >= 2) {
       return 0
     }
   }
@@ -244,9 +254,9 @@ test('Move axis aligned 3d bbox along all axes', () => {
 
   // Set camera to each of 6 axis aligned locations around cube
   // 0 = +x, 1 = -x, 2 = +y, 3 = -y, 4= +z, 5 = -z
-  for (var camLoc = 0; camLoc < 6; camLoc++) {
+  for (let camLoc = 0; camLoc < 6; camLoc++) {
     const position = new Vector3D()
-    position[Math.floor(camLoc/2)] = 10 * (camLoc % 1 == 0 ? -1 : 1)
+    position[Math.floor(camLoc / 2)] = 10 * (camLoc % 1 === 0 ? -1 : 1)
     Session.dispatch(moveCamera(
       position
     ))
@@ -265,22 +275,22 @@ test('Move axis aligned 3d bbox along all axes', () => {
 
     // From each axis aligned view there is vertical and horizontal axis.
     // Try positive and negative directions. 0 = +v, 1 = -v, 2 = +h, 3 = -h
-    for (var axis = 0; axis < 4; axis++) {
-      const neg: boolean = (axis % 2 == 1)
+    for (let axis = 0; axis < 4; axis++) {
+      const neg: boolean = (axis % 2 === 1)
       // Because of the view orientation, a positive movement could be along
       // a negative axis. This corrects that for testing.
-      const negAxis: boolean = axis >= 2 && (camLoc == 0 || camLoc == 1)
-      const vec_x = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
-      const vec_y = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
+      const negAxis: boolean = axis >= 2 && (camLoc === 0 || camLoc === 1)
+      const vecX = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
+      const vecY = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
 
-      raycaster.setFromCamera(new THREE.Vector2(vec_x, vec_y), camera)
-      let intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(vecX, vecY), camera)
+      let intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(vec_x, vec_y, camera, intersections[0])
-      label3dList.onMouseDown(vec_x, vec_y, camera)
-      label3dList.onMouseMove(5 * vec_x, 5 * vec_y, camera)
+      label3dList.onMouseMove(vecX, vecY, camera, intersections[0])
+      label3dList.onMouseDown(vecX, vecY, camera)
+      label3dList.onMouseMove(5 * vecX, 5 * vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()
@@ -289,24 +299,25 @@ test('Move axis aligned 3d bbox along all axes', () => {
 
       // get ActiveAxis based on view point and vertical or horizontal
       const activeAxis = getActiveAxis(camLoc, axis)
-      for (var i = 0; i < 3; i++) {
-        if (i != activeAxis) {
+      for (let i = 0; i < 3; i++) {
+        if (i !== activeAxis) {
           // Check other directions have not moved due to translation
           expect(center[i]).toBeCloseTo(0)
         } else {
           // Check translated direction, accounting for negations
-          expect((neg ? -1 : 1) * (negAxis ? -1 : 1) * center[i]).toBeGreaterThan(0)
+          const pos = (neg ? -1 : 1) * (negAxis ? -1 : 1) * center[i]
+          expect(pos).toBeGreaterThan(0)
         }
       }
 
-      raycaster.setFromCamera(new THREE.Vector2(5 * vec_x, 5 * vec_y), camera)
-      intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(5 * vecX, 5 * vecY), camera)
+      intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(5 * vec_x, 5 * vec_y, camera, intersections[0])
-      label3dList.onMouseDown(5 * vec_x, 5 * vec_y, camera)
-      label3dList.onMouseMove(vec_x, vec_y, camera)
+      label3dList.onMouseMove(5 * vecX, 5 * vecY, camera, intersections[0])
+      label3dList.onMouseDown(5 * vecX, 5 * vecY, camera)
+      label3dList.onMouseMove(vecX, vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()
@@ -353,9 +364,9 @@ test('Scale axis aligned 3d bbox along all axes', () => {
 
   // Set camera to each of 6 axis aligned locations around cube
   // 0 = +x, 1 = -x, 2 = +y, 3 = -y, 4= +z, 5 = -z
-  for (var camLoc = 0; camLoc < 6; camLoc++) {
+  for (let camLoc = 0; camLoc < 6; camLoc++) {
     const position = new Vector3D()
-    position[Math.floor(camLoc/2)] = 10 * (camLoc % 1 == 0 ? -1 : 1)
+    position[Math.floor(camLoc / 2)] = 10 * (camLoc % 1 === 0 ? -1 : 1)
     Session.dispatch(moveCamera(
       position
     ))
@@ -374,22 +385,22 @@ test('Scale axis aligned 3d bbox along all axes', () => {
 
     // From each axis aligned view there is vertical and horizontal axis.
     // Try positive and negative directions. 0 = +v, 1 = -v, 2 = +h, 3 = -h
-    for (var axis = 0; axis < 4; axis++) {
-      const neg: boolean = (axis % 2 == 1)
+    for (let axis = 0; axis < 4; axis++) {
+      const neg: boolean = (axis % 2 === 1)
       // Because of the view orientation, a positive movement could be along
       // a negative axis. This corrects that for testing.
-      const negAxis: boolean = axis >= 2 && (camLoc == 0 || camLoc == 1)
-      const vec_x = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
-      const vec_y = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
+      const negAxis: boolean = axis >= 2 && (camLoc === 0 || camLoc === 1)
+      const vecX = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
+      const vecY = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
 
-      raycaster.setFromCamera(new THREE.Vector2(vec_x, vec_y), camera)
-      let intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(vecX, vecY), camera)
+      let intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(vec_x, vec_y, camera, intersections[0])
-      label3dList.onMouseDown(vec_x, vec_y, camera)
-      label3dList.onMouseMove(5 * vec_x, 5 * vec_y, camera)
+      label3dList.onMouseMove(vecX, vecY, camera, intersections[0])
+      label3dList.onMouseDown(vecX, vecY, camera)
+      label3dList.onMouseMove(5 * vecX, 5 * vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()
@@ -402,26 +413,27 @@ test('Scale axis aligned 3d bbox along all axes', () => {
       const activeAxis = getActiveAxis(camLoc, axis)
       // expectVector3TypesClose(cube.center, { x: 0, y: 0, z: 0 })
 
-      for (var i = 0; i < 3; i++) {
-        if (i != activeAxis) {
+      for (let i = 0; i < 3; i++) {
+        if (i !== activeAxis) {
           // Check other directions have not changed due to scaling
           expect(center[i]).toBeCloseTo(0)
           expect(size[i]).toBeCloseTo(1)
         } else {
           // Check scaling direction, accounting for negations
-          expect((neg ? -1 : 1) * (negAxis ? -1 : 1) * center[i]).toBeGreaterThan(0)
+          const pos = (neg ? -1 : 1) * (negAxis ? -1 : 1) * center[i]
+          expect(pos).toBeGreaterThan(0)
           expect(size[i]).toBeGreaterThan(1)
         }
       }
 
-      raycaster.setFromCamera(new THREE.Vector2(5 * vec_x, 5 * vec_y), camera)
-      intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(5 * vecX, 5 * vecY), camera)
+      intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(5 * vec_x, 5 * vec_y, camera, intersections[0])
-      label3dList.onMouseDown(5 * vec_x, 5 * vec_y, camera)
-      label3dList.onMouseMove(vec_x, vec_y, camera)
+      label3dList.onMouseMove(5 * vecX, 5 * vecY, camera, intersections[0])
+      label3dList.onMouseDown(5 * vecX, 5 * vecY, camera)
+      label3dList.onMouseMove(vecX, vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()
@@ -435,10 +447,10 @@ test('Scale axis aligned 3d bbox along all axes', () => {
 test('Rotate axis aligned 3d bbox around all axes', () => {
   // Set camera to each of 6 axis aligned locations around cube
   // 0 = +x, 1 = -x, 2 = +y, 3 = -y, 4= +z, 5 = -z
-  for (var camLoc = 0; camLoc < 6; camLoc++) {
+  for (let camLoc = 0; camLoc < 6; camLoc++) {
     // From each axis aligned view there is vertical and horizontal axis.
     // Try positive and negative directions. 0 = +v, 1 = -v, 2 = +h, 3 = -h
-    for (var axis = 0; axis < 4; axis++) {
+    for (let axis = 0; axis < 4; axis++) {
       Session.devMode = false
       initStore(testJson)
       const itemIndex = 0
@@ -474,7 +486,7 @@ test('Rotate axis aligned 3d bbox around all axes', () => {
       label3dList.onKeyDown(rEvent)
 
       const position = new Vector3D()
-      position[Math.floor(camLoc/2)] = 10 * (camLoc % 1 == 0 ? -1 : 1)
+      position[Math.floor(camLoc / 2)] = 10 * (camLoc % 1 === 0 ? -1 : 1)
       Session.dispatch(moveCamera(
         position
       ))
@@ -491,21 +503,21 @@ test('Rotate axis aligned 3d bbox around all axes', () => {
       raycaster.far = 100.0
       raycaster.linePrecision = 0.02
 
-      const neg: boolean = (axis % 2 == 1)
+      const neg: boolean = (axis % 2 === 1)
       // Because of the view orientation, a positive movement could be along
       // a negative axis. This corrects that for testing.
       const negAxis: boolean = axis <= 1 && (camLoc >= 2)
-      const vec_x = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
-      const vec_y = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
+      const vecX = .1 * (axis >= 2 ? 1 : 0) * (neg ? -1 : 1)
+      const vecY = .1 * (axis <= 1 ? 1 : 0) * (neg ? -1 : 1)
 
-      raycaster.setFromCamera(new THREE.Vector2(vec_x, vec_y), camera)
-      let intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(vecX, vecY), camera)
+      let intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(vec_x, vec_y, camera, intersections[0])
-      label3dList.onMouseDown(vec_x, vec_y, camera)
-      label3dList.onMouseMove(2 * vec_x, 2 * vec_y, camera)
+      label3dList.onMouseMove(vecX, vecY, camera, intersections[0])
+      label3dList.onMouseDown(vecX, vecY, camera)
+      label3dList.onMouseMove(2 * vecX, 2 * vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()
@@ -517,25 +529,25 @@ test('Rotate axis aligned 3d bbox around all axes', () => {
       expectVector3TypesClose(cube.center, { x: 0, y: 0, z: 0 })
       expectVector3TypesClose(cube.size, { x: 1, y: 1, z: 1 })
 
-      for (var i = 0; i < 3; i++) {
-        // console.log(camLoc, axis, activeAxis, i)
-        if (i != activeAxis) {
+      for (let i = 0; i < 3; i++) {
+        if (i !== activeAxis) {
           // Check other orientations have not moved due to rotation
           expect(orientation[i]).toBeCloseTo(0)
         } else {
           // Check rotated orientations, accounting for negations
-          expect((neg ? -1 : 1) * (negAxis ? -1 : 1) * orientation[i]).toBeGreaterThan(0)
+          const pos = (neg ? -1 : 1) * (negAxis ? -1 : 1) * orientation[i]
+          expect(pos).toBeGreaterThan(0)
         }
       }
 
-      raycaster.setFromCamera(new THREE.Vector2(2 * vec_x, 2 * vec_y), camera)
-      intersections =
-        raycaster.intersectObjects(raycastableShapes as unknown as THREE.Object3D[])
+      raycaster.setFromCamera(new THREE.Vector2(2 * vecX, 2 * vecY), camera)
+      intersections = raycaster.intersectObjects(
+        raycastableShapes as unknown as THREE.Object3D[])
       expect(intersections.length).toBeGreaterThan(0)
 
-      label3dList.onMouseMove(2 * vec_x, 2 * vec_y, camera, intersections[0])
-      label3dList.onMouseDown(2 * vec_x, 2 * vec_y, camera)
-      label3dList.onMouseMove(vec_x, vec_y, camera)
+      label3dList.onMouseMove(2 * vecX, 2 * vecY, camera, intersections[0])
+      label3dList.onMouseDown(2 * vecX, 2 * vecY, camera)
+      label3dList.onMouseMove(vecX, vecY, camera)
       label3dList.onMouseUp()
 
       state = Session.getState()

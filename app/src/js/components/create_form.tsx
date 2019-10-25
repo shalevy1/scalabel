@@ -307,8 +307,6 @@ export default class CreateForm extends React.Component<Props, State> {
     const x = new XMLHttpRequest()
     x.timeout = submissionTimeout
     x.onreadystatechange = () => {
-      // tslint:disable-next-line: no-console
-      console.log(x)
       if (x.readyState === 4) {
         if (x.response) {
           alert(x.response)

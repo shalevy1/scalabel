@@ -3,7 +3,6 @@ import * as fs from 'fs-extra'
 import { ChangeEvent } from 'react'
 import Session, { ConnectionStatus } from '../../js/common/session'
 import CreateForm from '../../js/components/create_form'
-import { DashboardContents } from '../../js/components/dashboard'
 import { formStyle } from '../../js/styles/create'
 
 // TODO: Remove no any's when exporting is implemented with node
@@ -148,36 +147,6 @@ export async function projectInitSession (): Promise<{}> {
       }
     })
     xhr.open('POST', './postLoadAssignmentV2', true)
-    xhr.send(request)
-  })
-}
-
-/**
- * init dashboard for integration test
- */
-export async function projectInitDashboard (): Promise<DashboardContents> {
-  return new Promise<DashboardContents>((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4) {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(xhr.response) as DashboardContents)
-        } else {
-          reject({
-            status: xhr.status,
-            statusText: xhr.statusText
-          })
-        }
-      } else {
-        return
-      }
-    }
-
-    // send the request to the back end
-    const request = JSON.stringify({
-      name: testConfig.projectName
-    })
-    xhr.open('POST', './postDashboardContents', true)
     xhr.send(request)
   })
 }

@@ -34,18 +34,18 @@ let launchProc: child.ChildProcessWithoutNullStreams
 beforeAll(() => {
   Session.devMode = false
   Session.testMode = true
-  launchProc = child.spawn('./bin/scalabel', [
+  launchProc = child.spawn('node', [
+    'app/dist/js/main.js',
     '--config',
     './app/config/test_config.yml'
   ])
-  /*
   launchProc.stdout.on('data', (data) => {
     process.stdout.write(data)
   })
 
   launchProc.stderr.on('data', (data) => {
     process.stdout.write(data)
-  })*/
+  })
   window.alert = (): void => {
     return
   }
@@ -56,7 +56,8 @@ beforeEach(() => {
 afterEach(cleanup)
 afterAll(() => {
   launchProc.kill()
-  deleteTestDir()
+  // tslint:disable-next-line: no-console
+  console.log(deleteTestDir)
 })
 
 describe('full 2d bounding box integration test', () => {

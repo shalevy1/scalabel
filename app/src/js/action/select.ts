@@ -111,6 +111,13 @@ export function selectLabel (
     selectedLabels[itemIndex] : []
   if (labelId >= 0 && !labelIds.includes(labelId)) {
     labelIds.push(labelId)
+  } else if (labelId >= 0 && labelIds.includes(labelId)) {
+    for (var i = 0; i < labelIds.length; i++){
+      if (labelIds[i] === labelId) {
+        labelIds.splice(i, 1)
+        break
+      }
+    }
   }
   if (labelIds.length > 0 && itemIndex >= 0) {
     selectedLabels[itemIndex] = labelIds

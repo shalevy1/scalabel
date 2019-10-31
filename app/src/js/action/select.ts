@@ -112,7 +112,7 @@ export function selectLabel (
   if (labelId >= 0 && !labelIds.includes(labelId)) {
     labelIds.push(labelId)
   } else if (labelId >= 0 && labelIds.includes(labelId)) {
-    for (var i = 0; i < labelIds.length; i++){
+    for (let i = 0; i < labelIds.length; i++) {
       if (labelIds[i] === labelId) {
         labelIds.splice(i, 1)
         break

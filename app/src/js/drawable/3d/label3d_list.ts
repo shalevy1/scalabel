@@ -168,8 +168,8 @@ export class Label3DList {
         this._selectedLabel = this._labels[select.labels[select.item][0]]
         this._selectedLabel.attachControl(this._control)
       } else {
-        for (var i = 0; i < selectedLabelIds.length; i++){
-          this._labels[selectedLabelIds[i]].setSelected(true)
+        for (const labelId of selectedLabelIds) {
+          this._labels[labelId].setSelected(true)
         }
       }
     }

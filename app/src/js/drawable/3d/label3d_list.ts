@@ -40,6 +40,10 @@ export class Label3DList {
   private _raycastMap: {[id: number]: Label3D}
   /** Recorded state of last update */
   private _state: State
+  /** selected label Group */
+  private _selectedLabelGroup: THREE.Group | null
+  /** mouse over group control */
+  private _mouseOverGroupControl: boolean
   /** selected label */
   private _selectedLabel: Label3D | null
   /** highlighted label */
@@ -62,8 +66,10 @@ export class Label3DList {
   constructor () {
     this._labels = {}
     this._raycastMap = {}
+    this._selectedLabelGroup = new THREE.Group()
     this._selectedLabel = null
     this._highlightedLabel = null
+    this._mouseOverGroupControl = false
     this._mouseDownOnSelection = false
     this._labelChanged = false
     this._raycastableShapes = []
@@ -98,6 +104,12 @@ export class Label3DList {
     for (const id of Object.keys(this._labels)) {
       this._labels[Number(id)].render(scene, camera)
     }
+    if (this._selectedLabelGroup) {
+      scene.add(this._selectedLabelGroup)
+      const helper = new THREE.BoxHelper(this._selectedLabelGroup,
+        new THREE.Color(0xff00ff))
+      scene.add(helper)
+    }
   }
 
   /**
@@ -124,8 +136,7 @@ export class Label3DList {
       if (id in this._labels) {
         newLabels[id] = this._labels[id]
       } else {
-        newLabels[id] =
-          makeDrawableLabel(item.labels[id].type)
+        newLabels[id] = makeDrawableLabel(item.labels[id].type)
       }
       if (item.labels[id].type === LabelTypeName.PLANE_3D) {
         this._plane = newLabels[id] as Plane3D
@@ -153,6 +164,7 @@ export class Label3DList {
     this._raycastableShapes = newRaycastableShapes
     this._labels = newLabels
     this._raycastMap = newRaycastMap
+    this._selectedLabelGroup = null
 
     if (this._selectedLabel) {
       this._selectedLabel.setSelected(false)
@@ -168,9 +180,18 @@ export class Label3DList {
         this._selectedLabel = this._labels[select.labels[select.item][0]]
         this._selectedLabel.attachControl(this._control)
       } else {
+        this._selectedLabelGroup = new THREE.Group()
         for (const labelId of selectedLabelIds) {
           this._labels[labelId].setSelected(true)
+          this._labels[labelId].addToSelectedGroup(this._selectedLabelGroup)
         }
+        new THREE.Box3().setFromObject(this._selectedLabelGroup)
+          .getCenter(this._selectedLabelGroup.position)
+        for (const cube of this._selectedLabelGroup.children) {
+          cube.position.sub(this._selectedLabelGroup.position)
+        }
+        this._selectedLabelGroup.add(this._control)
+        this._control.attach(this._selectedLabelGroup)
       }
     }
   }
@@ -205,6 +226,16 @@ export class Label3DList {
         // Set current label as selected label
         this.selectHighlighted()
         return false
+      }
+    }
+
+    if (this._mouseOverGroupControl) {
+      this._mouseDownOnSelection = true
+      if (this._control.attached()) {
+        const consumed = this._control.onMouseDown(camera)
+        if (consumed) {
+          return false
+        }
       }
     }
 
@@ -251,8 +282,27 @@ export class Label3DList {
     if (!consumed && this._selectedLabel) {
       this._selectedLabel.onMouseUp()
     }
+    if (!consumed && this._selectedLabelGroup) {
+      for (const cube of this._selectedLabelGroup.children) {
+        if (cube === this._control) {
+          continue
+        }
+        const labelId = (cube as Cube3D).getId()
+        this._labels[labelId].onMouseUp()
+      }
+    }
     if (this._labelChanged && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
+    }
+    if (this._labelChanged && this._selectedLabelGroup) {
+      for (const cube of this._selectedLabelGroup.children) {
+        if (cube === this._control) {
+          continue
+        }
+        const labelId = (cube as Cube3D).getId()
+        cube.applyMatrix(this._selectedLabelGroup.matrix)
+        this._labels[labelId].commitLabel()
+      }
     }
     this._labelChanged = false
     return false
@@ -279,6 +329,15 @@ export class Label3DList {
         }
       }
       this._selectedLabel.onMouseMove(x, y, camera)
+      return true
+    } else if (this._mouseDownOnSelection && this._selectedLabelGroup) {
+      this._labelChanged = true
+      if (this._control.attached()) {
+        const consumed = this._control.onMouseMove(x, y, camera)
+        if (consumed) {
+          return true
+        }
+      }
       return true
     } else {
       this.highlight(raycastIntersection)
@@ -329,7 +388,7 @@ export class Label3DList {
       default:
         this._keyDownMap[e.key] = true
     }
-    if (this._selectedLabel !== null) {
+    if (this._selectedLabel !== null || this._selectedLabelGroup !== null) {
       return this._control.onKeyDown(e)
     }
     return false
@@ -351,6 +410,16 @@ export class Label3DList {
   }
 
   /**
+   * Get control if there is a group
+   */
+  public getControl () {
+    if (this._selectedLabelGroup) {
+      return this._control
+    }
+    return null
+  }
+
+  /**
    * Highlight label if ray from mouse is intersecting a label
    * @param object
    * @param point
@@ -360,10 +429,36 @@ export class Label3DList {
       this._highlightedLabel.setHighlighted()
       this._control.setHighlighted()
     }
+    if (this._selectedLabelGroup) {
+      this._control.setHighlighted()
+      for (const cube of this._selectedLabelGroup.children) {
+        if (cube === this._control) {
+          continue
+        }
+        const labelId = (cube as Cube3D).getId()
+        this._labels[labelId].setHighlighted()
+      }
+    }
     this._highlightedLabel = null
-
+    this._mouseOverGroupControl = false
     if (intersection) {
       let object = intersection.object
+      if (this._selectedLabelGroup && object.parent && object.parent.parent &&
+          ((object.parent === this._control) ||
+          (object.parent.parent === this._control) ||
+          (object.parent.parent.parent === this._control))
+      ) {
+        for (const cube of this._selectedLabelGroup.children) {
+          if (cube === this._control) {
+            continue
+          }
+          const labelId = (cube as Cube3D).getId()
+          this._labels[labelId].setHighlighted(intersection)
+        }
+        this._control.setHighlighted(intersection)
+        this._mouseOverGroupControl = true
+      }
+
       while (object.parent && !(object.id in this._raycastMap)) {
         object = object.parent
       }

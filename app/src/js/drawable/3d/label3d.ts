@@ -66,6 +66,9 @@ export abstract class Label3D {
     this._selected = s
   }
 
+  /** Add label to selected group */
+  public abstract addToSelectedGroup (group: THREE.Group): void
+
   /** highlight the label */
   public setHighlighted (intersection?: THREE.Intersection) {
     if (intersection) {

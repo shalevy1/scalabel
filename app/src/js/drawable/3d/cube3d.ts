@@ -284,7 +284,7 @@ export class Cube3D extends THREE.Group {
       }
     }
 
-    if (!this._grid) {
+    if (!this._grid && !this._selected) {
       scene.add(this)
     }
   }

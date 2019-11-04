@@ -26,6 +26,11 @@ export class Plane3D extends Label3D {
     super.setSelected(s)
   }
 
+  /** Add plane to selected group */
+  public addToSelectedGroup (group: THREE.Group) {
+    group.add(this._shape)
+  }
+
   /**
    * Modify ThreeJS objects to draw label
    * @param {THREE.Scene} scene: ThreeJS Scene Object

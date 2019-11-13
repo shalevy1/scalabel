@@ -6,4 +6,5 @@ database: "local"
 userManagement: false
 sync: false
 autosave: false
+redisTimeout: 3600
 ...

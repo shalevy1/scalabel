@@ -37,6 +37,8 @@ export interface Env {
   syncHost: string
   /** whether to save automatically */
   autosave: boolean
+  /** timeout for clearing value from redis cache */
+  redisTimeout: number
 }
 
 /**
@@ -125,7 +127,8 @@ export const defaultEnv: Env = {
   userManagement: false,
   sync: false,
   syncHost: 'http://localhost',
-  autosave: true
+  autosave: true,
+  redisTimeout: 3600
 }
 
 /* default categories when file is missing and label is box2D or box3D */

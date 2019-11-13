@@ -1,11 +1,13 @@
-import { Store } from 'redux'
+import * as redis from 'redis'
 import * as socketio from 'socket.io'
+import { promisify } from 'util'
 import * as uuid4 from 'uuid/v4'
 import * as types from '../action/types'
 import { configureStore } from '../common/configure_store'
 import { ItemTypeName, LabelTypeName, TrackPolicyType } from '../common/types'
 import { makeItemStatus, makeState } from '../functional/states'
 import { State, TaskType } from '../functional/types'
+import Logger from './logger'
 import * as path from './path'
 import Session from './server_session'
 import { EventName } from './types'
@@ -16,87 +18,118 @@ import { getSavedKey, getTaskKey,
  * Starts socket.io handlers for saving, loading, and synchronization
  */
 export function startSocketServer (io: socketio.Server) {
-  const env = Session.getEnv()
-  // maintain a store for each task
-  const stores: { [key: string]: Store } = {}
+  const client = redis.createClient()
+  client.on('error', (err) => {
+    Logger.error(err)
+  })
+
   io.on(EventName.CONNECTION, (socket: socketio.Socket) => {
     socket.on(EventName.REGISTER, async (rawData: string) => {
-      const data = JSON.parse(rawData)
-      const projectName = data.project
-
-      const taskIndex = data.index
-      const taskId = index2str(taskIndex)
-
-      let sessId = data.sessId
-      // keep session id if it exists, i.e. if it is a reconnection
-      if (!sessId) {
-        // new session on new load
-        sessId = uuid4()
-      }
-
-      let room = path.roomName(projectName, taskId, env.sync)
-
-      let state: State
-
-      // if sync is on, try to load from memory
-      if (env.sync && room in stores) {
-        // try load from memory
-        state = stores[room].getState().present
-      } else {
-        // load from storage
-        try {
-          // first, attempt loading previous submission
-          state = await loadSavedState(projectName, taskId)
-        } catch {
-          // if no submissions exist, load from task
-          state = await loadStateFromTask(projectName, taskIndex)
-        }
-
-        // update room with loaded sessId
-        room = path.roomName(projectName, taskId,
-          env.sync, sessId)
-
-        // update memory with new state
-        stores[room] = configureStore(state)
-
-        // automatically save task data on updates
-        stores[room].subscribe(async () => {
-          const content = JSON.stringify(stores[room].getState().present)
-          const filePath = path.getFileKey(getSavedKey(projectName, taskId))
-          await Session.getStorage().save(filePath, content)
-        })
-      }
-      state.session.id = sessId
-      state.task.config.autosave = env.autosave
-
-      // Connect socket to others in the same room
-      socket.join(room)
-      // Send backend state to newly registered socket
-      socket.emit(EventName.REGISTER_ACK, state)
+      await register(rawData, socket, client)
     })
 
-    socket.on(EventName.ACTION_SEND, (rawData: string) => {
-      const data = JSON.parse(rawData)
-      const projectName = data.project
-      const taskId = data.taskId
-      const sessId = data.sessId
-      const actionList = data.actions
-
-      const room = path.roomName(projectName, taskId, env.sync, sessId)
-
-      // For each action, update the backend store and broadcast
-      for (const action of actionList) {
-        action.timestamp = Date.now()
-        // for task actions, update store and broadcast to room
-        if (types.TASK_ACTION_TYPES.includes(action.type)) {
-          stores[room].dispatch(action)
-          io.in(room).emit(EventName.ACTION_BROADCAST, action)
-        } else {
-          socket.emit(EventName.ACTION_BROADCAST, action)
-        }
-      }
+    socket.on(EventName.ACTION_SEND, async (rawData: string) => {
+      await actionUpdate(rawData, socket, client, io)
     })
   })
+}
+
+/**
+ * Load the correct state and subscribe to redis
+ */
+async function register (
+  rawData: string, socket: socketio.Socket, client: redis.RedisClient) {
+  const data = JSON.parse(rawData)
+  const projectName = data.project
+  const taskIndex = data.index
+  let sessId = data.sessId
+  const env = Session.getEnv()
+
+  const taskId = index2str(taskIndex)
+  // keep session id if it exists, i.e. if it is a reconnection
+  if (!sessId) {
+    // new session on new load
+    sessId = uuid4()
+  }
+  const room = path.roomName(projectName, taskId, env.sync, sessId)
+
+  const state = await loadState(room, projectName, taskId, client)
+  state.session.id = sessId
+  state.task.config.autosave = env.autosave
+
+  // Connect socket to others in the same room
+  socket.join(room)
+  // Send backend state to newly registered socket
+  socket.emit(EventName.REGISTER_ACK, state)
+}
+
+/**
+ * Updates the state with the action, and broadcasts action
+ */
+async function actionUpdate (
+  rawData: string, socket: socketio.Socket,
+  client: redis.RedisClient, io: socketio.Server) {
+  const data = JSON.parse(rawData)
+  const projectName = data.project
+  const taskId = data.taskId
+  const sessId = data.sessId
+  const actionList = data.actions
+  const env = Session.getEnv()
+
+  const room = path.roomName(projectName, taskId, env.sync, sessId)
+  const state = await loadState(room, projectName, taskId, client)
+
+  // todo- handle concurrency with redis:
+  // https://github.com/NodeRedis/node_redis#optimistic-locks
+  const store = configureStore(state)
+
+  // For each action, update the backend store and broadcast
+  for (const action of actionList) {
+    action.timestamp = Date.now()
+    // for task actions, update store and broadcast to room
+    if (types.TASK_ACTION_TYPES.includes(action.type)) {
+      store.dispatch(action)
+      io.in(room).emit(EventName.ACTION_BROADCAST, action)
+    } else {
+      socket.emit(EventName.ACTION_BROADCAST, action)
+    }
+  }
+
+  const newState = store.getState().present
+  const stringState = JSON.stringify(newState)
+  const filePath = path.getFileKey(getSavedKey(projectName, taskId))
+  // TODO- don't save to storage every write
+  // TODO- should we still have separately, or rely on redis AOF?
+  await Session.getStorage().save(filePath, stringState)
+
+  const redisSetAsync = promisify(client.setex).bind(client)
+  await redisSetAsync(room, env.redisTimeout, stringState)
+}
+
+/**
+ * Loads state from cache if available, else memory
+ */
+async function loadState (
+  room: string, projectName: string, taskId: string,
+  client: redis.RedisClient): Promise<State> {
+  let state: State
+
+  // first try to load from redis cache
+  const redisGetAsync = promisify(client.get).bind(client)
+  const redisValue: string = await redisGetAsync(room)
+  if (redisValue) {
+    state = JSON.parse(redisValue)
+  } else {
+    // otherwise load from storage
+    try {
+      // first, attempt loading previous submission
+      state = await loadSavedState(projectName, taskId)
+    } catch {
+      // if no submissions exist, load from task
+      state = await loadStateFromTask(projectName, taskId)
+    }
+  }
+  return state
 }
 
 /**
@@ -105,8 +138,8 @@ export function startSocketServer (io: socketio.Server) {
  */
 async function loadStateFromTask (
   projectName: string,
-  taskIndex: number): Promise<State> {
-  const key = getTaskKey(projectName, index2str(taskIndex))
+  taskId: string): Promise<State> {
+  const key = getTaskKey(projectName, taskId)
   const fields = await Session.getStorage().load(key)
   const task = JSON.parse(fields) as TaskType
   const state = makeState({ task })

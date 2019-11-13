@@ -19,5 +19,6 @@ RUN npm install
 COPY scripts ./scripts
 
 COPY . .
+RUN npm t
 RUN ./node_modules/.bin/npx webpack --config webpack.config.js --mode=production; \
     rm -f app/dist/tsconfig.tsbuildinfo

@@ -88,7 +88,7 @@ export class Label2dViewer extends Viewer<Props> {
     this.controlCanvas = null
     this.labelContext = null
     this.labelCanvas = null
-    this.display = null
+    this.display = this.props.display
     this._labels = new Label2DList()
     this.crosshair = React.createRef()
   }

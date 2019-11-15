@@ -101,7 +101,10 @@ export function getVisibleCanvasCoords (
   if (display && canvas) {
     const displayRect = display.getBoundingClientRect()
     const imgRect = canvas.getBoundingClientRect()
-    return new Vector2D(displayRect.x - imgRect.x, displayRect.y - imgRect.y)
+    if (displayRect.x !== undefined && displayRect.y !== undefined &&
+        imgRect.x !== undefined && imgRect.y !== undefined) {
+      return new Vector2D(displayRect.x - imgRect.x, displayRect.y - imgRect.y)
+    }
   }
   return new Vector2D(0, 0)
 }

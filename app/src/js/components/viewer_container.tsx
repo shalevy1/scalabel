@@ -10,6 +10,10 @@ import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
 import PointCloudViewer from './point_cloud_viewer'
+import {IconButton, Tooltip, Table, TableCell, TableHead, TableRow, TableBody } from '@material-ui/core'
+import * as fa from '@fortawesome/free-solid-svg-icons/index'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
 
 interface Props {
   /** id of the viewer, for referencing viewer config in state */
@@ -157,6 +161,53 @@ class ViewerContainer extends Component<Props> {
             outline: 'none', width: '100%', background: '#222222'
           }}
         >
+          {<div style={{
+            boxShadow: '0px 4px 4px #FAEDD2',
+            padding: '2%',
+            margin: '2%',
+            background: '#ebebeb',
+            borderRadius: '10px',
+            zIndex: 100,
+          }}
+          >
+            <div style={{float: 'right'}}>
+              <Tooltip title={'Close'} key={'Close'}>
+                <IconButton>
+                  <FontAwesomeIcon icon={fa.faTimes} size='xs'/>
+                </IconButton>
+              </Tooltip>
+            </div>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell align={'center'}>
+                    {'Key'}</TableCell>
+                  <TableCell align={'center'}>
+                    {'Functionality'}</TableCell>
+                  <TableCell align={'center'}>
+                    {'Label Type'}</TableCell>
+                  <TableCell align={'center'}>
+                    {'Location'}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    {"S"}
+                  </TableCell>
+                  <TableCell>
+                    {"Change transformation control to scale mode"}
+                  </TableCell>
+                  <TableCell>
+                    {"Box 3D"}
+                  </TableCell>
+                  <TableCell>
+                    {"Label 3D Handler"}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+            </div>}
           <div
             ref={(element) => {
               if (element) {

@@ -13,6 +13,7 @@ import Synchronizer from '../common/synchronizer'
 import { defaultAppBar } from '../styles/general'
 import { StatusMessageBox } from '../styles/label'
 import { Component } from './component'
+import * as types from '../action/types'
 
 // how long to wait until saving times out
 export const saveTimeout = 20000
@@ -91,6 +92,12 @@ function toggleAssistantView () {
 }
 
 /**
+* show current keyboard shortcuts
+*/
+function toggleKeyboardShortcutList () {
+  console.log(types.SHOW_KEYBOARD_SHORTCUTS)
+}
+/**
  * Title bar
  */
 class TitleBar extends Component<Props> {
@@ -129,7 +136,7 @@ class TitleBar extends Component<Props> {
 
     const buttonInfo = [
       { title: 'Instructions', href: instructionLink, icon: fa.faInfo },
-      { title: 'Keyboard Usage', icon: fa.faQuestion },
+      { title: 'Keyboard Usage', icon: fa.faQuestion, onClick: toggleKeyboardShortcutList},
       { title: 'Dashboard', href: dashboardLink, icon: fa.faList },
       {
         title: 'Assistant View', onClick: toggleAssistantView,

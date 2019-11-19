@@ -29,8 +29,6 @@ interface Props {
  * all the attributes and categories for the 2D bounding box labeling tool
  */
 export class ToolBar extends Component<Props> {
-  /** The hashed list of keys currently down */
-  private _keyDownMap: { [key: string]: boolean }
   /** key down handler */
   private _keyDownHandler: (e: KeyboardEvent) => void
   /** key up handler */
@@ -42,7 +40,6 @@ export class ToolBar extends Component<Props> {
     this._keyUpHandler = this.onKeyUp.bind(this)
     this.handleAttributeToggle = this.handleAttributeToggle.bind(this)
     this.getAlignmentIndex = this.getAlignmentIndex.bind(this)
-    this._keyDownMap = {}
   }
 
   /**
@@ -78,7 +75,6 @@ export class ToolBar extends Component<Props> {
         }
         break
     }
-    this._keyDownMap[e.key] = true
   }
 
   /**
@@ -86,7 +82,7 @@ export class ToolBar extends Component<Props> {
    * @param e
    */
   public onKeyUp (e: KeyboardEvent) {
-    delete this._keyDownMap[e.key]
+    e = e;
   }
 
   /**
@@ -94,8 +90,8 @@ export class ToolBar extends Component<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', this._keyDownHandler)
-    document.addEventListener('keyup', this._keyUpHandler)
+    document.addEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler.bind(this)))
+    document.addEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler.bind(this)))
   }
 
   /**
@@ -103,8 +99,8 @@ export class ToolBar extends Component<Props> {
    */
   public componentWillUnmount () {
     super.componentWillUnmount()
-    document.removeEventListener('keydown', this._keyDownHandler)
-    document.removeEventListener('keyup', this._keyUpHandler)
+    document.removeEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler.bind(this)))
+    document.removeEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler.bind(this)))
   }
 
   /**
@@ -279,7 +275,7 @@ export class ToolBar extends Component<Props> {
    * @return {boolean}
    */
   private isKeyDown (key: string): boolean {
-    return this._keyDownMap[key]
+    return Session.isKeyDown(key)
   }
 
   /**

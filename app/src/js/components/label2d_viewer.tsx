@@ -5,6 +5,7 @@ import { getCurrentViewerConfig } from '../functional/state_util'
 import { ImageViewerConfigType, State } from '../functional/types'
 import { Vector2D } from '../math/vector2d'
 import { label2dViewStyle } from '../styles/label'
+import Session from '../common/session'
 import {
   clearCanvas,
   getCurrentImageSize,
@@ -65,10 +66,6 @@ export class Label2dViewer extends Viewer<Props> {
   /** The crosshair */
   private crosshair: React.RefObject<Crosshair2D>
 
-  // keyboard and mouse status
-  /** The hashed list of keys currently down */
-  private _keyDownMap: { [key: string]: boolean }
-
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -79,7 +76,6 @@ export class Label2dViewer extends Viewer<Props> {
     // constants
 
     // initialization
-    this._keyDownMap = {}
     this.scale = 1
     this.canvasHeight = 0
     this.canvasWidth = 0
@@ -98,8 +94,8 @@ export class Label2dViewer extends Viewer<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', (e) => { this.onKeyDown(e) })
-    document.addEventListener('keyup', (e) => { this.onKeyUp(e) })
+    document.addEventListener('keydown', (e) => { Session.onKeyDown(e, this.onKeyDown.bind(this))})
+    document.addEventListener('keyup', (e) => { Session.onKeyUp(e, this.onKeyUp.bind(this)) })
   }
 
   /**
@@ -266,8 +262,6 @@ export class Label2dViewer extends Viewer<Props> {
       return
     }
 
-    const key = e.key
-    this._keyDownMap[key] = true
     this._labels.onKeyDown(e)
     this.redraw()
   }
@@ -282,7 +276,6 @@ export class Label2dViewer extends Viewer<Props> {
     }
 
     const key = e.key
-    delete this._keyDownMap[key]
     if (key === 'Control' || key === 'Meta') {
       // Control or command
       this.setDefaultCursor()
@@ -341,7 +334,7 @@ export class Label2dViewer extends Viewer<Props> {
    * @return {boolean}
    */
   private isKeyDown (key: string): boolean {
-    return this._keyDownMap[key]
+    return Session.isKeyDown(key)
   }
 
   /**

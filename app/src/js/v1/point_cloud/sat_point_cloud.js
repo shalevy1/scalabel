@@ -1187,4 +1187,3 @@ SatPointCloud.prototype.handleEndTrack = function() {
     this.selectedLabel.parent.endTrack(this.selectedLabel);
   }
 };
-

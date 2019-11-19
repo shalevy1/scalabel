@@ -4,15 +4,13 @@ import * as types from '../common/types'
 import { ImageViewerConfigType, ViewerConfigType } from '../functional/types'
 import ViewerConfigUpdater from '../view_config/viewer_config'
 import { Component } from './component'
+import ShortcutList from './shortcut_list'
 import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
 import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
 import PointCloudViewer from './point_cloud_viewer'
-import {IconButton, Tooltip, Table, TableCell, TableHead, TableRow, TableBody } from '@material-ui/core'
-import * as fa from '@fortawesome/free-solid-svg-icons/index'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 
 interface Props {
@@ -75,8 +73,8 @@ class ViewerContainer extends Component<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', this._keyDownHandler)
-    document.addEventListener('keyup', this._keyUpHandler)
+    document.addEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler))
+    document.addEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler))
   }
 
   /**
@@ -84,8 +82,8 @@ class ViewerContainer extends Component<Props> {
    */
   public componentWillUnmount () {
     super.componentWillUnmount()
-    document.removeEventListener('keydown', this._keyDownHandler)
-    document.removeEventListener('keyup', this._keyUpHandler)
+    document.removeEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler))
+    document.removeEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler))
   }
 
   /**
@@ -147,7 +145,6 @@ class ViewerContainer extends Component<Props> {
     const playerControl = (<PlayerControl key='player-control'
       num_frames={Session.getState().task.items.length}
     />)
-
     return (
         <div
           ref={(element) => {
@@ -161,53 +158,7 @@ class ViewerContainer extends Component<Props> {
             outline: 'none', width: '100%', background: '#222222'
           }}
         >
-          {<div style={{
-            boxShadow: '0px 4px 4px #FAEDD2',
-            padding: '2%',
-            margin: '2%',
-            background: '#ebebeb',
-            borderRadius: '10px',
-            zIndex: 100,
-          }}
-          >
-            <div style={{float: 'right'}}>
-              <Tooltip title={'Close'} key={'Close'}>
-                <IconButton>
-                  <FontAwesomeIcon icon={fa.faTimes} size='xs'/>
-                </IconButton>
-              </Tooltip>
-            </div>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell align={'center'}>
-                    {'Key'}</TableCell>
-                  <TableCell align={'center'}>
-                    {'Functionality'}</TableCell>
-                  <TableCell align={'center'}>
-                    {'Label Type'}</TableCell>
-                  <TableCell align={'center'}>
-                    {'Location'}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell>
-                    {"S"}
-                  </TableCell>
-                  <TableCell>
-                    {"Change transformation control to scale mode"}
-                  </TableCell>
-                  <TableCell>
-                    {"Box 3D"}
-                  </TableCell>
-                  <TableCell>
-                    {"Label 3D Handler"}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-            </div>}
+        <ShortcutList open={true}/>
           <div
             ref={(element) => {
               if (element) {

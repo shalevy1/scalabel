@@ -66,8 +66,6 @@ class Label3dViewer extends Viewer<Props> {
   private target: THREE.Mesh
   /** raycaster */
   private _raycaster: THREE.Raycaster
-  /** The hashed list of keys currently down */
-  private _keyDownMap: { [key: string]: boolean }
 
   /** drawable label list */
   private _labelHandler: Label3DHandler
@@ -104,8 +102,6 @@ class Label3dViewer extends Viewer<Props> {
     this._raycaster.far = 100.0
     this._raycaster.linePrecision = 0.02
 
-    this._keyDownMap = {}
-
     this._keyUpListener = (e) => { this.onKeyUp(e) }
     this._keyDownListener = (e) => { this.onKeyDown(e) }
   }
@@ -115,8 +111,8 @@ class Label3dViewer extends Viewer<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', this._keyDownListener)
-    document.addEventListener('keyup', this._keyUpListener)
+    document.addEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownListener.bind(this)))
+    document.addEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpListener.bind(this)))
   }
 
   /**
@@ -124,8 +120,8 @@ class Label3dViewer extends Viewer<Props> {
    */
   public componentWillUnmount () {
     super.componentWillUnmount()
-    document.removeEventListener('keydown', this._keyDownListener)
-    document.removeEventListener('keyup', this._keyUpListener)
+    document.removeEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownListener.bind(this)))
+    document.removeEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpListener.bind(this)))
   }
 
   /**
@@ -264,8 +260,6 @@ class Label3dViewer extends Viewer<Props> {
       return
     }
 
-    this._keyDownMap[e.key] = true
-
     if (this._labelHandler.onKeyDown(e)) {
       this.renderThree()
     }
@@ -279,8 +273,6 @@ class Label3dViewer extends Viewer<Props> {
     if (this.checkFreeze()) {
       return
     }
-
-    this._keyDownMap[e.key] = true
 
     if (this._labelHandler.onKeyUp(e)) {
       this.renderThree()

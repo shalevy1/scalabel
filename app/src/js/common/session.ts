@@ -46,6 +46,10 @@ class Session {
   public status: ConnectionStatus
   /** Overwriteable function that adds side effects to state change */
   public applyStatusEffects: () => void
+  /** The hashed list of keys currently down */
+  public keyDownMap: { [key: string]: boolean }
+
+  public showShortcuts: () => void;
 
   constructor () {
     this.images = []
@@ -62,6 +66,8 @@ class Session {
     this.applyStatusEffects = () => { return }
     this.testMode = false
     this.store = configureStore({}, this.devMode)
+    this.keyDownMap = {}
+    this.showShortcuts = () => {};
   }
 
   /**
@@ -111,6 +117,38 @@ class Session {
     this.status = newStatus
     this.applyStatusEffects()
     return newStatus
+  }
+
+  /**
+   * Callback function when key is down
+   * @param {KeyboardEvent} e - event
+   */
+  public onKeyDown (e: KeyboardEvent, callback: (e: KeyboardEvent) => void) {
+    if (this.status === ConnectionStatus.RECONNECTING) {
+      return
+    }
+
+    const key = e.key
+    this.keyDownMap[key] = true
+    callback(e);
+  }
+
+  /**
+   * Callback function when key is up
+   * @param {KeyboardEvent} e - event
+   */
+  public onKeyUp (e: KeyboardEvent, callback: (e: KeyboardEvent) => void) {
+    const key = e.key
+    delete this.keyDownMap[key]
+    callback(e);
+  }
+  /**
+   * Whether a specific key is pressed down
+   * @param {string} key - the key to check
+   * @return {boolean}
+   */
+  public isKeyDown (key: string): boolean {
+    return this.keyDownMap[key]
   }
 }
 

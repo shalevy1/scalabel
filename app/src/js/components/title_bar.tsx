@@ -13,7 +13,6 @@ import Synchronizer from '../common/synchronizer'
 import { defaultAppBar } from '../styles/general'
 import { StatusMessageBox } from '../styles/label'
 import { Component } from './component'
-import * as types from '../action/types'
 
 // how long to wait until saving times out
 export const saveTimeout = 20000
@@ -95,7 +94,7 @@ function toggleAssistantView () {
 * show current keyboard shortcuts
 */
 function toggleKeyboardShortcutList () {
-  console.log(types.SHOW_KEYBOARD_SHORTCUTS)
+  Session.showShortcuts();
 }
 /**
  * Title bar

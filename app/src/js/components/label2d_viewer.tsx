@@ -1,6 +1,7 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import { Label2DList } from '../drawable/2d/label2d_list'
+import Session from '../common/session'
+import { Label2DHandler } from '../drawable/2d/label2d_handler'
 import { getCurrentViewerConfig } from '../functional/state_util'
 import { ImageViewerConfigType, State } from '../functional/types'
 import { Vector2D } from '../math/vector2d'
@@ -46,7 +47,7 @@ export class Label2dViewer extends Viewer<Props> {
   public controlContext: CanvasRenderingContext2D | null
 
   /** drawable label list */
-  private _labels: Label2DList
+  private _labelHandler: Label2DHandler
   /** The label canvas */
   private labelCanvas: HTMLCanvasElement | null
   /** The control canvas */
@@ -85,7 +86,7 @@ export class Label2dViewer extends Viewer<Props> {
     this.labelContext = null
     this.labelCanvas = null
     this.display = null
-    this._labels = new Label2DList()
+    this._labelHandler = new Label2DHandler()
     this.crosshair = React.createRef()
   }
 
@@ -182,7 +183,7 @@ export class Label2dViewer extends Viewer<Props> {
       this.controlCanvas !== null && this.controlContext !== null) {
       clearCanvas(this.labelCanvas, this.labelContext)
       clearCanvas(this.controlCanvas, this.controlContext)
-      this._labels.redraw(this.labelContext, this.controlContext,
+      Session.label2dList.redraw(this.labelContext, this.controlContext,
         this.displayToImageRatio * UP_RES_RATIO)
     }
     return true
@@ -200,7 +201,7 @@ export class Label2dViewer extends Viewer<Props> {
       // get mouse position in image coordinates
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
-    if (this._labels.onMouseDown(mousePos, labelIndex, handleIndex)) {
+    if (this._labelHandler.onMouseDown(mousePos, labelIndex, handleIndex)) {
       e.stopPropagation()
     }
     this.redraw()
@@ -217,7 +218,7 @@ export class Label2dViewer extends Viewer<Props> {
 
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
-    this._labels.onMouseUp(mousePos, labelIndex, handleIndex)
+    this._labelHandler.onMouseUp(mousePos, labelIndex, handleIndex)
     this.redraw()
   }
 
@@ -243,14 +244,14 @@ export class Label2dViewer extends Viewer<Props> {
     // update the currently hovered shape
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
-    if (this._labels.onMouseMove(
+    if (this._labelHandler.onMouseMove(
       mousePos,
       getCurrentImageSize(this.state, this.props.id),
       labelIndex, handleIndex
     )) {
       e.stopPropagation()
-      this.redraw()
     }
+    this.redraw()
   }
 
   /**
@@ -262,7 +263,7 @@ export class Label2dViewer extends Viewer<Props> {
       return
     }
 
-    this._labels.onKeyDown(e)
+    this._labelHandler.onKeyDown(e)
     this.redraw()
   }
 
@@ -280,7 +281,7 @@ export class Label2dViewer extends Viewer<Props> {
       // Control or command
       this.setDefaultCursor()
     }
-    this._labels.onKeyUp(e)
+    this._labelHandler.onKeyUp(e)
     this.redraw()
   }
 
@@ -289,7 +290,7 @@ export class Label2dViewer extends Viewer<Props> {
    */
   protected updateState (state: State): void {
     this.display = this.props.display
-    this._labels.updateState(state, state.user.select.item)
+    this._labelHandler.updateState(state)
   }
 
   /**

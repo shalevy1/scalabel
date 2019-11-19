@@ -158,7 +158,7 @@ class ViewerContainer extends Component<Props> {
             outline: 'none', width: '100%', background: '#222222'
           }}
         >
-        <ShortcutList open={true}/>
+        <ShortcutList open={false}/>
           <div
             ref={(element) => {
               if (element) {

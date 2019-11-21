@@ -243,9 +243,18 @@ class Label3dViewer extends Viewer<Props> {
     if (control) {
       shapes.push(control)
     }
-    const intersects = this._raycaster.intersectObjects(
-      shapes, false
-    )
+    const intersectsControl = control ?
+      this._raycaster.intersectObjects(
+        [control], false
+      ) :
+      this._raycaster.intersectObjects(
+        [], false
+      )
+    const intersects = intersectsControl && intersectsControl.length > 0 ?
+      intersectsControl :
+      this._raycaster.intersectObjects(
+        shapes, false
+      )
     const consumed = (intersects && intersects.length > 0) ?
       this._labels.onMouseMove(x, y, this.camera, intersects[0]) :
       this._labels.onMouseMove(x, y, this.camera)

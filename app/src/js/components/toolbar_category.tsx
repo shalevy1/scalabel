@@ -12,6 +12,7 @@ import { changeSelectedLabelsCategories } from '../action/select'
 import Session from '../common/session'
 import { categoryStyle } from '../styles/label'
 import { Component } from './component'
+import { NestedCategory } from '../server/types'
 
 interface ClassType {
   /** root of the category selector */
@@ -65,7 +66,7 @@ class MultipleSelect extends Component<Props> {
    * Render the category in a list
    */
   public renderCategory (
-    categories: string[], classes: ClassType, headerText: string) {
+    categories: NestedCategory, classes: ClassType, headerText: string) {
     const state = Session.getState()
     const currentCategoryId = state.user.select.category
     const currentCategory = state.task.config.categories[currentCategoryId]
@@ -74,26 +75,29 @@ class MultipleSelect extends Component<Props> {
         <FormControl className={classes.formControl}>
           <ListItemText classes={{ primary: classes.primary }}
             primary={headerText} />
-          <RadioGroup className={classes.root}>
-            {categories.map((name: string, index: number) => (
-              <FormControlLabel
-                key={index}
-                control={<Radio
-                  checked={currentCategory === name}
-                  onChange={this.handleChange}
-                  key={'kk'}
-                  value={name}
-                  icon={<RadioButtonUncheckedIcon fontSize='small' />}
-                  checkedIcon={<RadioButtonCheckedIcon fontSize='small' />}
-                  classes={{
-                    root: classes.checkbox,
-                    checked: classes.checked
-                  }}
-                />}
-                label={name}
-              />
-            ))}
-          </RadioGroup>
+          {Object.keys(categories).map((key: string, index: number) => (
+              <ListItemText primary={key} />
+              <RadioGroup className={classes.root}>
+                {categories[key].map((name: string, index: number) => (
+                  <FormControlLabel
+                    key={index}
+                    control={<Radio
+                      checked={currentCategory === name}
+                      onChange={this.handleChange}
+                      key={'kk'}
+                      value={name}
+                      icon={<RadioButtonUncheckedIcon fontSize='small' />}
+                      checkedIcon={<RadioButtonCheckedIcon fontSize='small' />}
+                      classes={{
+                        root: classes.checkbox,
+                        checked: classes.checked
+                      }}
+                    />}
+                    label={name}
+                  />
+                ))}
+              </RadioGroup>
+          ))}
         </FormControl>
       </div>
     )

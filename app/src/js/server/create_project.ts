@@ -12,6 +12,8 @@ import { convertItemToImport } from './import'
 import Session from './server_session'
 import * as types from './types'
 import * as util from './util'
+import { NestedCategory } from './types'
+
 
 /**
  * convert fields to form and validate input
@@ -120,7 +122,7 @@ function readCategoriesFile (path: string): Promise<NestedCategory> {
           }
           categoryDict[category.name] = categoriesList
       }
-      resolve(categoriesList)
+      resolve(categoryDict)
     })
   })
 }

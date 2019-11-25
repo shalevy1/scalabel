@@ -69,6 +69,8 @@ export interface FormFileData {
   items: Array<Partial<ItemExport>>
 }
 
+export type NestedCategory = { [name: string] : string[] }
+
 /**
  * Defining the types of some general callback functions
  */

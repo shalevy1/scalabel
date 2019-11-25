@@ -102,7 +102,7 @@ function getDefaultCategories (labelType: string): string[] {
 /**
  * Read categories from yaml file at path
  */
-function readCategoriesFile (path: string): Promise<string[]> {
+function readCategoriesFile (path: string): Promise<NestedCategory> {
   return new Promise((resolve, reject) => {
     fs.readFile(path, 'utf8', (err: types.MaybeError, file: string) => {
       if (err) {
@@ -110,10 +110,15 @@ function readCategoriesFile (path: string): Promise<string[]> {
         return
       }
       // TODO: support subcategories
+      // TODO: still need to do recursive structure
       const categories = yaml.load(file)
-      const categoriesList = []
+      const categoryDict: NestedCategory = {}
       for (const category of categories) {
-        categoriesList.push(category.name)
+          const categoriesList:string[] = []
+          for (const subcat of category.subcategories) {
+              categoriesList.push(subcat.name)
+          }
+          categoryDict[category.name] = categoriesList
       }
       resolve(categoriesList)
     })

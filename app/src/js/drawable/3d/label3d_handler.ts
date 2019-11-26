@@ -85,14 +85,12 @@ export class Label3DHandler {
    */
   public onMouseDown (x: number, y: number, camera: THREE.Camera): boolean {
     if (this._highlightedLabel) {
-      if (Session.label3dList.control.attached()) {
-        const consumed = this._highlightedLabel.onMouseDown(x, y, camera)
-        if (consumed) {
-          this._mouseDownOnSelection = true
-          // Set current label as selected label
-          this.selectHighlighted()
-          return false
-        }
+      const consumed = this._highlightedLabel.onMouseDown(x, y, camera)
+      if (consumed) {
+        this._mouseDownOnSelection = true
+        // Set current label as selected label
+        this.selectHighlighted()
+        return false
       }
     }
 
@@ -125,7 +123,7 @@ export class Label3DHandler {
           continue
         }
         const labelId = (cube as Cube3D).label.labelId
-        Session.label3dList.labels[labelId].onMouseUp()
+        labelList.labels[labelId].onMouseUp()
       }
     }
     if (this._labelChanged) {
@@ -137,7 +135,7 @@ export class Label3DHandler {
         }
         cube.applyMatrix(labelList.selectedLabelGroup.matrix)
         const labelId = (cube as Cube3D).label.labelId
-        const label = Session.label3dList.labels[labelId]
+        const label = labelList.labels[labelId]
         const [labelIds,,labelShapes] = label.shapeObjects()
         ids = ids.concat(labelIds)
         shapes = shapes.concat(labelShapes)

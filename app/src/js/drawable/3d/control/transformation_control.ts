@@ -136,9 +136,9 @@ export class TransformationControl extends THREE.Group {
   public validateController () {
     if (!this._object) {
       return true
-    } else if (this._object.children.length <= 3) {
+    } else if (this._object.userData.numberOfSelectedLabels <= 1) {
       return true
-    } else if (this._object.children.length >= 4 &&
+    } else if (this._object.userData.numberOfSelectedLabels >= 2 &&
               this._currentController === this._scaleControl) {
       this.switchController(this._rotationControl)
       return false

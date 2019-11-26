@@ -250,13 +250,7 @@ export class Label3dViewer extends Viewer<Props> {
       label3dList.raycastableShapes.slice() as unknown as THREE.Object3D[]
     )
     const control = label3dList.control
-    const intersectsControl = control ?
-      this._raycaster.intersectObjects(
-        [control], false
-      ) :
-      this._raycaster.intersectObjects(
-        [], false
-      )
+    const intersectsControl = this._raycaster.intersectObjects([control], false)
     const intersects = intersectsControl && intersectsControl.length > 0 ?
       intersectsControl :
       this._raycaster.intersectObjects(

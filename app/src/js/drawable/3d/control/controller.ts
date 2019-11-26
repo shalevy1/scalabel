@@ -169,7 +169,7 @@ export abstract class Controller extends THREE.Object3D {
 
       const worldScale = new THREE.Vector3()
       this._object.getWorldScale(worldScale)
-      if (this._object.children.length >= 4) {
+      if (this._object.userData.numberOfSelectedLabels >= 2) {
         for (const cube of this._object.children) {
           if (cube instanceof THREE.LineSegments) {
             cube.geometry.computeBoundingBox()

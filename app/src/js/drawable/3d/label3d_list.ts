@@ -238,6 +238,7 @@ export class Label3DList {
           cube.scale.y,
           cube.scale.z)
         cube.scale.set(1,1,1)
+        this._boundingBox.visible = false
       } else if (groupChanged) {
         // Check if the group labels have changed
         const bbox = new THREE.Box3().setFromObject(this._selectedLabelGroup)
@@ -259,6 +260,8 @@ export class Label3DList {
           cube.applyMatrix(groupMatrixInv)
         }
       }
+      this._selectedLabelGroup.userData.numberOfSelectedLabels =
+        selectedLabelIds.length
       this._selectedLabelGroup.add(this._boundingBox)
       this._selectedLabelGroup.add(this.control)
       this.control.attach(this._selectedLabelGroup)
@@ -308,7 +311,9 @@ export class Label3DList {
       const label = this._labels[labelId]
       if (label) {
         label.selected = true
-        label.addToSelectedGroup(this._selectedLabelGroup)
+        for (const shape of label.shapes()) {
+          this._selectedLabelGroup.add(shape)
+        }
       }
     }
   }

@@ -227,7 +227,8 @@ export class Label2dViewer extends Viewer<Props> {
       // get mouse position in image coordinates
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
-    if (this._labelHandler.onMouseDown(mousePos, labelIndex, handleIndex)) {
+    if (this._labelHandler.onMouseDown(mousePos, labelIndex, handleIndex) &&
+        !this.isKeyDown(Key.META) && !this.isKeyDown(Key.CONTROL)) {
       e.stopPropagation()
     }
 

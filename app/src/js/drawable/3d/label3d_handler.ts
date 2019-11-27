@@ -314,7 +314,7 @@ export class Label3DHandler {
 
   /**
    * Whether an object is part of the group control
-   * @param {object} key
+   * @param {object} object
    */
   private isGroupControl (object: THREE.Object3D): boolean {
     const control = Session.label3dList.control

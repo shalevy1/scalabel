@@ -112,6 +112,7 @@ export class TransformationControl extends THREE.Group {
     this.updateMatrix()
     this.updateMatrixWorld(true)
     this._currentController.attach(object)
+    this.visible = true
     this._object = object
   }
 
@@ -133,12 +134,12 @@ export class TransformationControl extends THREE.Group {
   /**
    * Enforce that current controller is valid
    */
-  public validateController () {
+  public validateController (numberOfSelectedLabels: number) {
     if (!this._object) {
       return true
-    } else if (this._object.userData.numberOfSelectedLabels <= 1) {
+    } else if (numberOfSelectedLabels <= 1) {
       return true
-    } else if (this._object.userData.numberOfSelectedLabels >= 2 &&
+    } else if (numberOfSelectedLabels >= 2 &&
               this._currentController === this._scaleControl) {
       this.switchController(this._rotationControl)
       return false

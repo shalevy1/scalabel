@@ -239,8 +239,7 @@ export class Label3DList {
           cube.scale.z)
         cube.scale.set(1,1,1)
         this._boundingBox.visible = false
-      } else if (groupChanged) {
-        // Check if the group labels have changed
+      } else if (groupChanged) { // Check if the group labels have changed
         const bbox = new THREE.Box3().setFromObject(this._selectedLabelGroup)
         bbox.getCenter(this._selectedLabelGroup.position)
         for (const cube of this._selectedLabelGroup.children) {
@@ -265,11 +264,11 @@ export class Label3DList {
       this._selectedLabelGroup.add(this._boundingBox)
       this._selectedLabelGroup.add(this.control)
       this.control.attach(this._selectedLabelGroup)
-      this.control.validateController()
+      this.control.validateController(selectedLabelIds.length)
     } else {
       this._selectedLabelGroup = new THREE.Group()
       this._boundingBox = new THREE.LineSegments()
-      this.control.detach()
+      this.control.visible = false
     }
     this._scene.add(this._selectedLabelGroup)
   }

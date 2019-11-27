@@ -199,13 +199,14 @@ export class Label3DHandler {
    * @returns true if consumed, false otherwise
    */
   public onKeyDown (e: KeyboardEvent): boolean {
+    const labelList = Session.label3dList
     switch (e.key) {
       case Key.SPACE:
         const box = new Box3D()
         const planeId = (this._plane) ? this._plane.labelId : -1
         box.init(
           this._selectedItemIndex,
-          Session.label3dList.currentCategory,
+          labelList.currentCategory,
           this._viewerConfig,
           planeId
         )
@@ -215,7 +216,7 @@ export class Label3DHandler {
             const newTrack = new Track()
             newTrack.updateState(
               makeTrack(-1),
-              makeTrackPolicy(newTrack, Session.label3dList.policyType)
+              makeTrackPolicy(newTrack, labelList.policyType)
             )
             newTrack.onLabelCreated(this._selectedItemIndex, box, [-1])
           } else {
@@ -231,7 +232,7 @@ export class Label3DHandler {
       case Key.ESCAPE:
       case Key.ENTER:
         Session.dispatch(selectLabel(
-          Session.label3dList.selectedLabelIds, -1, -1
+          labelList.selectedLabelIds, -1, -1
         ))
         return true
       case Key.P_UP:
@@ -239,11 +240,11 @@ export class Label3DHandler {
         if (this._plane) {
           if (this._plane.selected) {
             Session.dispatch(selectLabel(
-              Session.label3dList.selectedLabelIds, -1, -1
+              labelList.selectedLabelIds, -1, -1
             ))
           } else {
             Session.dispatch(selectLabel(
-              Session.label3dList.selectedLabelIds,
+              labelList.selectedLabelIds,
               this._selectedItemIndex,
               this._plane.labelId
             ))
@@ -253,17 +254,14 @@ export class Label3DHandler {
         return false
       case Key.E_UP:
       case Key.E_LOW:
-        if (Session.label3dList.selectedLabelGroup.children.length > 3) {
+        if (labelList.selectedLabelGroup.userData.numberOfSelectedLabels >= 2) {
           return false
         }
         break
       default:
         this._keyDownMap[e.key] = true
     }
-    if (Session.label3dList.selectedLabelGroup.children.length > 1) {
-      return Session.label3dList.control.onKeyDown(e)
-    }
-    return false
+    return labelList.control.onKeyDown(e)
   }
 
   /**
@@ -291,11 +289,7 @@ export class Label3DHandler {
     this._mouseOverGroupControl = false
     if (intersection) {
       const object = intersection.object
-      if (object.parent && object.parent.parent &&
-        ((object.parent === control) ||
-        (object.parent.parent === control) ||
-        (object.parent.parent.parent === control))
-      ) {
+      if (this.isGroupControl(object)) {
         for (const cube of labelList.selectedLabelGroup.children) {
           if (cube === control || cube === labelList.boundingBox) {
             continue
@@ -316,6 +310,21 @@ export class Label3DHandler {
         return
       }
     }
+  }
+
+  /**
+   * Whether an object is part of the group control
+   * @param {object} key
+   */
+  private isGroupControl (object: THREE.Object3D): boolean {
+    const control = Session.label3dList.control
+    while (object.parent) {
+      if (object.parent === control) {
+        return true
+      }
+      object = object.parent
+    }
+    return false
   }
 
   /**

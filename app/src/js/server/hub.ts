@@ -1,14 +1,12 @@
-import * as redis from 'redis'
 import * as socketio from 'socket.io'
-import { promisify } from 'util'
 import * as uuid4 from 'uuid/v4'
 import * as types from '../action/types'
 import { configureStore } from '../common/configure_store'
 import { ItemTypeName, LabelTypeName, TrackPolicyType } from '../common/types'
 import { makeItemStatus, makeState } from '../functional/states'
 import { State, TaskType } from '../functional/types'
-import Logger from './logger'
 import * as path from './path'
+import { RedisCache } from './redis_cache'
 import Session from './server_session'
 import { EventName } from './types'
 import { getSavedKey, getTaskKey,
@@ -18,18 +16,15 @@ import { getSavedKey, getTaskKey,
  * Starts socket.io handlers for saving, loading, and synchronization
  */
 export function startSocketServer (io: socketio.Server) {
-  const client = redis.createClient()
-  client.on('error', (err) => {
-    Logger.error(err)
-  })
+  const cache = new RedisCache()
 
   io.on(EventName.CONNECTION, (socket: socketio.Socket) => {
     socket.on(EventName.REGISTER, async (rawData: string) => {
-      await register(rawData, socket, client)
+      await register(rawData, socket, cache)
     })
 
     socket.on(EventName.ACTION_SEND, async (rawData: string) => {
-      await actionUpdate(rawData, socket, client, io)
+      await actionUpdate(rawData, socket, cache, io)
     })
   })
 }
@@ -38,7 +33,7 @@ export function startSocketServer (io: socketio.Server) {
  * Load the correct state and subscribe to redis
  */
 async function register (
-  rawData: string, socket: socketio.Socket, client: redis.RedisClient) {
+  rawData: string, socket: socketio.Socket, cache: RedisCache) {
   const data = JSON.parse(rawData)
   const projectName = data.project
   const taskIndex = data.index
@@ -53,7 +48,7 @@ async function register (
   }
   const room = path.roomName(projectName, taskId, env.sync, sessId)
 
-  const state = await loadState(room, projectName, taskId, client)
+  const state = await loadState(room, projectName, taskId, cache)
   state.session.id = sessId
   state.task.config.autosave = env.autosave
 
@@ -68,7 +63,7 @@ async function register (
  */
 async function actionUpdate (
   rawData: string, socket: socketio.Socket,
-  client: redis.RedisClient, io: socketio.Server) {
+  cache: RedisCache, io: socketio.Server) {
   const data = JSON.parse(rawData)
   const projectName = data.project
   const taskId = data.taskId
@@ -77,10 +72,7 @@ async function actionUpdate (
   const env = Session.getEnv()
 
   const room = path.roomName(projectName, taskId, env.sync, sessId)
-  const state = await loadState(room, projectName, taskId, client)
-
-  // todo- handle concurrency with redis:
-  // https://github.com/NodeRedis/node_redis#optimistic-locks
+  const state = await loadState(room, projectName, taskId, cache)
   const store = configureStore(state)
 
   // For each action, update the backend store and broadcast
@@ -98,12 +90,8 @@ async function actionUpdate (
   const newState = store.getState().present
   const stringState = JSON.stringify(newState)
   const filePath = path.getFileKey(getSavedKey(projectName, taskId))
-  // TODO- don't save to storage every write
-  // TODO- should we still have separately, or rely on redis AOF?
-  await Session.getStorage().save(filePath, stringState)
 
-  const redisSetAsync = promisify(client.setex).bind(client)
-  await redisSetAsync(room, env.redisTimeout, stringState)
+  await cache.setExWithReminder(room, filePath, stringState)
 }
 
 /**
@@ -111,12 +99,11 @@ async function actionUpdate (
  */
 async function loadState (
   room: string, projectName: string, taskId: string,
-  client: redis.RedisClient): Promise<State> {
+  cache: RedisCache): Promise<State> {
   let state: State
 
   // first try to load from redis cache
-  const redisGetAsync = promisify(client.get).bind(client)
-  const redisValue: string = await redisGetAsync(room)
+  const redisValue = await cache.get(room)
   if (redisValue) {
     state = JSON.parse(redisValue)
   } else {

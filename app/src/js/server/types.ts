@@ -37,8 +37,12 @@ export interface Env {
   syncHost: string
   /** whether to save automatically */
   autosave: boolean
-  /** timeout for clearing value from redis cache */
+  /** timeout (seconds) for clearing value from redis cache */
   redisTimeout: number
+  /** write to disk after this time interval (seconds) since last update */
+  timeForWrite: number
+  /** write to disk every time this number of actions occurs */
+  numActionsForWrite: number
 }
 
 /**
@@ -128,7 +132,9 @@ export const defaultEnv: Env = {
   sync: false,
   syncHost: 'http://localhost',
   autosave: true,
-  redisTimeout: 3600
+  redisTimeout: 3600,
+  timeForWrite: 600,
+  numActionsForWrite: 10
 }
 
 /* default categories when file is missing and label is box2D or box3D */

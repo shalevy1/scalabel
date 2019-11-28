@@ -7,4 +7,6 @@ userManagement: false
 sync: false
 autosave: false
 redisTimeout: 3600
+timeForWrite: 600
+numActionsForWrite: 10
 ...

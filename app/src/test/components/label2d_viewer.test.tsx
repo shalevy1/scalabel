@@ -10,8 +10,6 @@ import { makeImageViewerConfig } from '../../js/functional/states'
 import { PolygonType, RectType } from '../../js/functional/types'
 import { testJson } from '../test_image_objects'
 
-const viewerRef: React.RefObject<Label2dViewer> = React.createRef()
-
 beforeAll(() => {
   Session.devMode = false
   Session.images.length = 0
@@ -22,13 +20,13 @@ beforeEach(() => {
   cleanup()
   initStore(testJson)
   Session.subscribe(() => Session.label2dList.updateState(Session.getState()))
-  setUpLabel2dViewer(1000, 1000)
 })
 
 afterEach(cleanup)
 
 /** Set up component for testing */
 function setUpLabel2dViewer (width: number, height: number) {
+  const viewerRef: React.RefObject<Label2dViewer> = React.createRef()
   Session.dispatch(action.addViewerConfig(0, makeImageViewerConfig(0)))
 
   const display = document.createElement('div')
@@ -76,6 +74,8 @@ function setUpLabel2dViewer (width: number, height: number) {
 
   expect(viewerRef.current).not.toBeNull()
   expect(viewerRef.current).not.toBeUndefined()
+
+  return viewerRef
 }
 
 /** Create mouse down event */
@@ -109,7 +109,7 @@ function mouseMoveEvent (
 }
 
 test('Draw 2d boxes to label2d list', () => {
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
   if (viewerRef.current) {
     // Draw first box
     viewerRef.current.onMouseMove(mouseMoveEvent(1, 1))
@@ -194,7 +194,7 @@ test('Draw 2d boxes to label2d list', () => {
 
 test('Draw 2d polygons to label2d list', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw the first polygon
@@ -295,7 +295,7 @@ test('Draw 2d polygons to label2d list', () => {
 
 test('2d polygons highlighted and selected', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw first polygon
@@ -373,7 +373,7 @@ test('2d polygons highlighted and selected', () => {
 
 test('validation check for polygon2d', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw a valid polygon
@@ -502,7 +502,7 @@ test('validation check for polygon2d', () => {
 
 test('2d polygons drag vertices, midpoints and edges', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     viewerRef.current.onMouseMove(mouseMoveEvent(10, 10))
@@ -583,7 +583,7 @@ test('2d polygons drag vertices, midpoints and edges', () => {
 
 test('2d polygons delete vertex and draw bezier curve', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw a polygon and delete vertex when drawing
@@ -739,7 +739,7 @@ test('2d polygons delete vertex and draw bezier curve', () => {
 
 test('2d polygons multi-select and multi-label moving', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw first polygon
@@ -892,7 +892,7 @@ test('2d polygons multi-select and multi-label moving', () => {
 
 test('2d polygons linking labels and moving', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw first polygon
@@ -1063,7 +1063,7 @@ test('2d polygons linking labels and moving', () => {
 
 test('2d polygons unlinking', () => {
   Session.dispatch(action.changeSelect({ labelType: 1 }))
-  expect(viewerRef.current).not.toBeNull()
+  const viewerRef = setUpLabel2dViewer(1000, 1000)
 
   if (viewerRef.current) {
     // draw first polygon

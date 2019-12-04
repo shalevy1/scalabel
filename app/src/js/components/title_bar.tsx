@@ -8,6 +8,7 @@ import { withStyles } from '@material-ui/core/styles/index'
 import Typography from '@material-ui/core/Typography'
 import _ from 'lodash'
 import React from 'react'
+import * as types from '../action/types'
 import Session, { ConnectionStatus } from '../common/session'
 import Synchronizer from '../common/synchronizer'
 import { defaultAppBar } from '../styles/general'
@@ -91,10 +92,14 @@ function toggleAssistantView () {
 }
 
 /**
-* show current keyboard shortcuts
-*/
-function toggleKeyboardShortcutList () {
-  Session.showShortcuts();
+ * show current keyboard shortcuts
+ */
+function toggleKeyboardShortcutsList () {
+  Session.showShortcuts = !Session.showShortcuts
+  Session.dispatch({
+    type: types.UPDATE_ALL,
+    sessionId: Session.id
+  })
 }
 /**
  * Title bar
@@ -135,7 +140,11 @@ class TitleBar extends Component<Props> {
 
     const buttonInfo = [
       { title: 'Instructions', href: instructionLink, icon: fa.faInfo },
-      { title: 'Keyboard Usage', icon: fa.faQuestion, onClick: toggleKeyboardShortcutList},
+      {
+        title: 'Keyboard Usage',
+        icon: fa.faQuestion,
+        onClick: toggleKeyboardShortcutsList
+      },
       { title: 'Dashboard', href: dashboardLink, icon: fa.faList },
       {
         title: 'Assistant View', onClick: toggleAssistantView,

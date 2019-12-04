@@ -4,14 +4,13 @@ import * as types from '../common/types'
 import { ImageViewerConfigType, ViewerConfigType } from '../functional/types'
 import ViewerConfigUpdater from '../view_config/viewer_config'
 import { Component } from './component'
-import ShortcutList from './shortcut_list'
 import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
 import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
 import PointCloudViewer from './point_cloud_viewer'
-
+import ShortcutList from './shortcut_list'
 
 interface Props {
   /** id of the viewer, for referencing viewer config in state */
@@ -73,8 +72,8 @@ class ViewerContainer extends Component<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler))
-    document.addEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler))
+    document.addEventListener('keydown', this._keyDownHandler)
+    document.addEventListener('keyup', this._keyUpHandler)
   }
 
   /**
@@ -82,8 +81,8 @@ class ViewerContainer extends Component<Props> {
    */
   public componentWillUnmount () {
     super.componentWillUnmount()
-    document.removeEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler))
-    document.removeEventListener('keyup', (e) => Session.onKeyUp(e, this._keyUpHandler))
+    document.removeEventListener('keydown', this._keyDownHandler)
+    document.removeEventListener('keyup', this._keyUpHandler)
   }
 
   /**
@@ -158,7 +157,7 @@ class ViewerContainer extends Component<Props> {
             outline: 'none', width: '100%', background: '#222222'
           }}
         >
-        <ShortcutList open={false}/>
+        <ShortcutList/>
           <div
             ref={(element) => {
               if (element) {

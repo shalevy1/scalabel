@@ -29,14 +29,20 @@ interface Props {
  * all the attributes and categories for the 2D bounding box labeling tool
  */
 export class ToolBar extends Component<Props> {
+  /** The hashed list of keys currently down */
+  private _keyDownMap: { [key: string]: boolean }
   /** key down handler */
   private _keyDownHandler: (e: KeyboardEvent) => void
+  /** key up handler */
+  private _keyUpHandler: (e: KeyboardEvent) => void
   constructor (props: Readonly<Props>) {
     super(props)
     this.handleToggle = this.handleToggle.bind(this)
     this._keyDownHandler = this.onKeyDown.bind(this)
+    this._keyUpHandler = this.onKeyUp.bind(this)
     this.handleAttributeToggle = this.handleAttributeToggle.bind(this)
     this.getAlignmentIndex = this.getAlignmentIndex.bind(this)
+    this._keyDownMap = {}
   }
 
   /**
@@ -72,6 +78,15 @@ export class ToolBar extends Component<Props> {
         }
         break
     }
+    this._keyDownMap[e.key] = true
+  }
+
+  /**
+   * Key up handler
+   * @param e
+   */
+  public onKeyUp (e: KeyboardEvent) {
+    delete this._keyDownMap[e.key]
   }
 
   /**
@@ -79,8 +94,8 @@ export class ToolBar extends Component<Props> {
    */
   public componentDidMount () {
     super.componentDidMount()
-    document.addEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler.bind(this)))
-    document.addEventListener('keyup', (e) => Session.onKeyUp(e, (_e) => {}))
+    document.addEventListener('keydown', this._keyDownHandler)
+    document.addEventListener('keyup', this._keyUpHandler)
   }
 
   /**
@@ -88,8 +103,8 @@ export class ToolBar extends Component<Props> {
    */
   public componentWillUnmount () {
     super.componentWillUnmount()
-    document.removeEventListener('keydown', (e) => Session.onKeyDown(e, this._keyDownHandler.bind(this)))
-    document.removeEventListener('keyup', (e) => Session.onKeyUp(e, (_e) => {}))
+    document.removeEventListener('keydown', this._keyDownHandler)
+    document.removeEventListener('keyup', this._keyUpHandler)
   }
 
   /**
@@ -264,7 +279,7 @@ export class ToolBar extends Component<Props> {
    * @return {boolean}
    */
   private isKeyDown (key: string): boolean {
-    return Session.isKeyDown(key)
+    return this._keyDownMap[key]
   }
 
   /**

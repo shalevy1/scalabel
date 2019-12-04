@@ -1,6 +1,6 @@
 import Session from '../common/session'
-import { LabelType, Select, ShapeType,
-  TaskType, ViewerConfigType } from '../functional/types'
+import { LabelType, Select,
+  ShapeType, SplitType, TaskType, ViewerConfigType } from '../functional/types'
 import * as types from './types'
 
 /** init session */
@@ -201,7 +201,7 @@ export function changeLabelsProps (
 }
 
 /**
- * Link two labels
+ * Link labels
  * @param {number} itemIndex
  * @param {[]number} labelIds labels to link
  */
@@ -209,6 +209,21 @@ export function linkLabels (
     itemIndex: number, labelIds: number[]): types.LinkLabelsAction {
   return {
     type: types.LINK_LABELS,
+    sessionId: Session.id,
+    itemIndex,
+    labelIds
+  }
+}
+
+/**
+ * unlink labels
+ * @param {number} itemIndex
+ * @param {[]number} labelIds labels to unlink
+ */
+export function unlinkLabels (
+    itemIndex: number, labelIds: number[]): types.UnlinkLabelsAction {
+  return {
+    type: types.UNLINK_LABELS,
     sessionId: Session.id,
     itemIndex,
     labelIds
@@ -282,6 +297,34 @@ export function changeViewerConfig (
     sessionId: Session.id,
     viewerId,
     config
+  }
+}
+
+/** action to split pane */
+export function splitPane (
+  pane: number,
+  split: SplitType,
+  viewerId: number
+): types.SplitPaneAction {
+  return {
+    type: types.SPLIT_PANE,
+    sessionId: Session.id,
+    pane,
+    split,
+    viewerId
+  }
+}
+
+/** action to delete pane */
+export function deletePane (
+  pane: number,
+  viewerId: number
+): types.DeletePaneAction {
+  return {
+    type: types.DELETE_PANE,
+    sessionId: Session.id,
+    pane,
+    viewerId
   }
 }
 

@@ -41,6 +41,8 @@ export const reducer: Reducer<State> = (
         state, action as types.ChangeLabelsAction)
     case types.LINK_LABELS:
       return common.linkLabels(state, action as types.LinkLabelsAction)
+    case types.UNLINK_LABELS:
+      return common.unlinkLabels(state, action as types.UnlinkLabelsAction)
     case types.MERGE_TRACKS:
       return common.mergeTracks(state, action as types.MergeTrackAction)
     case types.DELETE_LABELS:
@@ -49,6 +51,10 @@ export const reducer: Reducer<State> = (
       return common.addViewerConfig(
         state, action as types.AddViewerConfigAction
       )
+    case types.SPLIT_PANE:
+      return common.splitPane(state, action as types.SplitPaneAction)
+    case types.DELETE_PANE:
+      return common.deletePane(state, action as types.DeletePaneAction)
     case types.CHANGE_VIEWER_CONFIG:
       return common.changeViewerConfig(
         state, action as types.ChangeViewerConfigAction

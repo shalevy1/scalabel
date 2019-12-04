@@ -26,8 +26,11 @@ export const SCROLL_ZOOM_RATIO = 1.03
 export function getCurrentImageSize (state: State, viewerId: number): Size2D {
   const item = getCurrentItem(state)
   const sensor = state.user.viewerConfigs[viewerId].sensor
-  const image = Session.images[item.index][sensor]
-  return new Size2D(image.width, image.height)
+  if (sensor in Session.images[item.index]) {
+    const image = Session.images[item.index][sensor]
+    return new Size2D(image.width, image.height)
+  }
+  return new Size2D(0, 0)
 }
 
 /**
@@ -101,7 +104,11 @@ export function getVisibleCanvasCoords (
   if (display && canvas) {
     const displayRect = display.getBoundingClientRect()
     const imgRect = canvas.getBoundingClientRect()
-    return new Vector2D(displayRect.x - imgRect.x, displayRect.y - imgRect.y)
+    if (imgRect.x && imgRect.y) {
+      return new Vector2D(displayRect.x - imgRect.x, displayRect.y - imgRect.y)
+    }
+
+    return new Vector2D(displayRect.x, displayRect.y)
   }
   return new Vector2D(0, 0)
 }

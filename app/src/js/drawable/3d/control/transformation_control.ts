@@ -108,10 +108,10 @@ export class TransformationControl extends THREE.Group {
    * Attach to object
    * @param object
    */
-  public attach (object: THREE.Object3D) {
+  public attachController (object: THREE.Object3D) {
     this.updateMatrix()
     this.updateMatrixWorld(true)
-    this._currentController.attach(object)
+    this._currentController.attachController(object)
     this.visible = true
     this._object = object
   }
@@ -131,20 +131,21 @@ export class TransformationControl extends THREE.Group {
     return this._object !== null
   }
 
+  /** return if control is highlighted */
+  public isHighlighted () {
+    return this._currentController.isHighlighted()
+  }
+
   /**
-   * Enforce that current controller is valid
+   * Enforce that current controller is valid. Scaling is invalid for groups
+   * with more than one label
    */
   public validateController (numberOfSelectedLabels: number) {
-    if (!this._object) {
-      return true
-    } else if (numberOfSelectedLabels <= 1) {
-      return true
-    } else if (numberOfSelectedLabels >= 2 &&
-              this._currentController === this._scaleControl) {
+    if (this._object &&
+        numberOfSelectedLabels >= 2 &&
+        this._currentController === this._scaleControl) {
       this.switchController(this._rotationControl)
-      return false
     }
-    return true
   }
 
   /**
@@ -161,6 +162,6 @@ export class TransformationControl extends THREE.Group {
 
     this._currentController = controller
     this.add(this._currentController)
-    this.attach(object)
+    this.attachController(object)
   }
 }

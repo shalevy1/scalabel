@@ -84,6 +84,7 @@ export class Label3DHandler {
    * Process mouse down action
    */
   public onMouseDown (x: number, y: number, camera: THREE.Camera): boolean {
+    // if a label is highlighted, transform that label (likely a control sphere)
     if (this._highlightedLabel) {
       const consumed = this._highlightedLabel.onMouseDown(x, y, camera)
       if (consumed) {
@@ -94,6 +95,7 @@ export class Label3DHandler {
       }
     }
 
+    // if the mouse is over the group control, transform the group using control
     if (this._mouseOverGroupControl) {
       if (Session.label3dList.control.attached()) {
         this._mouseDownOnSelection = true
@@ -117,6 +119,8 @@ export class Label3DHandler {
     if (labelList.control.attached()) {
       consumed = labelList.control.onMouseUp()
     }
+
+    // if the control was not consumed, run onMouseUp on each label in group
     if (!consumed && labelList.selectedLabelGroup) {
       for (const cube of labelList.selectedLabelGroup.children) {
         if (cube === labelList.control || cube === labelList.boundingBox) {
@@ -126,6 +130,8 @@ export class Label3DHandler {
         labelList.labels[labelId].onMouseUp()
       }
     }
+
+    // if a labels have changed, save the labels, dispatch changeShapes
     if (this._labelChanged) {
       let ids: number[] = []
       let shapes: ShapeType[] = []
@@ -170,14 +176,17 @@ export class Label3DHandler {
   ): boolean {
     const labelList = Session.label3dList
     if (this._mouseDownOnSelection) {
+      // if mouse is down on selection, label has changed
       this._labelChanged = true
+      // if control is attached run onMouseMove with the group control
       if (labelList.control.attached()) {
         const consumed = labelList.control.onMouseMove(x, y, camera)
         if (consumed) {
           return true
         }
       }
-      if (labelList.selectedLabelGroup.children.length <= 3) {
+      // if there is one label in the group, run onMouseMove on it
+      if (labelList.selectedLabelGroup.userData.numberOfSelectedLabels <= 1) {
         for (const cube of labelList.selectedLabelGroup.children) {
           if (cube === labelList.control || cube === labelList.boundingBox) {
             continue
@@ -188,6 +197,7 @@ export class Label3DHandler {
       }
       return true
     } else {
+      // if mouse is not down on selection, update highlighting
       this.highlight(raycastIntersection)
     }
     return false
@@ -280,6 +290,7 @@ export class Label3DHandler {
   private highlight (intersection?: THREE.Intersection) {
     const labelList = Session.label3dList
     const control = labelList.control
+    // For each label, reset highlighting
     for (const key of Object.keys(labelList.labels)) {
       const labelId = labelList.labels[Number(key)].labelId
       labelList.labels[labelId].setHighlighted()
@@ -287,9 +298,14 @@ export class Label3DHandler {
     control.setHighlighted()
     this._highlightedLabel = null
     this._mouseOverGroupControl = false
+    // if there is an intersection, highlight intersected objects
     if (intersection) {
       const object = intersection.object
-      if (this.isGroupControl(object)) {
+      // control highlights if intersection is part of the control
+      control.setHighlighted(intersection)
+
+      // if group control is highlighted, highlight all labels in group
+      if (control.isHighlighted()) {
         for (const cube of labelList.selectedLabelGroup.children) {
           if (cube === control || cube === labelList.boundingBox) {
             continue
@@ -297,34 +313,16 @@ export class Label3DHandler {
           const labelId = (cube as Cube3D).label.labelId
           labelList.labels[labelId].setHighlighted(intersection)
         }
-        control.setHighlighted(intersection)
         this._mouseOverGroupControl = true
       }
 
+      // if label is intersected, highlight label
       const label = labelList.getLabelFromRaycastedObject3D(object)
-
       if (label) {
         label.setHighlighted(intersection)
         this._highlightedLabel = label
-        control.setHighlighted(intersection)
-        return
       }
     }
-  }
-
-  /**
-   * Whether an object is part of the group control
-   * @param {object} object
-   */
-  private isGroupControl (object: THREE.Object3D): boolean {
-    const control = Session.label3dList.control
-    while (object.parent) {
-      if (object.parent === control) {
-        return true
-      }
-      object = object.parent
-    }
-    return false
   }
 
   /**
@@ -337,7 +335,9 @@ export class Label3DHandler {
   }
 
   /**
-   * Select highlighted label
+   * Select highlighted label.
+   * If Control- or Meta-click, add to group or remove from group
+   * Otherwise select clicked label (and deselect other labels)
    */
   private selectHighlighted () {
     if (this._highlightedLabel !== null) {

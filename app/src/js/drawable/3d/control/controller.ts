@@ -64,6 +64,11 @@ export abstract class Controller extends THREE.Object3D {
     }
   }
 
+  /** return if control is highlighted */
+  public isHighlighted () {
+    return this._highlightedUnit != null
+  }
+
   /** mouse down */
   public onMouseDown (camera: THREE.Camera) {
     if (this._highlightedUnit && this._object) {
@@ -129,7 +134,7 @@ export abstract class Controller extends THREE.Object3D {
   }
 
   /** attach to object */
-  public attach (object: THREE.Object3D) {
+  public attachController (object: THREE.Object3D) {
     this._object = object
     this.updateMatrix()
     this.updateMatrixWorld(true)

@@ -66,7 +66,7 @@ export abstract class Controller extends THREE.Object3D {
 
   /** return if control is highlighted */
   public isHighlighted () {
-    return this._highlightedUnit != null
+    return this._highlightedUnit !== null
   }
 
   /** mouse down */

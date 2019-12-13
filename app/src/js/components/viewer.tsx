@@ -3,17 +3,17 @@ import React from 'react'
 import Session from '../common/session'
 import * as types from '../common/types'
 import { ImageViewerConfigType, ViewerConfigType } from '../functional/types'
-import { viewerContainerStyles } from '../styles/viewer_container'
+import { viewerStyles } from '../styles/viewer'
 import ViewerConfigUpdater from '../view_config/viewer_config'
 import { Component } from './component'
-import ImageViewer from './image_viewer'
-import Label2dViewer from './label2d_viewer'
-import Label3dViewer from './label3d_viewer'
-import PointCloudViewer from './point_cloud_viewer'
+import ImageCanvas from './image_canvas'
+import Label2dCanvas from './label2d_canvas'
+import Label3dCanvas from './label3d_canvas'
+import PointCloudCanvas from './point_cloud_canvas'
 
 /** Generate string to use for react component key */
-export function viewerContainerReactKey (id: number) {
-  return `viewerContainer${id}`
+export function viewerReactKey (id: number) {
+  return `viewer${id}`
 }
 
 interface ClassType {
@@ -31,7 +31,7 @@ interface Props {
 /**
  * Canvas Viewer
  */
-class ViewerContainer extends Component<Props> {
+class Viewer extends Component<Props> {
   /** Moveable container */
   private _container: HTMLDivElement | null
   /** viewer config */
@@ -106,36 +106,36 @@ class ViewerContainer extends Component<Props> {
       switch (config.type) {
         case types.ViewerConfigTypeName.IMAGE:
           views.push(
-            <ImageViewer
+            <ImageCanvas
               key={`imageView${id}`} display={this._container} id={id}
             />
           )
           views.push(
-            <Label2dViewer
+            <Label2dCanvas
               key={`label2dView${id}`} display={this._container} id={id}
             />
           )
           break
         case types.ViewerConfigTypeName.POINT_CLOUD:
           views.push(
-            <PointCloudViewer
+            <PointCloudCanvas
               key={`pointCloudView${id}`} display={this._container} id={id}
             />
           )
           views.push(
-            <Label3dViewer
+            <Label3dCanvas
               key={`label3dView${id}`} display={this._container} id={id}
             />
           )
           break
         case types.ViewerConfigTypeName.IMAGE_3D:
           views.push(
-            <ImageViewer
+            <ImageCanvas
               key={`imageView${id}`} display={this._container} id={id}
             />
           )
           views.push(
-            <Label3dViewer
+            <Label3dCanvas
               key={`label3dView${id}`} display={this._container} id={id}
             />
           )
@@ -248,5 +248,5 @@ class ViewerContainer extends Component<Props> {
 }
 
 export default withStyles(
-  viewerContainerStyles, { withTheme: true }
-)(ViewerContainer)
+  viewerStyles, { withTheme: true }
+)(Viewer)

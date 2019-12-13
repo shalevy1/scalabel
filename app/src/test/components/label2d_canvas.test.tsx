@@ -4,13 +4,13 @@ import * as React from 'react'
 import * as action from '../../js/action/common'
 import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
-import { Label2dViewer } from '../../js/components/label2d_viewer'
+import { Label2dCanvas } from '../../js/components/label2d_canvas'
 import { getShape } from '../../js/functional/state_util'
 import { makeImageViewerConfig } from '../../js/functional/states'
 import { PolygonType, RectType } from '../../js/functional/types'
 import { testJson } from '../test_image_objects'
 
-const viewerRef: React.RefObject<Label2dViewer> = React.createRef()
+const viewerRef: React.RefObject<Label2dCanvas> = React.createRef()
 
 beforeEach(() => {
   cleanup()
@@ -25,11 +25,11 @@ beforeAll(() => {
   initStore(testJson)
   Session.images.length = 0
   Session.images.push({ [-1]: new Image(1000, 1000) })
-  setUpLabel2dViewer(1000, 1000)
+  setUpLabel2dCanvas(1000, 1000)
 })
 
 /** Set up component for testing */
-function setUpLabel2dViewer (width: number, height: number) {
+function setUpLabel2dCanvas (width: number, height: number) {
   Session.dispatch(action.addViewerConfig(0, makeImageViewerConfig(0)))
 
   const display = document.createElement('div')
@@ -60,7 +60,7 @@ function setUpLabel2dViewer (width: number, height: number) {
 
   render(
     <div style={{ width: `${width}px`, height: `${height}px` }}>
-      <Label2dViewer
+      <Label2dCanvas
         classes={{
           label2d_canvas: 'label2dcanvas',
           control_canvas: 'controlcanvas'

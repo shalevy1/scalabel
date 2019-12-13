@@ -7,7 +7,7 @@ import { moveCamera, moveCameraAndTarget } from '../../js/action/point_cloud'
 import { selectLabel } from '../../js/action/select'
 import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
-import { Label3dViewer } from '../../js/components/label3d_viewer'
+import { Label3dCanvas } from '../../js/components/label3d_canvas'
 import { getCurrentViewerConfig, getShape } from '../../js/functional/state_util'
 import { makePointCloudViewerConfig } from '../../js/functional/states'
 import { CubeType, PointCloudViewerConfigType } from '../../js/functional/types'
@@ -53,10 +53,10 @@ beforeEach(() => {
 afterEach(cleanup)
 
 /** Set up component for testing */
-function setUpLabel3dViewer (
+function setUpLabel3dCanvas (
   paneId: number = 0
-): Label3dViewer {
-  const viewerRef: React.RefObject<Label3dViewer> = React.createRef()
+): Label3dCanvas {
+  const viewerRef: React.RefObject<Label3dCanvas> = React.createRef()
   Session.dispatch(
     action.addViewerConfig(viewerId, makePointCloudViewerConfig(paneId))
   )
@@ -89,7 +89,7 @@ function setUpLabel3dViewer (
 
   render(
     <div style={{ width: `${width}px`, height: `${height}px` }}>
-      <Label3dViewer
+      <Label3dCanvas
         classes={{
           label3d_canvas: 'label3dcanvas'
         }}
@@ -125,7 +125,7 @@ function mouseEvent (
 }
 
 test('Add 3d bbox', () => {
-  const viewer = setUpLabel3dViewer()
+  const viewer = setUpLabel3dCanvas()
 
   const spaceEvent = new KeyboardEvent('keydown', { key: ' ' })
 
@@ -174,7 +174,7 @@ test('Add 3d bbox', () => {
 })
 
 test('Move axis aligned 3d bbox along z axis', () => {
-  const viewer = setUpLabel3dViewer()
+  const viewer = setUpLabel3dCanvas()
 
   let state = Session.getState()
 

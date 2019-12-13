@@ -8,7 +8,7 @@ import { getCurrentViewerConfig, isCurrentItemLoaded } from '../functional/state
 import { Image3DViewerConfigType, PointCloudViewerConfigType, State } from '../functional/types'
 import { MAX_SCALE, MIN_SCALE, updateCanvasScale } from '../view_config/image'
 import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../view_config/point_cloud'
-import { Viewer } from './viewer'
+import { DrawableCanvas } from './drawable_canvas'
 
 const styles = () => createStyles({
   label3d_canvas: {
@@ -49,7 +49,7 @@ function normalizeCoordinatesToCanvas (
 /**
  * Canvas Viewer
  */
-export class Label3dViewer extends Viewer<Props> {
+export class Label3dCanvas extends DrawableCanvas<Props> {
   /** Canvas to draw on */
   private canvas: HTMLCanvasElement | null
   /** Container */
@@ -393,4 +393,4 @@ export class Label3dViewer extends Viewer<Props> {
   }
 }
 
-export default withStyles(styles, { withTheme: true })(Label3dViewer)
+export default withStyles(styles, { withTheme: true })(Label3dCanvas)

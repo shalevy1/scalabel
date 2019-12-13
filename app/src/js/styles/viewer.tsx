@@ -1,6 +1,6 @@
 import { createStyles } from '@material-ui/core'
 
-export const viewerContainerStyles = () => createStyles({
+export const viewerStyles = () => createStyles({
   viewer_container: {
     display: 'block',
     height: '100%',

@@ -10,11 +10,11 @@ import SplitPane from 'react-split-pane'
 import { changeViewerConfig, deletePane, splitPane, updateAll } from '../action/common'
 import Session from '../common/session'
 import * as types from '../common/types'
+import { makeDefaultViewerConfig } from '../functional/states'
 import { SplitType } from '../functional/types'
 import { paneBarStyles, resizerStyles } from '../styles/split_pane'
 import { Component } from './component'
-import ViewerContainer, { viewerContainerReactKey } from './viewer_container'
-import { makeDefaultViewerConfig } from '../functional/states'
+import Viewer, { viewerReactKey } from './viewer'
 
 interface ClassType {
   /** grid */
@@ -126,7 +126,7 @@ class LabelPane extends Component<Props> {
         </IconButton>
       )
 
-      const viewerContainerBar = (
+      const configBar = (
           <Grid
             justify={'flex-end'}
             container
@@ -144,10 +144,10 @@ class LabelPane extends Component<Props> {
       // Leaf, render viewer container
       return (
         <div>
-          {viewerContainerBar}
-          <ViewerContainer
+          {configBar}
+          <Viewer
             id={pane.viewerId}
-            key={viewerContainerReactKey(pane.viewerId)}
+            key={viewerReactKey(pane.viewerId)}
           />
         </div>
       )

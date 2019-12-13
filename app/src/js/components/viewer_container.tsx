@@ -1,16 +1,8 @@
-import { IconButton } from '@material-ui/core'
-import Grid from '@material-ui/core/Grid'
-import MenuItem from '@material-ui/core/MenuItem'
-import Select from '@material-ui/core/Select'
-import CloseIcon from '@material-ui/icons/Close'
-import ViewStreamIcon from '@material-ui/icons/ViewStream'
 import { withStyles } from '@material-ui/styles'
 import React from 'react'
-import { changeViewerConfig, deletePane, splitPane } from '../action/common'
 import Session from '../common/session'
 import * as types from '../common/types'
-import { makeImage3DViewerConfig, makeImageViewerConfig, makePointCloudViewerConfig } from '../functional/states'
-import { ImageViewerConfigType, SplitType, ViewerConfigType } from '../functional/types'
+import { ImageViewerConfigType, ViewerConfigType } from '../functional/types'
 import { viewerContainerStyles } from '../styles/viewer_container'
 import ViewerConfigUpdater from '../view_config/viewer_config'
 import { Component } from './component'
@@ -24,37 +16,7 @@ export function viewerContainerReactKey (id: number) {
   return `viewerContainer${id}`
 }
 
-/**
- * Create viewer config based on type
- * @param type
- * @param pane
- * @param sensor
- */
-function makeViewerConfig (
-  type: types.ViewerConfigTypeName,
-  pane: number,
-  sensor: number
-): ViewerConfigType | null {
-  switch (type) {
-    case types.ViewerConfigTypeName.IMAGE:
-      return makeImageViewerConfig(pane, sensor)
-    case types.ViewerConfigTypeName.IMAGE_3D:
-      return makeImage3DViewerConfig(pane, sensor)
-    case types.ViewerConfigTypeName.POINT_CLOUD:
-      return makePointCloudViewerConfig(pane, sensor)
-  }
-  return null
-}
-
 interface ClassType {
-  /** grid */
-  viewer_container_bar: string
-  /** select */
-  select: string
-  /** icon */
-  icon: string
-  /** icon rotated */
-  icon90: string
   /** container */
   viewer_container: string
 }
@@ -181,99 +143,7 @@ class ViewerContainer extends Component<Props> {
       }
     }
 
-    const viewerTypeMenu = (
-      <Select
-        value={
-          (this._viewerConfig) ? this._viewerConfig.type :
-            types.ViewerConfigTypeName.UNKNOWN
-        }
-        onChange={this.handleViewerTypeChange}
-        classes={{ select: this.props.classes.select }}
-        inputProps={{
-          classes: {
-            icon: this.props.classes.icon
-          }
-        }}
-      >
-        <MenuItem value={types.ViewerConfigTypeName.IMAGE}>Image</MenuItem>
-        <MenuItem value={types.ViewerConfigTypeName.POINT_CLOUD}>
-          Point Cloud
-        </MenuItem>
-        <MenuItem value={types.ViewerConfigTypeName.IMAGE_3D}>
-          Image 3D
-        </MenuItem>
-      </Select>
-    )
-
-    const verticalSplitButton = (
-      <IconButton
-        className={this.props.classes.icon90}
-        onClick={() => {
-          if (this._viewerConfig) {
-            Session.dispatch(splitPane(
-              this._viewerConfig.pane,
-              SplitType.VERTICAL,
-              this.props.id
-            ))
-          }
-        }}
-      >
-        <ViewStreamIcon />
-      </IconButton>
-    )
-
-    const horizontalSplitButton = (
-      <IconButton
-        className={this.props.classes.icon}
-        onClick={() => {
-          if (this._viewerConfig) {
-            Session.dispatch(splitPane(
-              this._viewerConfig.pane,
-              SplitType.HORIZONTAL,
-              this.props.id
-            ))
-          }
-        }}
-      >
-        <ViewStreamIcon />
-      </IconButton>
-    )
-
-    const deleteButton = (
-      <IconButton
-        className={this.props.classes.icon}
-        onClick={() => {
-          if (this._viewerConfig) {
-            Session.dispatch(deletePane(
-              this._viewerConfig.pane,
-              this.props.id
-            ))
-          }
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
-    )
-
-    const viewerContainerBar = (
-        <Grid
-          justify={'flex-end'}
-          container
-          direction='row'
-          classes={{
-            container: this.props.classes.viewer_container_bar
-          }}
-        >
-          {viewerTypeMenu}
-          {verticalSplitButton}
-          {horizontalSplitButton}
-          {deleteButton}
-        </Grid>
-    )
-
     return (
-      <div>
-        {viewerContainerBar}
         <div
           ref={(element) => {
             if (element && this._container !== element) {
@@ -293,32 +163,7 @@ class ViewerContainer extends Component<Props> {
         >
           {views}
         </div>
-      </div>
     )
-  }
-
-  /** Handle viewer type select change */
-  private handleViewerTypeChange (
-    e: React.ChangeEvent<{
-      /** Inherited from material ui */
-      name?: string;
-      /** Inherited from material ui */
-      value: unknown
-    }>
-  ): void {
-    if (this._viewerConfig) {
-      const newConfig = makeViewerConfig(
-        e.target.value as types.ViewerConfigTypeName,
-        this._viewerConfig.pane,
-        this._viewerConfig.sensor
-      )
-      if (newConfig) {
-        Session.dispatch(changeViewerConfig(
-          this.props.id,
-          newConfig
-        ))
-      }
-    }
   }
 
   /**

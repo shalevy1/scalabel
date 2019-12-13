@@ -22,7 +22,8 @@ import {
   TaskStatus,
   TaskType,
   TrackType,
-  UserType
+  UserType,
+  ViewerConfigType
 } from './types'
 
 /**
@@ -214,19 +215,25 @@ export function makeImage3DViewerConfig (
 }
 
 /**
- * Create default viewer config for item type
- * @param sensors
+ * Create viewer config based on type
  * @param type
+ * @param pane
+ * @param sensor
  */
 export function makeDefaultViewerConfig (
-  type: types.DataType, pane: number = 0
-) {
+  type: types.ViewerConfigTypeName,
+  pane: number,
+  sensor: number
+): ViewerConfigType | null {
   switch (type) {
-    case types.DataType.IMAGE:
-      return makeImageViewerConfig(pane)
-    case types.DataType.POINT_CLOUD:
-      return makePointCloudViewerConfig(pane)
+    case types.ViewerConfigTypeName.IMAGE:
+      return makeImageViewerConfig(pane, sensor)
+    case types.ViewerConfigTypeName.IMAGE_3D:
+      return makeImage3DViewerConfig(pane, sensor)
+    case types.ViewerConfigTypeName.POINT_CLOUD:
+      return makePointCloudViewerConfig(pane, sensor)
   }
+  return null
 }
 
 /**

@@ -14,7 +14,7 @@ import { makeDefaultViewerConfig } from '../functional/states'
 import { SplitType } from '../functional/types'
 import { paneBarStyles, resizerStyles } from '../styles/split_pane'
 import { Component } from './component'
-import Viewer, { viewerReactKey } from './viewer'
+import { viewerReactKey } from './drawable_viewer'
 
 interface ClassType {
   /** grid */

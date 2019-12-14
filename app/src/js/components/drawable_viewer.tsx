@@ -20,16 +20,6 @@ export interface ViewerProps {
   id: number
 }
 
-/** Make drawable viewer based on viewer config */
-export function viewerFactory (
-  viewerConfig: ViewerConfigType
-): DrawableViewer | null {
-  switch (viewerConfig.type) {
-
-  }
-  return null
-}
-
 /**
  * Canvas Viewer
  */
@@ -38,6 +28,8 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
   protected _container: HTMLDivElement | null
   /** viewer config */
   protected _viewerConfig?: ViewerConfigType
+  /** viewer id */
+  protected _viewerId: number
 
   /** UI handler */
   protected _keyDownHandler: (e: KeyboardEvent) => void
@@ -64,6 +56,7 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
   constructor (props: ViewerProps) {
     super(props)
     this._container = null
+    this._viewerId = -1
 
     const state = Session.getState()
     if (this.props.id in state.user.viewerConfigs) {
@@ -104,8 +97,8 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
    * @return {React.Fragment} React fragment
    */
   public render () {
-    const viewerConfig = this.state.user.viewerConfigs[this.props.id]
-    this._viewerConfig = viewerConfig
+    this._viewerId = this.props.id
+    this._viewerConfig = this.state.user.viewerConfigs[this._viewerId]
 
     return (
         <div
@@ -129,6 +122,24 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
     )
   }
 
+  /** Normalize coordinates to container */
+  protected normalizeCoordinates (x: number, y: number): [number, number] {
+    if (this._container) {
+      const rect = this._container.getBoundingClientRect()
+      return [x - rect.left, y - rect.top]
+    }
+    return [x, y]
+  }
+
+  /**
+   * Whether a specific key is pressed down
+   * @param {string} key - the key to check
+   * @return {boolean}
+   */
+  protected isKeyDown (key: string): boolean {
+    return this._keyDownMap[key]
+  }
+
   /** Get child components for rendering */
   protected abstract getDrawableComponents (): React.ReactElement[]
 
@@ -136,19 +147,34 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
    * Handle mouse down
    * @param e
    */
-  protected abstract onMouseDown (e: React.MouseEvent): void
+  protected onMouseDown (e: React.MouseEvent): void {
+    if (!this._container) {
+      return
+    }
+    this._mouseDown = true
+    this._mouseButton = e.button
+    const normalized = this.normalizeCoordinates(e.clientX, e.clientY)
+    this._mX = normalized[0]
+    this._mY = normalized[1]
+  }
 
   /**
    * Handle mouse up
    * @param e
    */
-  protected abstract onMouseUp (e: React.MouseEvent): void
+  protected onMouseUp (_e: React.MouseEvent): void {
+    this._mouseDown = false
+  }
 
   /**
    * Handle mouse move
    * @param e
    */
-  protected abstract onMouseMove (e: React.MouseEvent): void
+  protected onMouseMove (e: React.MouseEvent): void {
+    const normalized = this.normalizeCoordinates(e.clientX, e.clientY)
+    this._mX = normalized[0]
+    this._mY = normalized[1]
+  }
 
   /**
    * Handle double click
@@ -160,7 +186,9 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
    * Handle mouse leave
    * @param e
    */
-  protected abstract onMouseEnter (_e: React.MouseEvent): void
+  protected onMouseEnter (_e: React.MouseEvent) {
+    Session.activeViewerId = this.props.id
+  }
 
   /**
    * Handle mouse leave
@@ -178,10 +206,15 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
    * Handle key down
    * @param e
    */
-  protected abstract onKeyUp (e: KeyboardEvent): void
+  protected onKeyUp (e: KeyboardEvent): void {
+    delete this._keyDownMap[e.key]
+  }
+
   /**
    * Handle key down
    * @param e
    */
-  protected abstract onKeyDown (e: KeyboardEvent): void
+  protected onKeyDown (e: KeyboardEvent): void {
+    this._keyDownMap[e.key] = true
+  }
 }

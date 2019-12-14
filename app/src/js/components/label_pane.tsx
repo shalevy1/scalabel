@@ -11,10 +11,25 @@ import { changeViewerConfig, deletePane, splitPane, updateAll } from '../action/
 import Session from '../common/session'
 import * as types from '../common/types'
 import { makeDefaultViewerConfig } from '../functional/states'
-import { SplitType } from '../functional/types'
+import { SplitType, ViewerConfigType } from '../functional/types'
 import { paneBarStyles, resizerStyles } from '../styles/split_pane'
 import { Component } from './component'
 import { viewerReactKey } from './drawable_viewer'
+import ImageViewer from './image_viewer'
+import PointCloudViewer from './point_cloud_viewer'
+
+/** Make drawable viewer based on viewer config */
+export function viewerFactory (
+  viewerConfig: ViewerConfigType, viewerId: number
+) {
+  switch (viewerConfig.type) {
+    case types.ViewerConfigTypeName.IMAGE:
+      return (<ImageViewer id={viewerId} key={viewerReactKey(viewerId)} />)
+    case types.ViewerConfigTypeName.POINT_CLOUD:
+      return (<PointCloudViewer id={viewerId} key={viewerReactKey(viewerId)} />)
+  }
+  return null
+}
 
 interface ClassType {
   /** grid */
@@ -145,10 +160,7 @@ class LabelPane extends Component<Props> {
       return (
         <div>
           {configBar}
-          <Viewer
-            id={pane.viewerId}
-            key={viewerReactKey(pane.viewerId)}
-          />
+          {viewerFactory(viewerConfig, pane.viewerId)}
         </div>
       )
     }

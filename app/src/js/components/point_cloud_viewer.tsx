@@ -16,7 +16,7 @@ import PointCloudCanvas from './point_cloud_canvas'
  */
 class PointCloudViewer extends DrawableViewer {
   /** Camera for math */
-  private _camera: THREE.Camera
+  private _camera: THREE.PerspectiveCamera
   /** Raycaster */
   private _raycaster: THREE.Raycaster
 
@@ -26,7 +26,7 @@ class PointCloudViewer extends DrawableViewer {
    */
   constructor (props: ViewerProps) {
     super(props)
-    this._camera = new THREE.Camera()
+    this._camera = new THREE.PerspectiveCamera(45, 1, 1, 1000)
     this._raycaster = new THREE.Raycaster()
   }
 
@@ -64,26 +64,28 @@ class PointCloudViewer extends DrawableViewer {
     const oldX = this._mX
     const oldY = this._mY
     super.onMouseMove(e)
-    if (this._mouseButton === 2) {
-      this.updateCamera(this._viewerConfig as PointCloudViewerConfigType)
-      Session.dispatch(dragCamera(
-        oldX,
-        oldY,
-        this._mX,
-        this._mY,
-        this._camera,
-        this._viewerId,
-        this._viewerConfig as PointCloudViewerConfigType
-      ))
-    } else {
-      Session.dispatch(rotateCamera(
-        oldX,
-        oldY,
-        this._mX,
-        this._mY,
-        this._viewerId,
-        this._viewerConfig as PointCloudViewerConfigType
-      ))
+    if (this._mouseDown) {
+      if (this._mouseButton === 2) {
+        this.updateCamera(this._viewerConfig as PointCloudViewerConfigType)
+        Session.dispatch(dragCamera(
+          oldX,
+          oldY,
+          this._mX,
+          this._mY,
+          this._camera,
+          this._viewerId,
+          this._viewerConfig as PointCloudViewerConfigType
+        ))
+      } else {
+        Session.dispatch(rotateCamera(
+          oldX,
+          oldY,
+          this._mX,
+          this._mY,
+          this._viewerId,
+          this._viewerConfig as PointCloudViewerConfigType
+        ))
+      }
     }
   }
 
@@ -196,6 +198,12 @@ class PointCloudViewer extends DrawableViewer {
   private updateCamera (config: PointCloudViewerConfigType) {
     if (!this._viewerConfig) {
       return
+    }
+
+    if (this._container) {
+      this._camera.aspect = this._container.offsetWidth /
+        this._container.offsetHeight
+      this._camera.updateProjectionMatrix()
     }
 
     const target = new THREE.Vector3(

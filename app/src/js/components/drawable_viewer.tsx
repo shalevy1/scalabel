@@ -99,6 +99,7 @@ export abstract class DrawableViewer extends Component<ViewerProps> {
   public render () {
     this._viewerId = this.props.id
     this._viewerConfig = this.state.user.viewerConfigs[this._viewerId]
+    this._item = this.state.user.select.item
 
     return (
         <div

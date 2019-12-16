@@ -115,7 +115,8 @@ export const enum FormField {
   CATEGORIES = 'categories',
   ATTRIBUTES = 'attributes',
   ITEMS = 'item_file',
-  SENSORS = 'sensors'
+  SENSORS = 'sensors',
+  LABEL_SPEC = 'label_spec'
 }
 
 /* default config for env */

@@ -210,6 +210,24 @@ export interface ItemType {
   videoName: string
 }
 
+// TODO: This only supports points for now.
+// Needs to be extended to support polygons as basic part type
+export interface LabelPartType {
+  /** Part name */
+  name: string
+  /** list of neighboring part ids' */
+  neighbors: number[]
+}
+
+export interface LabelSpecType {
+  /** spec name */
+  name: string
+  /** parts */
+  parts: { [id: number]: LabelPartType }
+  /** template */
+  template: { [part: number]: Vector2Type }
+}
+
 export interface Attribute {
   /** Attribute tool type */
   toolType: AttributeToolType,
@@ -239,6 +257,8 @@ export interface ConfigType {
   itemType: string
   /** Label types available for the session */
   labelTypes: string[]
+  /** Custom label specs */
+  labelSpecs: { [name: string]: LabelSpecType }
   /** Policy types available for session */
   policyTypes: string[]
   /** Task size */

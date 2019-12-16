@@ -1,0 +1,33 @@
+{
+    name: 'Basic Human Pose',
+    parts: [
+        { name: 'Head', },
+        { name: 'Neck', },
+        { name: 'Left Shoulder', },
+        { name: 'Right Shoulder', },
+        { name: 'Left Elbow', },
+        { name: 'Right Elbow', },
+        { name: 'Left Wrist'},
+        { name: 'Right Wrist'},
+        { name: 'Pelvis' },
+        { name: 'Left Knee' },
+        { name: 'Right Knee' },
+        { name: 'Left Foot' },
+        { name: 'Right Foot' }
+    ],
+    template: {
+        Head: {x: 5, y: 5},
+        Neck: {x: 5, y: 7}.
+        'Right Shoulder': {x: 1, y: 10},
+        'Left Shoulder': {x: 9, y: 10},
+        'Right Elbow': {x: 1, y: 16},
+        'Left Elbow': {x: 9, y: 16},
+        'Right Wrist': {x: 1, y: 22},
+        'Left Wrist': {x: 9, y: 22},
+        'Pelvis': {x: 5, y: 25},
+        'Right Knee': {x: 3, y: 30},
+        'Left Knee': {x: 7, y: 30},
+        'Right Foot': {x: 3, y: 32},
+        'Left Foot': {x: 7, y: 32}
+    }
+}

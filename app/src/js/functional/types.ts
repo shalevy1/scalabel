@@ -225,7 +225,7 @@ export interface LabelSpecType {
   /** parts */
   parts: { [id: number]: LabelPartType }
   /** template */
-  template: { [part: number]: Vector2Type }
+  template: { [part: number]: Point2DType }
 }
 
 export interface Attribute {

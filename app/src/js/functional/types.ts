@@ -210,22 +210,20 @@ export interface ItemType {
   videoName: string
 }
 
-// TODO: This only supports points for now.
-// Needs to be extended to support polygons as basic part type
-export interface LabelPartType {
-  /** Part name */
+export interface PointTemplateType extends Point2DType {
+  /** name */
   name: string
-  /** list of neighboring part ids' */
-  neighbors: number[]
 }
 
-export interface LabelSpecType {
+// TODO: This only supports points for now.
+// Needs to be extended to support polygons as basic part type
+export interface Label2DSpecType {
   /** spec name */
   name: string
-  /** parts */
-  parts: { [id: number]: LabelPartType }
   /** template */
-  template: { [part: number]: Point2DType }
+  template: PointTemplateType[]
+  /** connections between points represented as array of 2d tuples */
+  connections: Array<[number, number]>
 }
 
 export interface Attribute {
@@ -258,7 +256,7 @@ export interface ConfigType {
   /** Label types available for the session */
   labelTypes: string[]
   /** Custom label specs */
-  labelSpecs: { [name: string]: LabelSpecType }
+  label2DSpecs: { [name: string]: Label2DSpecType }
   /** Policy types available for session */
   policyTypes: string[]
   /** Task size */

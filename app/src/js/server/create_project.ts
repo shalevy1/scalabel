@@ -7,7 +7,7 @@ import { ItemExport } from '../functional/bdd_types'
 import { makeSensor, makeTask, makeTrack } from '../functional/states'
 import {
   Attribute, ConfigType,
-  ItemType, SensorType, TaskStatus, TaskType, TrackMapType } from '../functional/types'
+  ItemType, Label2DSpecType, SensorType, TaskStatus, TaskType, TrackMapType } from '../functional/types'
 import { convertItemToImport } from './import'
 import Session from './server_session'
 import * as types from './types'
@@ -73,16 +73,22 @@ export function parseFiles (labelType: string, files: Files)
   return Promise.all([
     parseItems(files),
     parseSensors(files),
+    parseSpecs(files),
     parseAttributes(files, labelType),
     parseCategories(files, labelType)])
     .then((result: [
-      Array<Partial<ItemExport>>, SensorType[], Attribute[], string[]
+      Array<Partial<ItemExport>>,
+      SensorType[],
+      Label2DSpecType[],
+      Attribute[],
+      string[]
     ]) => {
       return {
         items: result[0],
         sensors: result[1],
-        attributes: result[2],
-        categories: result[3]
+        specs: result[2],
+        attributes: result[3],
+        categories: result[4]
       }
     })
 }
@@ -244,6 +250,34 @@ export function parseSensors (files: Files): Promise<SensorType[]> {
   }
 }
 
+/** Read sensors file */
+function readSpecsFile (path: string): Promise<Label2DSpecType[]> {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf8', (err: types.MaybeError, fileBytes: string) => {
+      if (err) {
+        reject(err)
+      } else {
+        try {
+          const specs = yaml.load(fileBytes) as Label2DSpecType[]
+          resolve(specs)
+        } catch {
+          reject(Error('Improper formatting for sensors file'))
+        }
+      }
+    })
+  })
+}
+
+/** Parse files for sensors */
+export function parseSpecs (files: Files): Promise<Label2DSpecType[]> {
+  const specsFile = files[types.FormField.LABEL_SPEC]
+  if (util.formFileExists(specsFile)) {
+    return readSpecsFile(specsFile.path)
+  } else {
+    return Promise.resolve([])
+  }
+}
+
 /**
  * Marshal data into project format
  */
@@ -255,6 +289,12 @@ export function createProject (
   const bundleFile = util.getBundleFile(form.labelType)
   const [itemType, tracking] = util.getTracking(form.itemType)
 
+  const specs: { [name: string]: Label2DSpecType } = {}
+
+  for (const spec of formFileData.specs) {
+    specs[spec.name] = spec
+  }
+
   /* use arbitrary values for
    * submitTime, taskId, and policyTypes
    * assign these when tasks are created
@@ -263,6 +303,7 @@ export function createProject (
     projectName: form.projectName,
     itemType,
     labelTypes: [form.labelType],
+    label2DSpecs: specs,
     taskSize: form.taskSize,
     handlerUrl,
     pageTitle: form.pageTitle,

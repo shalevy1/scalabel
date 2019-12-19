@@ -1,6 +1,6 @@
 import { AttributeToolType } from '../common/types'
 import { ItemExport } from '../functional/bdd_types'
-import { Attribute, ConfigType, SensorType } from '../functional/types'
+import { Attribute, ConfigType, Label2DSpecType, SensorType } from '../functional/types'
 
 /**
  * Stores specifications of project
@@ -65,6 +65,8 @@ export interface FormFileData {
   categories: string[]
   /** sensors */
   sensors: SensorType[]
+  /** custom label specs */
+  specs: Label2DSpecType[]
   /** attributes parsed from form file */
   attributes: Attribute[]
   /** items parsed from form file (may be incomplete) */

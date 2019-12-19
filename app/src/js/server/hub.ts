@@ -120,15 +120,21 @@ async function loadStateFromTask (
   switch (state.task.config.itemType) {
     case ItemTypeName.IMAGE:
     case ItemTypeName.VIDEO:
-      if (state.task.config.labelTypes.length === 1 &&
-          state.task.config.labelTypes[0] === LabelTypeName.BOX_2D) {
-        state.task.config.policyTypes =
-          [TrackPolicyType.LINEAR_INTERPOLATION_BOX_2D]
-      }
-      if (state.task.config.labelTypes.length === 1 &&
-          state.task.config.labelTypes[0] === LabelTypeName.POLYGON_2D) {
-        state.task.config.policyTypes =
-          [TrackPolicyType.LINEAR_INTERPOLATION_POLYGON]
+      if (state.task.config.labelTypes.length === 1) {
+        switch (state.task.config.labelTypes[0]) {
+          case LabelTypeName.BOX_2D:
+            state.task.config.policyTypes =
+              [TrackPolicyType.LINEAR_INTERPOLATION_BOX_2D]
+            break
+          case LabelTypeName.POLYGON_2D:
+            state.task.config.policyTypes =
+              [TrackPolicyType.LINEAR_INTERPOLATION_POLYGON]
+            break
+          case LabelTypeName.CUSTOM_2D:
+            console.log(state.task.config.label2DSpecs, state.task.config.labelTypes)
+            state.task.config.labelTypes[0] =
+              Object.keys(state.task.config.label2DSpecs)[0]
+        }
       }
       break
     case ItemTypeName.POINT_CLOUD:
@@ -146,6 +152,7 @@ async function loadStateFromTask (
         TrackPolicyType.LINEAR_INTERPOLATION_BOX_3D,
         TrackPolicyType.LINEAR_INTERPOLATION_PLANE_3D
       ]
+      break
   }
   return state
 }

@@ -4,14 +4,14 @@ import { makeLabel } from '../../functional/states'
 import { Label2DSpecType, Point2DType, RectType, ShapeType, State } from '../../functional/types'
 import { Size2D } from '../../math/size2d'
 import { Vector2D } from '../../math/vector2d'
-import { Context2D, encodeControlColor, getColorById, toCssColor } from '../util'
+import { Context2D, encodeControlColor, getColorById } from '../util'
 import { DrawMode, Label2D } from './label2d'
 import { makePoint2DStyle, Point2D } from './point2d'
 
 const DEFAULT_VIEW_POINT_STYLE = makePoint2DStyle({ radius: 8 })
 const DEFAULT_VIEW_HIGH_POINT_STYLE = makePoint2DStyle({ radius: 12 })
 const DEFAULT_CONTROL_POINT_STYLE = makePoint2DStyle({ radius: 12 })
-const lineWidth = 4
+// const lineWidth = 4
 
 /** Class for templated user-defined labels */
 export class CustomLabel2D extends Label2D {
@@ -58,21 +58,25 @@ export class CustomLabel2D extends Label2D {
         break
     }
 
-    for (let i = 0; i < this._spec.connections.length; i++) {
-      const connection = this._spec.connections[i]
-      const startPoint = this._shapes[connection[0]]
-      const endPoint = this._shapes[connection[1]]
+    // for (let i = 0; i < this._spec.connections.length; i++) {
+    //   const connection = this._spec.connections[i]
+    //   const startPoint = this._shapes[connection[0]]
+    //   const endPoint = this._shapes[connection[1]]
 
-      const realStart = startPoint.scale(ratio)
-      const realEnd = endPoint.scale(ratio)
+    //   const realStart = startPoint.scale(ratio)
+    //   const realEnd = endPoint.scale(ratio)
 
-      context.save()
-      context.strokeStyle = toCssColor(assignColor(i))
-      context.lineWidth = lineWidth
-      context.moveTo(realStart.x, realStart.y)
-      context.lineTo(realEnd.x, realEnd.y)
-      context.stroke()
-      context.restore()
+    //   context.save()
+    //   context.strokeStyle = toCssColor(assignColor(i))
+    //   context.lineWidth = lineWidth
+    //   context.moveTo(realStart.x, realStart.y)
+    //   context.lineTo(realEnd.x, realEnd.y)
+    //   context.stroke()
+    //   context.restore()
+    // }
+    for (let i = 0; i < this._shapes.length; i++) {
+      pointStyle.color = assignColor(i)
+      this._shapes[i].draw(context, ratio, pointStyle)
     }
   }
 
@@ -108,21 +112,35 @@ export class CustomLabel2D extends Label2D {
       this._bounds.y2 = Math.max(point.y, this._bounds.y2)
     }
 
-    const points: Point2DType[] = []
+    this._shapes = []
     for (const point of this._spec.template) {
-      points.push({
-        x: point.x - this._bounds.x1 + start.x,
-        y: point.y - this._bounds.y1 + start.y
-      })
+      this._shapes.push(new Point2D(
+        point.x - this._bounds.x1 + start.x,
+        point.y - this._bounds.y1 + start.y
+      ))
     }
 
-    this._shapes = []
-    for (const point of points) {
-      this._shapes.push(new Point2D(point.x, point.y))
-    }
+    const width = this._bounds.x2 - this._bounds.x1
+    const height = this._bounds.y2 - this._bounds.y1
+
+    this._bounds.x1 = start.x
+    this._bounds.y1 = start.y
+    this._bounds.x2 = start.x + width
+    this._bounds.y2 = start.y + height
 
     this.setSelected(true)
     this._highlightedHandle = 5
+  }
+
+  /** Override on mouse down */
+  public onMouseDown (coord: Vector2D, handleIndex: number): boolean {
+    const returnValue = super.onMouseDown(coord, handleIndex)
+    this.editing = true
+    if (this._labelId < 0) {
+      this._bounds.x1 = coord.x
+      this._bounds.y1 = coord.y
+    }
+    return returnValue
   }
 
   /** Handle mouse move */
@@ -133,23 +151,30 @@ export class CustomLabel2D extends Label2D {
     _handleIndex: number
   ) {
     if (this._labelId < 0) {
+      const newWidth = Math.max(coord.x - this._bounds.x1, 1)
       const xScale =
-        (coord.x - this._bounds.x1) / (this._bounds.x2 - this._bounds.x1)
+        (newWidth) / (this._bounds.x2 - this._bounds.x1)
+      const newHeight = Math.max(coord.y - this._bounds.y1, 1)
       const yScale =
-        (coord.y - this._bounds.y1) / (this._bounds.y2 - this._bounds.y1)
-
-      const centerX = (this._bounds.x1 + this._bounds.x2) / 2.
-      const centerY = (this._bounds.y1 + this._bounds.y2) / 2.
+        (newHeight) / (this._bounds.y2 - this._bounds.y1)
+      console.log(this._bounds, coord, xScale, yScale)
 
       for (const shape of this._shapes) {
-        shape.x = (shape.x - centerX) * xScale + centerX
-        shape.y = (shape.y - centerY) * yScale + centerY
+        shape.x = (shape.x - this._bounds.x1) * xScale + this._bounds.x1
+        shape.y = (shape.y - this._bounds.y1) * yScale + this._bounds.y1
       }
 
-      this._bounds.x2 = coord.x
-      this._bounds.y2 = coord.y
+      this._bounds.x2 = this._bounds.x1 + newWidth
+      this._bounds.y2 = this._bounds.y1 + newHeight
     }
     return false
+  }
+
+  /** Override on mouse up */
+  public onMouseUp (coord: Vector2D): boolean {
+    const returnValue = super.onMouseUp(coord)
+    this.editing = false
+    return returnValue
   }
 
   /** On key down */

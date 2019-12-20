@@ -160,6 +160,8 @@ class LabelPane extends Component<Props> {
       return (
           <div>
             {
+              // Disable the config bar for now for 2D images.
+              // It will be useful if multiple data sources are present.
               (this.state.task.config.itemType === types.ItemTypeName.IMAGE) ?
                 null : configBar
             }

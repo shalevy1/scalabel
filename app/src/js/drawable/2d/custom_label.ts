@@ -58,22 +58,15 @@ export class CustomLabel2D extends Label2D {
         break
     }
 
-    for (let i = 0; i < this._shapes.length; i++) {
-      pointStyle.color = assignColor(i)
-      this._shapes[i].draw(context, ratio, pointStyle)
-    }
-
-    for (let i = 0; i < this._spec.connections.length; i++) {
-      const connection = this._spec.connections[i]
+    for (const connection of this._spec.connections) {
       const startPoint = this._shapes[connection[0]]
       const endPoint = this._shapes[connection[1]]
 
       const realStart = startPoint.clone().scale(ratio)
       const realEnd = endPoint.clone().scale(ratio)
-      console.log(realStart, realEnd)
 
       context.save()
-      context.strokeStyle = toCssColor(assignColor(i))
+      context.strokeStyle = toCssColor(assignColor(this._shapes.length))
       context.lineWidth = lineWidth
       context.beginPath()
       context.moveTo(realStart.x, realStart.y)
@@ -81,6 +74,13 @@ export class CustomLabel2D extends Label2D {
       context.closePath()
       context.stroke()
       context.restore()
+    }
+
+    for (let i = 0; i < this._shapes.length; i++) {
+      const style =
+        (i === this._highlightedHandle) ? highPointStyle : pointStyle
+      style.color = assignColor(i)
+      this._shapes[i].draw(context, ratio, style)
     }
   }
 
@@ -161,7 +161,6 @@ export class CustomLabel2D extends Label2D {
       const newHeight = Math.max(coord.y - this._bounds.y1, 1)
       const yScale =
         (newHeight) / (this._bounds.y2 - this._bounds.y1)
-      console.log(this._bounds, coord, xScale, yScale)
 
       for (const shape of this._shapes) {
         shape.x = (shape.x - this._bounds.x1) * xScale + this._bounds.x1
@@ -170,6 +169,11 @@ export class CustomLabel2D extends Label2D {
 
       this._bounds.x2 = this._bounds.x1 + newWidth
       this._bounds.y2 = this._bounds.y1 + newHeight
+    }
+
+    if (this._highlightedHandle < this._shapes.length) {
+      this._shapes[this._highlightedHandle].x = coord.x
+      this._shapes[this._highlightedHandle].y = coord.y
     }
     return false
   }

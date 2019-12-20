@@ -169,20 +169,21 @@ export class CustomLabel2D extends Label2D {
 
       this._bounds.x2 = this._bounds.x1 + newWidth
       this._bounds.y2 = this._bounds.y1 + newHeight
+    } else {
+      if (this._highlightedHandle < this._shapes.length) {
+        this._shapes[this._highlightedHandle].x = coord.x
+        this._shapes[this._highlightedHandle].y = coord.y
+      } else if (this._highlightedHandle > 0) {
+        const delta = coord.clone().subtract(this._mouseDownCoord)
+        for (const shape of this._shapes) {
+          shape.x += delta.x
+          shape.y += delta.y
+        }
+        this._mouseDownCoord.x = coord.x
+        this._mouseDownCoord.y = coord.y
+      }
     }
 
-    if (this._highlightedHandle < this._shapes.length) {
-      this._shapes[this._highlightedHandle].x = coord.x
-      this._shapes[this._highlightedHandle].y = coord.y
-    } else if (this._highlightedHandle > 0) {
-      const delta = coord.clone().subtract(this._mouseDownCoord)
-      for (const shape of this._shapes) {
-        shape.x += delta.x
-        shape.y += delta.y
-      }
-      this._mouseDownCoord.x = coord.x
-      this._mouseDownCoord.y = coord.y
-    }
     return false
   }
 

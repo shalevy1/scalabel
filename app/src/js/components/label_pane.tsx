@@ -158,12 +158,11 @@ class LabelPane extends Component<Props> {
       )
       // Leaf, render viewer container
       return (
-        (this.state.task.config.itemType === types.ItemTypeName.IMAGE) ?
           <div>
-            {viewerFactory(viewerConfig, pane.viewerId)}
-          </div> :
-          <div>
-            {configBar}
+            {
+              (this.state.task.config.itemType === types.ItemTypeName.IMAGE) ?
+                null : configBar
+            }
             {viewerFactory(viewerConfig, pane.viewerId)}
           </div>
       )

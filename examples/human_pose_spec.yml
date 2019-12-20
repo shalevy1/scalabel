@@ -3,18 +3,18 @@
         name: 'Basic Human Pose',
         template: [
             { name: 'Head', x: 5, y: 5 },
-            { name: 'Neck', x: 5, y: 7 },
+            { name: 'Neck', x: 5, y: 10 },
             { name: 'Left Shoulder', x: 1, y: 10 },
             { name: 'Right Shoulder', x: 9, y: 10 },
-            { name: 'Left Elbow', x: 1, y: 16 },
-            { name: 'Right Elbow', x: 9, y: 16 },
-            { name: 'Left Wrist', x: 1, y: 22 },
-            { name: 'Right Wrist', x: 9, y: 22 },
-            { name: 'Pelvis', x: 5, y: 25 },
+            { name: 'Left Elbow', x: 1, y: 13 },
+            { name: 'Right Elbow', x: 9, y: 13 },
+            { name: 'Left Wrist', x: 1, y: 17 },
+            { name: 'Right Wrist', x: 9, y: 17 },
+            { name: 'Pelvis', x: 5, y: 22 },
             { name: 'Left Knee', x: 3, y: 30 },
             { name: 'Right Knee', x: 7, y: 30 },
-            { name: 'Left Foot', x: 3, y: 32 },
-            { name: 'Right Foot', x: 7, y: 32 }
+            { name: 'Left Foot', x: 3, y: 40 },
+            { name: 'Right Foot', x: 7, y: 40 }
         ],
         connections: [
             [0, 1],

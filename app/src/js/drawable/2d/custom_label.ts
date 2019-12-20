@@ -4,14 +4,14 @@ import { makeLabel } from '../../functional/states'
 import { Label2DSpecType, Point2DType, RectType, ShapeType, State } from '../../functional/types'
 import { Size2D } from '../../math/size2d'
 import { Vector2D } from '../../math/vector2d'
-import { Context2D, encodeControlColor, getColorById } from '../util'
+import { Context2D, encodeControlColor, getColorById, toCssColor } from '../util'
 import { DrawMode, Label2D } from './label2d'
 import { makePoint2DStyle, Point2D } from './point2d'
 
 const DEFAULT_VIEW_POINT_STYLE = makePoint2DStyle({ radius: 8 })
 const DEFAULT_VIEW_HIGH_POINT_STYLE = makePoint2DStyle({ radius: 12 })
 const DEFAULT_CONTROL_POINT_STYLE = makePoint2DStyle({ radius: 12 })
-// const lineWidth = 4
+const lineWidth = 4
 
 /** Class for templated user-defined labels */
 export class CustomLabel2D extends Label2D {
@@ -58,25 +58,29 @@ export class CustomLabel2D extends Label2D {
         break
     }
 
-    // for (let i = 0; i < this._spec.connections.length; i++) {
-    //   const connection = this._spec.connections[i]
-    //   const startPoint = this._shapes[connection[0]]
-    //   const endPoint = this._shapes[connection[1]]
-
-    //   const realStart = startPoint.scale(ratio)
-    //   const realEnd = endPoint.scale(ratio)
-
-    //   context.save()
-    //   context.strokeStyle = toCssColor(assignColor(i))
-    //   context.lineWidth = lineWidth
-    //   context.moveTo(realStart.x, realStart.y)
-    //   context.lineTo(realEnd.x, realEnd.y)
-    //   context.stroke()
-    //   context.restore()
-    // }
     for (let i = 0; i < this._shapes.length; i++) {
       pointStyle.color = assignColor(i)
       this._shapes[i].draw(context, ratio, pointStyle)
+    }
+
+    for (let i = 0; i < this._spec.connections.length; i++) {
+      const connection = this._spec.connections[i]
+      const startPoint = this._shapes[connection[0]]
+      const endPoint = this._shapes[connection[1]]
+
+      const realStart = startPoint.clone().scale(ratio)
+      const realEnd = endPoint.clone().scale(ratio)
+      console.log(realStart, realEnd)
+
+      context.save()
+      context.strokeStyle = toCssColor(assignColor(i))
+      context.lineWidth = lineWidth
+      context.beginPath()
+      context.moveTo(realStart.x, realStart.y)
+      context.lineTo(realEnd.x, realEnd.y)
+      context.closePath()
+      context.stroke()
+      context.restore()
     }
   }
 

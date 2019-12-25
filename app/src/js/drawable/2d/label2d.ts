@@ -5,7 +5,6 @@ import { getRootLabelId, getRootTrackId } from '../../functional/common'
 import { makeTaskConfig } from '../../functional/states'
 import { ConfigType, LabelType, ShapeType, State } from '../../functional/types'
 import { Size2D } from '../../math/size2d'
-import { Vector } from '../../math/vector'
 import { Vector2D } from '../../math/vector2d'
 import { Context2D, getColorById } from '../util'
 
@@ -271,7 +270,7 @@ export abstract class Label2D {
    * @param _labelIndex
    * @param _handleIndex
    */
-  public onMouseDrag (_srcCoord: Vector2D, _destCoord: Vector, _limit: Size2D,
+  public onMouseDrag (_srcCoord: Vector2D, _destCoord: Vector2D, _limit: Size2D,
                       _labelIndex: number, _handleIndex: number) {
     return
   }

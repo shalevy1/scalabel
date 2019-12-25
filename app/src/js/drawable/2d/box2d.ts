@@ -192,47 +192,32 @@ export class Box2D extends Label2D {
   }
 
   /**
-   * Handle mouse up
+   * Handle mouse click
    * @param coord
+   * @param labelIndex
+   * @param handleIndex
    */
-  public onMouseUp (_coord: Vector2D): boolean {
-    this._mouseDown = false
-    this.editing = false
-    return true
+  public onMouseClick (
+    _coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
+    return
   }
 
   /**
-   * Handle mouse down
-   * @param coord
+   * Handle mouse click
+   * @param srcCoord
+   * @param destCoord
+   * @param labelIndel
+   * @param handleIndex
    */
-  public onMouseDown (coord: Vector2D, _handleIndex: number): boolean {
-    this._mouseDown = true
-    if (this._selected) {
-      this.editing = true
-      this._mouseDownCoord = coord.clone()
-      this._startingRect = (this.shapes[0] as Rect2D).clone()
-      return true
+  public onMouseDrag (srcCoord: Vector2D, destCoord: Vector2D, limit: Size2D,
+                      labelIndex: number, handleIndex: number): void {
+    console.log("label drag")
+    this._mouseDownCoord = srcCoord
+    if (this._highlightedHandle > 0 && labelIndex === this._labelId) {
+      this.resize(destCoord, limit)
+    } else if (this._highlightedHandle === 0 && handleIndex === 0) {
+      this.move(destCoord, limit)
     }
-    return false
-  }
-
-/**
- * Drag the handle to a new position
- * @param {Vector2D} coord: current mouse position
- * @param {Vector2D} limit: limit of the canvas frame
- */
-  public onMouseMove (coord: Vector2D, limit: Size2D,
-                      _labelIndex: number, handleIndex: number): boolean {
-    if (this._selected && this._mouseDown && this.editing) {
-      if (this._highlightedHandle > 0) {
-        this.resize(coord, limit)
-      } else if (this._highlightedHandle === 0 && handleIndex === 0) {
-        this.move(coord, limit)
-      }
-      return true
-    }
-
-    return false
   }
 
   /**

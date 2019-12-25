@@ -5,6 +5,7 @@ import { getRootLabelId, getRootTrackId } from '../../functional/common'
 import { makeTaskConfig } from '../../functional/states'
 import { ConfigType, LabelType, ShapeType, State } from '../../functional/types'
 import { Size2D } from '../../math/size2d'
+import { Vector } from '../../math/vector'
 import { Vector2D } from '../../math/vector2d'
 import { Context2D, getColorById } from '../util'
 
@@ -254,14 +255,38 @@ export abstract class Label2D {
   }
 
   /**
+   * Handle mouse click
+   * @param _coord
+   */
+  public onMouseClick (_coord: Vector2D,
+                       _labelIndex: number, _handleIndex: number): void {
+    return
+  }
+
+  /**
+   * Handle mouse drag
+   * @param _srcCoord
+   * @param _destCoord
+   * @param _limit
+   * @param _labelIndex
+   * @param _handleIndex
+   */
+  public onMouseDrag (_srcCoord: Vector2D, _destCoord: Vector, _limit: Size2D,
+                      _labelIndex: number, _handleIndex: number) {
+    return
+  }
+
+  /**
    * Process mouse move
    * @param {Vector2D} coord: mouse coordinate
    * @param {Size2D} limit: limit of the canvas frame
    */
-  public abstract onMouseMove (
-    coord: Vector2D, limit: Size2D,
-    labelIndex: number, handleIndex: number
-  ): boolean
+  public onMouseMove (
+    _coord: Vector2D, _limit: Size2D,
+    _labelIndex: number, _handleIndex: number
+  ): boolean {
+    return true
+  }
 
   /**
    * handle keyboard down event

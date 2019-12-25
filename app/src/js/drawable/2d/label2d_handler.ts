@@ -25,12 +25,18 @@ export class Label2DHandler {
   private _keyDownMap: { [key: string]: boolean }
   /** index of currently selected item */
   private _selectedItemIndex: number
+  /** whether mouse is down */
+  private _mouseDown: boolean
+  /** mouseDown Coordinate */
+  private _mouseDownCoord: Vector2D
 
   constructor () {
     this._highlightedLabel = null
     this._state = Session.getState()
     this._keyDownMap = {}
     this._selectedItemIndex = -1
+    this._mouseDown = false
+    this._mouseDownCoord = new Vector2D()
   }
 
   /** get highlightedLabel for state inspection */
@@ -45,38 +51,11 @@ export class Label2DHandler {
    * @param handleIndex
    */
   public onMouseDown (
-      coord: Vector2D, _labelIndex: number, handleIndex: number): boolean {
-    if (!this.hasSelectedLabels() || !this.isEditingSelectedLabels()) {
-      if (this._highlightedLabel) {
-        this.selectHighlighted()
-      } else {
-        Session.dispatch(selectLabels(
-          {}, -1, []
-        ))
-        Session.label2dList.selectedLabels.length = 0
-        const state = this._state
-
-        const label = makeDrawableLabel2D(
-          state.task.config.labelTypes[state.user.select.labelType]
-        )
-        if (label) {
-          label.initTemp(state, coord)
-          Session.label2dList.selectedLabels.push(label)
-          Session.label2dList.labelList.push(label)
-        }
-
-        this._highlightedLabel = label
-      }
-    }
-    if (this.hasSelectedLabels() &&
-        !this.isKeyDown(Key.META) && !this.isKeyDown(Key.CONTROL)) {
-      for (const label of Session.label2dList.selectedLabels) {
-        if (label !== this._highlightedLabel) {
-          label.setHighlighted(true, 0)
-        }
-        label.onMouseDown(coord, handleIndex)
-      }
-    }
+      coord: Vector2D, _labelIndex: number, _handleIndex: number): boolean {
+    this._mouseDownCoord = coord
+    this._mouseDown = true
+    console.log('onMouseDown Function')
+    console.log(this._highlightedLabel)
     return true
   }
 
@@ -87,16 +66,23 @@ export class Label2DHandler {
    * @param handleIndex
    */
   public onMouseUp (
-      coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
+      coord: Vector2D, labelIndex: number, handleIndex: number): void {
+    const line = coord.subtract(this._mouseDownCoord)
+    console.log('onMosueUp function')
+    if (line.area() < 10) {
+      this.onMouseClick(coord, labelIndex, handleIndex)
+    }
+    console.log(line.area())
     if (this.hasSelectedLabels() && !this.isKeyDown(Key.META)) {
       Session.label2dList.selectedLabels.forEach((selectedLabel, index) => {
-        selectedLabel.onMouseUp(coord)
         if (selectedLabel !== this._highlightedLabel) {
           selectedLabel.setHighlighted(false)
         }
         this.commitLabel(index)
       })
     }
+    this._mouseDown = false
+    this._mouseDownCoord = new Vector2D()
   }
 
   /**
@@ -105,10 +91,9 @@ export class Label2DHandler {
   public onMouseMove (
       coord: Vector2D, canvasLimit: Size2D,
       labelIndex: number, handleIndex: number): boolean {
-    if (this.hasSelectedLabels() && this.isEditingSelectedLabels()) {
-      for (const label of Session.label2dList.selectedLabels) {
-        label.onMouseMove(coord, canvasLimit, labelIndex, handleIndex)
-      }
+    console.log('on Mouse move function')
+    if (this._mouseDown) {
+      this.onMouseDrag(coord, canvasLimit, labelIndex, handleIndex)
       return true
     } else {
       if (labelIndex >= 0) {
@@ -305,5 +290,82 @@ export class Label2DHandler {
     Session.dispatch(unlinkLabels(
       this._state.user.select.item, selectedLabelIdArray
     ))
+  }
+
+  /** Process mouse click action */
+  private onMouseClick (
+    coord: Vector2D, labelIndex: number, handleIndex: number): void {
+    console.log("on mouse click")
+    if (!this.hasSelectedLabels() || !this.isEditingSelectedLabels()) {
+      if (this._highlightedLabel) {
+        this.selectHighlighted()
+      } else {
+        Session.dispatch(selectLabels(
+          {}, -1, []
+        ))
+        Session.label2dList.selectedLabels.length = 0
+        const state = this._state
+
+        const label = makeDrawableLabel2D(
+          state.task.config.labelTypes[state.user.select.labelType]
+        )
+        if (label) {
+          label.initTemp(state, coord)
+          Session.label2dList.selectedLabels.push(label)
+          Session.label2dList.labelList.push(label)
+        }
+
+        this._highlightedLabel = label
+      }
+    }
+
+    if (!this.isKeyDown(Key.META) && !this.isKeyDown(Key.CONTROL)) {
+      Session.label2dList.selectedLabels.forEach((selectedLabel) => {
+        if (selectedLabel !== this._highlightedLabel) {
+          selectedLabel.setHighlighted(true, 0)
+        }
+        selectedLabel.onMouseClick(coord, labelIndex, handleIndex)
+      })
+    }
+  }
+
+  /** Process mouse drag action */
+  private onMouseDrag (destCoord: Vector2D, canvasLimit: Size2D,
+                       labelIndex: number, handleIndex: number): void {
+    console.log("on mouse drag")
+    if (!this.hasSelectedLabels() || !this.isEditingSelectedLabels()) {
+      if (this._highlightedLabel) {
+        console.log("select highlighted")
+        this.selectHighlighted()
+      } else {
+        console.log("create label")
+        Session.dispatch(selectLabels(
+          {}, -1, []
+        ))
+        Session.label2dList.selectedLabels.length = 0
+        const state = this._state
+
+        const label = makeDrawableLabel2D(
+          state.task.config.labelTypes[state.user.select.labelType]
+        )
+        if (label) {
+          label.initTemp(state, this._mouseDownCoord)
+          Session.label2dList.selectedLabels.push(label)
+          Session.label2dList.labelList.push(label)
+        }
+
+        this._highlightedLabel = label
+      }
+    }
+
+    if (!this.isKeyDown(Key.META) && !this.isKeyDown(Key.CONTROL)) {
+      Session.label2dList.selectedLabels.forEach((selectedLabel) => {
+        if (selectedLabel !== this._highlightedLabel) {
+          selectedLabel.setHighlighted(true, 0)
+        }
+        selectedLabel.onMouseDrag(this._mouseDownCoord, destCoord,
+          canvasLimit, labelIndex, handleIndex)
+      })
+    }
   }
 }

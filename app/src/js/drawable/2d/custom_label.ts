@@ -21,6 +21,11 @@ export class CustomLabel2D extends Label2D {
   private _spec: Label2DSpecType
   /** Shapes */
   private _shapes: Point2D[]
+  /**
+   * Corners for resizing,
+   * order: top-left, top-right, bottom-left, bottom-right
+   */
+  private _corners: Point2D[]
   /** Bounds of the shape */
   private _bounds: Rect2D
 
@@ -29,6 +34,7 @@ export class CustomLabel2D extends Label2D {
     this._spec = spec
     this._shapes = []
     this._bounds = new Rect2D(-1, -1, -1, -1)
+    this._corners = [new Point2D(), new Point2D(), new Point2D(), new Point2D()]
   }
 
   /** Draw according to spec */
@@ -37,12 +43,14 @@ export class CustomLabel2D extends Label2D {
 
     // Set proper drawing styles
     let pointStyle = makePoint2DStyle()
+    const rectStyle = _.assign(makeRect2DStyle(), DEFAULT_VIEW_RECT_STYLE)
     let highPointStyle = makePoint2DStyle()
     let assignColor: (i: number) => number[] = () => [0]
     switch (mode) {
       case DrawMode.VIEW:
         pointStyle = _.assign(pointStyle, DEFAULT_VIEW_POINT_STYLE)
         highPointStyle = _.assign(highPointStyle, DEFAULT_VIEW_HIGH_POINT_STYLE)
+        rectStyle.dashed = true
         assignColor = (_i: number): number[] => {
           // vertex
           return self._color
@@ -59,9 +67,16 @@ export class CustomLabel2D extends Label2D {
     }
 
     if (this._selected) {
-      const rectStyle = _.assign(makeRect2DStyle(), DEFAULT_VIEW_RECT_STYLE)
-      rectStyle.color = assignColor(this._shapes.length)
+      rectStyle.color = assignColor(this._shapes.length + this._corners.length)
       this._bounds.draw(context, ratio, rectStyle)
+
+      for (let i = 0; i < this._corners.length; i++) {
+        const style =
+          (i === this._highlightedHandle - this._shapes.length) ?
+            highPointStyle : pointStyle
+        style.color = assignColor(i + this._shapes.length)
+        this._corners[i].draw(context, ratio, style)
+      }
     }
 
     for (const connection of this._spec.connections) {
@@ -72,7 +87,9 @@ export class CustomLabel2D extends Label2D {
       const realEnd = endPoint.clone().scale(ratio)
 
       context.save()
-      context.strokeStyle = toCssColor(assignColor(this._shapes.length))
+      context.strokeStyle = toCssColor(assignColor(
+        this._shapes.length + this._corners.length
+      ))
       context.lineWidth = lineWidth
       context.beginPath()
       context.moveTo(realStart.x, realStart.y)
@@ -142,9 +159,10 @@ export class CustomLabel2D extends Label2D {
   public onMouseMove (
     coord: Vector2D,
     _limit: Size2D,
-    labelIndex: number,
+    _labelIndex: number,
     _handleIndex: number
   ) {
+    console.log(this._highlightedHandle)
     if (this._labelId < 0) {
       const rawWidth = coord.x - this._bounds.x
       let widthSign = Math.sign(rawWidth)
@@ -167,11 +185,9 @@ export class CustomLabel2D extends Label2D {
         shape.y = (shape.y - this._bounds.y) * yScale + this._bounds.y
       }
 
-      this._bounds.w = newWidth
-      this._bounds.h = newHeight
+      this.updateBounds()
     } else {
-      if (this._highlightedHandle < this._shapes.length &&
-          labelIndex === this.index) {
+      if (this._highlightedHandle < this._shapes.length) {
         this._shapes[this._highlightedHandle].x = coord.x
         this._shapes[this._highlightedHandle].y = coord.y
         this.updateBounds()
@@ -260,5 +276,12 @@ export class CustomLabel2D extends Label2D {
     this._bounds.y = bounds.y1
     this._bounds.w = bounds.x2 - bounds.x1
     this._bounds.h = bounds.y2 - bounds.y1
+
+    for (let i = 0; i < 4; i++) {
+      this._corners[i].x = this._bounds.x
+      this._corners[i].y = this._bounds.y
+      this._corners[i].x += this._bounds.w * (i % 2)
+      this._corners[i].y += this._bounds.h * Math.floor(i / 2)
+    }
   }
 }

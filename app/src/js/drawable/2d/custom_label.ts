@@ -7,7 +7,7 @@ import { Vector2D } from '../../math/vector2d'
 import { Context2D, encodeControlColor, getColorById, toCssColor } from '../util'
 import { DrawMode, Label2D } from './label2d'
 import { makePoint2DStyle, Point2D } from './point2d'
-import { Rect2D, makeRect2DStyle } from './rect2d'
+import { makeRect2DStyle, Rect2D } from './rect2d'
 
 const DEFAULT_VIEW_RECT_STYLE = makeRect2DStyle({ lineWidth: 4 })
 const DEFAULT_VIEW_POINT_STYLE = makePoint2DStyle({ radius: 8 })
@@ -60,7 +60,7 @@ export class CustomLabel2D extends Label2D {
 
     if (this._selected) {
       const rectStyle = _.assign(makeRect2DStyle(), DEFAULT_VIEW_RECT_STYLE)
-      rectStyle.color = this._color
+      rectStyle.color = assignColor(this._shapes.length)
       this._bounds.draw(context, ratio, rectStyle)
     }
 
@@ -110,32 +110,22 @@ export class CustomLabel2D extends Label2D {
       (state.task.config.tracking) ? state.task.status.maxTrackId + 1 : -1
     )
 
-    const bounds = {
-      x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity
-    }
-
-    for (const point of this._spec.template) {
-      bounds.x1 = Math.min(point.x, bounds.x1)
-      bounds.y1 = Math.min(point.y, bounds.y1)
-      bounds.x2 = Math.max(point.x, bounds.x2)
-      bounds.y2 = Math.max(point.y, bounds.y2)
-    }
-
     this._shapes = []
     for (const point of this._spec.template) {
       this._shapes.push(new Point2D(
-        point.x - bounds.x1 + start.x,
-        point.y - bounds.y1 + start.y
+        point.x,
+        point.y
       ))
     }
 
-    const width = bounds.x2 - bounds.x1
-    const height = bounds.y2 - bounds.y1
+    this.updateBounds()
 
-    this._bounds.x = start.x
-    this._bounds.y = start.y
-    this._bounds.w = width
-    this._bounds.h = height
+    for (const point of this._shapes) {
+      point.x += start.x - this._bounds.x
+      point.y += start.y - this._bounds.y
+    }
+
+    this.updateBounds()
 
     this.setSelected(true)
     this._highlightedHandle = 5
@@ -184,6 +174,7 @@ export class CustomLabel2D extends Label2D {
           labelIndex === this.index) {
         this._shapes[this._highlightedHandle].x = coord.x
         this._shapes[this._highlightedHandle].y = coord.y
+        this.updateBounds()
       } else if (this._highlightedHandle > 0) {
         const delta = coord.clone().subtract(this._mouseDownCoord)
         for (const shape of this._shapes) {
@@ -192,6 +183,7 @@ export class CustomLabel2D extends Label2D {
         }
         this._mouseDownCoord.x = coord.x
         this._mouseDownCoord.y = coord.y
+        this.updateBounds()
       }
     }
 
@@ -236,6 +228,7 @@ export class CustomLabel2D extends Label2D {
         this._shapes[i].y = point.y
       }
     }
+    this.updateBounds()
   }
 
   /** Get shape id's and shapes for updating */
@@ -248,5 +241,24 @@ export class CustomLabel2D extends Label2D {
       (shape) => ({ x: shape.x, y: shape.y })
     )
     return [this._label.shapes, shapeTypes, shapeStates]
+  }
+
+  /** update bounds to current points */
+  private updateBounds () {
+    const bounds = {
+      x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity
+    }
+
+    for (const point of this._shapes) {
+      bounds.x1 = Math.min(point.x, bounds.x1)
+      bounds.y1 = Math.min(point.y, bounds.y1)
+      bounds.x2 = Math.max(point.x, bounds.x2)
+      bounds.y2 = Math.max(point.y, bounds.y2)
+    }
+
+    this._bounds.x = bounds.x1
+    this._bounds.y = bounds.y1
+    this._bounds.w = bounds.x2 - bounds.x1
+    this._bounds.h = bounds.y2 - bounds.y1
   }
 }

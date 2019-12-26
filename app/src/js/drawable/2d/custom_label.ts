@@ -7,8 +7,9 @@ import { Vector2D } from '../../math/vector2d'
 import { Context2D, encodeControlColor, getColorById, toCssColor } from '../util'
 import { DrawMode, Label2D } from './label2d'
 import { makePoint2DStyle, Point2D } from './point2d'
-import { Rect2D } from './rect2d'
+import { Rect2D, makeRect2DStyle } from './rect2d'
 
+const DEFAULT_VIEW_RECT_STYLE = makeRect2DStyle({ lineWidth: 4 })
 const DEFAULT_VIEW_POINT_STYLE = makePoint2DStyle({ radius: 8 })
 const DEFAULT_VIEW_HIGH_POINT_STYLE = makePoint2DStyle({ radius: 12 })
 const DEFAULT_CONTROL_POINT_STYLE = makePoint2DStyle({ radius: 12 })
@@ -55,6 +56,12 @@ export class CustomLabel2D extends Label2D {
           return encodeControlColor(self._index, i)
         }
         break
+    }
+
+    if (this._selected) {
+      const rectStyle = _.assign(makeRect2DStyle(), DEFAULT_VIEW_RECT_STYLE)
+      rectStyle.color = this._color
+      this._bounds.draw(context, ratio, rectStyle)
     }
 
     for (const connection of this._spec.connections) {
@@ -138,10 +145,6 @@ export class CustomLabel2D extends Label2D {
   public onMouseDown (coord: Vector2D, handleIndex: number): boolean {
     const returnValue = super.onMouseDown(coord, handleIndex)
     this.editing = true
-    if (this._labelId < 0) {
-      this._bounds.x = coord.x
-      this._bounds.y = coord.y
-    }
     return returnValue
   }
 
@@ -154,21 +157,28 @@ export class CustomLabel2D extends Label2D {
   ) {
     if (this._labelId < 0) {
       const rawWidth = coord.x - this._bounds.x
-      const newWidth = Math.max(Math.abs(rawWidth), 1) * Math.sign(rawWidth)
+      let widthSign = Math.sign(rawWidth)
+      if (widthSign === 0) {
+        widthSign = 1
+      }
+      const newWidth = Math.max(Math.abs(rawWidth), 1) * widthSign
       const xScale = (newWidth) / (this._bounds.w)
 
-      const rawHeight = coord.y = this._bounds.y
-      const newHeight = Math.max(Math.abs(rawHeight), 1) * Math.sign(rawHeight)
-      const yScale =
-        (newHeight) / (this._bounds.h)
+      const rawHeight = coord.y - this._bounds.y
+      let heightSign = Math.sign(rawHeight)
+      if (heightSign === 0) {
+        heightSign = 1
+      }
+      const newHeight = Math.max(Math.abs(rawHeight), 1) * heightSign
+      const yScale = (newHeight) / (this._bounds.h)
 
       for (const shape of this._shapes) {
         shape.x = (shape.x - this._bounds.x) * xScale + this._bounds.x
         shape.y = (shape.y - this._bounds.y) * yScale + this._bounds.y
       }
 
-      this._bounds.x = this._bounds.x + newWidth
-      this._bounds.y = this._bounds.y + newHeight
+      this._bounds.w = newWidth
+      this._bounds.h = newHeight
     } else {
       if (this._highlightedHandle < this._shapes.length &&
           labelIndex === this.index) {
